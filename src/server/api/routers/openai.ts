@@ -1,7 +1,6 @@
-import fs from "fs";
-import path from "path";
 import { TRPCError } from "@trpc/server";
 import OpenAI from "openai";
+import { toFile } from "openai/uploads";
 import { z } from "zod";
 import { env } from "@/env";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
@@ -45,39 +44,25 @@ export const openaiRouter = createTRPCRouter({
         // Convert base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
 
-        // Create temp directory if it doesn't exist
-        const tempDir = path.join(process.cwd(), "tmp");
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-        }
+        console.log("Sending audio to OpenAI, size:", buffer.length, "bytes");
 
-        // Save buffer to temp file
-        const tempFilePath = path.join(tempDir, `audio-${Date.now()}.webm`);
-        fs.writeFileSync(tempFilePath, buffer);
+        // Create a unique filename for the audio
+        const filename = `audio-${Date.now()}.webm`;
 
-        try {
-          console.log("Sending file to OpenAI, size:", buffer.length, "bytes");
+        // Use OpenAI's toFile helper to create a File object from the buffer
+        const audioFile = await toFile(buffer, filename);
 
-          // Use OpenAI SDK to transcribe the audio file
-          const transcription = await openai.audio.transcriptions.create({
-            file: fs.createReadStream(tempFilePath),
-            model: "gpt-4o-transcribe",
-            language: "en",
-          });
+        // Send directly to OpenAI's API for transcription
+        const transcription = await openai.audio.transcriptions.create({
+          file: audioFile,
+          model: "gpt-4o-transcribe",
+          language: "en",
+        });
 
-          // Clean up the temp file
-          fs.unlinkSync(tempFilePath);
-
-          return {
-            success: true,
-            text: transcription.text || "",
-          };
-        } finally {
-          // Make sure we clean up in case of error
-          if (fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
-          }
-        }
+        return {
+          success: true,
+          text: transcription.text || "",
+        };
       } catch (error) {
         console.error("Transcription error:", error);
         if (error instanceof TRPCError) {
