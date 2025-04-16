@@ -131,74 +131,86 @@ export const openaiRouter = createTRPCRouter({
           temperature: 0.7,
         });
 
-        const analysisText = response.choices[0]?.message.content || "";
+        const analysisText = response.choices[0]?.message.content ?? "";
 
         // Parse the response from OpenAI to extract structured feedback
 
         let band = 0;
-        const bandMatch = analysisText.match(/نطاق\s*(?:\(?band\)?)?[:\s]+(\d+\.?\d*)/i);
-        if (bandMatch && bandMatch[1]) {
+        const bandRegex = /نطاق\s*(?:\(?band\)?)?[:\s]+(\d+\.?\d*)/i;
+        const bandMatch = bandRegex.exec(analysisText);
+        if (bandMatch?.[1]) {
           band = parseFloat(bandMatch[1]);
         }
 
         // Extract strengths summary (first paragraph after "نقاط القوة")
         let strengthsSummary = "";
-        const strengthsMatch = analysisText.match(
-          /نقاط القوة[:\s]+([\s\S]+?)(?=\n\s*-|\n\s*\d+\.|\n\s*مجالات)/i,
-        );
-        if (strengthsMatch && strengthsMatch[1]) {
+        const strengthsRegex = /نقاط القوة[:\s]+([\s\S]+?)(?=\n\s*-|\n\s*\d+\.|\n\s*مجالات)/i;
+        const strengthsMatch = strengthsRegex.exec(analysisText);
+        if (strengthsMatch?.[1]) {
           strengthsSummary = strengthsMatch[1].trim();
         }
 
         // Extract strength points (bullet points after strengths summary)
         const strengthPoints: string[] = [];
-        const strengthPointsMatch = analysisText.match(/نقاط القوة[\s\S]+?((?:-[^\n]+\n?)+)/i);
-        if (strengthPointsMatch && strengthPointsMatch[1]) {
-          const points = strengthPointsMatch[1].match(/-([^\n]+)/g);
-          if (points) {
-            points.forEach((point: string) => {
-              strengthPoints.push(point.replace(/^-\s*/, "").trim());
-            });
+        const strengthPointsRegex = /نقاط القوة[\s\S]+?((?:-[^\n]+\n?)+)/i;
+        const strengthPointsMatch = strengthPointsRegex.exec(analysisText);
+        if (strengthPointsMatch?.[1]) {
+          const pointsRegex = /-([^\n]+)/g;
+          let pointMatch;
+          while ((pointMatch = pointsRegex.exec(strengthPointsMatch[1])) !== null) {
+            strengthPoints.push(pointMatch[0].replace(/^-\s*/, "").trim());
           }
         }
 
         // Extract areas to improve
         const areasToImprove: { mistake: string; correction: string }[] = [];
-        const improvementMatch = analysisText.match(
-          /مجالات[^:]*التحسين[:\s]+([\s\S]+?)(?=\n\s*نصائح|\n\s*\d+\.|\n\s*$)/i,
-        );
+        const improvementRegex =
+          /مجالات[^:]*التحسين[:\s]+([\s\S]+?)(?=\n\s*نصائح|\n\s*\d+\.|\n\s*$)/i;
+        const improvementMatch = improvementRegex.exec(analysisText);
 
-        if (improvementMatch && improvementMatch[1]) {
+        if (improvementMatch?.[1]) {
           const improvementText = improvementMatch[1];
-          const mistakeMatches = improvementText.match(/[✗×]([^\n]+)/g);
-          const correctionMatches = improvementText.match(/[✓]([^\n]+)/g);
+          const mistakeRegex = /[✗×]([^\n]+)/g;
+          const correctionRegex = /[✓]([^\n]+)/g;
 
-          if (mistakeMatches && correctionMatches) {
-            const len = Math.min(mistakeMatches.length, correctionMatches.length);
-            for (let i = 0; i < len; i++) {
-              const mistake = mistakeMatches[i];
-              const correction = correctionMatches[i];
+          const mistakes: string[] = [];
+          const corrections: string[] = [];
 
-              if (mistake && correction) {
-                areasToImprove.push({
-                  mistake: mistake.replace(/^[✗×]\s*/, "").trim(),
-                  correction: correction.replace(/^[✓]\s*/, "").trim(),
-                });
-              }
+          let mistakeMatch;
+          while ((mistakeMatch = mistakeRegex.exec(improvementText)) !== null) {
+            mistakes.push(mistakeMatch[0]);
+          }
+
+          let correctionMatch;
+          while ((correctionMatch = correctionRegex.exec(improvementText)) !== null) {
+            corrections.push(correctionMatch[0]);
+          }
+
+          const len = Math.min(mistakes.length, corrections.length);
+          for (let i = 0; i < len; i++) {
+            const mistake = mistakes[i];
+            const correction = corrections[i];
+
+            if (mistake && correction) {
+              areasToImprove.push({
+                mistake: mistake.replace(/^[✗×]\s*/, "").trim(),
+                correction: correction.replace(/^[✓]\s*/, "").trim(),
+              });
             }
           }
         }
 
         // Extract improvement tips
         const improvementTips: string[] = [];
-        const tipsMatch = analysisText.match(/نصائح[^:]*تحسين[:\s]+([\s\S]+)/i);
-        if (tipsMatch && tipsMatch[1]) {
+        const tipsRegex = /نصائح[^:]*تحسين[:\s]+([\s\S]+)/i;
+        const tipsMatch = tipsRegex.exec(analysisText);
+        if (tipsMatch?.[1]) {
           const tipsText = tipsMatch[1];
-          const tips = tipsText.match(/(?:-|\d+\.)\s*([^\n]+)/g);
-          if (tips) {
-            tips.forEach((tip: string) => {
-              improvementTips.push(tip.replace(/^(?:-|\d+\.)\s*/, "").trim());
-            });
+          const tipItemRegex = /(?:-|\d+\.)\s*([^\n]+)/g;
+
+          let tipMatch;
+          while ((tipMatch = tipItemRegex.exec(tipsText)) !== null) {
+            improvementTips.push(tipMatch[0].replace(/^(?:-|\d+\.)\s*/, "").trim());
           }
         }
 

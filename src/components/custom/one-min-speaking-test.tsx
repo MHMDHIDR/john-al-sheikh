@@ -66,114 +66,116 @@ export function SpeakTest() {
           }
         });
 
-        recorder.addEventListener("stop", async () => {
-          if (audioChunks.length === 0) {
-            error("لم يتم تسجيل أي صوت");
-            return;
-          }
-
-          try {
-            setIsProcessing(true);
-            success("جاري تحليل إجابتك...");
-
-            // Combine audio chunks into a single blob
-            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
-            // Check audio duration and size
-            if (audioBlob.size < 1000) {
-              error("التسجيل الصوتي قصير جداً");
-              setIsProcessing(false);
+        recorder.addEventListener("stop", () => {
+          void (async () => {
+            if (audioChunks.length === 0) {
+              error("لم يتم تسجيل أي صوت");
               return;
             }
 
-            console.log("Audio size:", audioBlob.size, "bytes");
+            try {
+              setIsProcessing(true);
+              success("جاري تحليل إجابتك...");
 
-            // Convert blob to base64
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
+              // Combine audio chunks into a single blob
+              const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
 
-            reader.onloadend = async () => {
-              try {
-                const base64Audio = reader.result as string;
+              // Check audio duration and size
+              if (audioBlob.size < 1000) {
+                error("التسجيل الصوتي قصير جداً");
+                setIsProcessing(false);
+                return;
+              }
 
-                if (!isValidAudio(base64Audio)) {
-                  error("التسجيل الصوتي غير صالح");
-                  setIsProcessing(false);
-                  return;
-                }
+              console.log("Audio size:", audioBlob.size, "bytes");
 
-                // Transcribe audio using tRPC endpoint
-                const transcriptionResult = await transcribeAudioMutation.mutateAsync({
-                  audioBase64: base64Audio,
-                  fileType: "audio/webm",
-                });
+              // Convert blob to base64
+              const reader = new FileReader();
+              reader.readAsDataURL(audioBlob);
 
-                // If transcription failed, show the error message
-                if (!transcriptionResult.success) {
-                  error("فشل في تحويل الصوت إلى نص");
-                  setIsProcessing(false);
-                  return;
-                }
+              reader.onloadend = async () => {
+                try {
+                  const base64Audio = reader.result as string;
 
-                const transcribedText = transcriptionResult.text;
+                  if (!isValidAudio(base64Audio)) {
+                    error("التسجيل الصوتي غير صالح");
+                    setIsProcessing(false);
+                    return;
+                  }
 
-                if (!transcribedText || transcribedText.trim() === "") {
-                  error("لم يتم التعرف على أي كلام في التسجيل");
-                  setIsProcessing(false);
-                  return;
-                }
+                  // Transcribe audio using tRPC endpoint
+                  const transcriptionResult = await transcribeAudioMutation.mutateAsync({
+                    audioBase64: base64Audio,
+                    fileType: "audio/webm",
+                  });
 
-                // Get the current prompt for analysis - ensure it's always a string
-                const defaultPrompt = "تحدث عن أي موضوع تختاره"; // Fallback prompt
-                const promptForAnalysis = currentPrompt || prompts[0] || defaultPrompt;
+                  // If transcription failed, show the error message
+                  if (!transcriptionResult.success) {
+                    error("فشل في تحويل الصوت إلى نص");
+                    setIsProcessing(false);
+                    return;
+                  }
 
-                console.log("Transcription==>", transcribedText);
+                  const transcribedText = transcriptionResult.text;
 
-                // Analyze transcription using tRPC endpoint
-                const analysisResult = await analyzeIELTSSpeakingMutation.mutateAsync({
-                  transcription: transcribedText,
-                  prompt: promptForAnalysis,
-                });
+                  if (!transcribedText || transcribedText.trim() === "") {
+                    error("لم يتم التعرف على أي كلام في التسجيل");
+                    setIsProcessing(false);
+                    return;
+                  }
 
-                if (!analysisResult.success || !analysisResult.feedback) {
-                  error("فشل في تحليل الإجابة");
-                  setIsProcessing(false);
-                  return;
-                }
+                  // Get the current prompt for analysis - ensure it's always a string
+                  const defaultPrompt = "تحدث عن أي موضوع تختاره"; // Fallback prompt
+                  const promptForAnalysis = currentPrompt ?? prompts[0] ?? defaultPrompt;
 
-                const { feedback } = analysisResult;
+                  console.log("Transcription==>", transcribedText);
 
-                // Store results in sessionStorage to access on results page
-                sessionStorage.setItem(
-                  "ieltsResult",
-                  JSON.stringify({
-                    band: feedback.band,
-                    strengths: feedback.strengths,
-                    areasToImprove: feedback.areasToImprove,
-                    improvementTips: feedback.improvementTips,
+                  // Analyze transcription using tRPC endpoint
+                  const analysisResult = await analyzeIELTSSpeakingMutation.mutateAsync({
                     transcription: transcribedText,
                     prompt: promptForAnalysis,
-                  }),
-                );
+                  });
 
-                // Navigate to results page
-                router.push("/results");
-              } catch (fileErr) {
-                console.error("Error processing file:", fileErr);
-                error(fileErr instanceof Error ? fileErr.message : "حدث خطأ أثناء معالجة الملف");
+                  if (!analysisResult.success || !analysisResult.feedback) {
+                    error("فشل في تحليل الإجابة");
+                    setIsProcessing(false);
+                    return;
+                  }
+
+                  const { feedback } = analysisResult;
+
+                  // Store results in sessionStorage to access on results page
+                  sessionStorage.setItem(
+                    "ieltsResult",
+                    JSON.stringify({
+                      band: feedback.band,
+                      strengths: feedback.strengths,
+                      areasToImprove: feedback.areasToImprove,
+                      improvementTips: feedback.improvementTips,
+                      transcription: transcribedText,
+                      prompt: promptForAnalysis,
+                    }),
+                  );
+
+                  // Navigate to results page
+                  router.push("/results");
+                } catch (fileErr) {
+                  console.error("Error processing file:", fileErr);
+                  error(fileErr instanceof Error ? fileErr.message : "حدث خطأ أثناء معالجة الملف");
+                  setIsProcessing(false);
+                }
+              };
+
+              reader.onerror = () => {
+                error("فشل في قراءة الملف الصوتي");
                 setIsProcessing(false);
-              }
-            };
-
-            reader.onerror = () => {
-              error("فشل في قراءة الملف الصوتي");
+              };
+            } catch (err) {
+              console.error("Error processing audio:", err);
+              error(err instanceof Error ? err.message : "حدث خطأ أثناء معالجة التسجيل");
               setIsProcessing(false);
-            };
-          } catch (err) {
-            console.error("Error processing audio:", err);
-            error(err instanceof Error ? err.message : "حدث خطأ أثناء معالجة التسجيل");
-            setIsProcessing(false);
-          }
+            }
+          })();
         });
 
         // Start recording with a timeout to automatically stop after MAX_RECORDING_TIME

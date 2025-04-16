@@ -29,7 +29,7 @@ export default function ResultsPage() {
     try {
       const savedResult = sessionStorage.getItem("ieltsResult");
       if (savedResult) {
-        setResult(JSON.parse(savedResult));
+        setResult(JSON.parse(savedResult) as IELTSResult);
       }
     } catch (error) {
       console.error("Error loading results:", error);

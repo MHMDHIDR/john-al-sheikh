@@ -215,7 +215,7 @@ export default function OnboardingPage() {
             <FormField
               control={form.control}
               name="profileImage"
-              render={({ field: { onChange, value, ...field } }) => (
+              render={({ field: { onChange, value: _value, ...field } }) => (
                 <FormItem>
                   <FormLabel
                     className="cursor-pointer text-sm text-gray-600 hover:text-black"
