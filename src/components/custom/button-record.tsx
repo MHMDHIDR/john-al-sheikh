@@ -23,19 +23,24 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
     "#34A853", // Google green
   ];
 
-  useEffect(() => {
-    // Setup audio analyzer when recording starts
-    if (isRecording) {
-      setupAudioAnalyzer();
-    } else {
-      // Clean up when recording stops
-      cleanupAudioAnalyzer();
-    }
+  useEffect(
+    () => {
+      // Setup audio analyzer when recording starts
+      if (isRecording) {
+        setupAudioAnalyzer();
+      } else {
+        // Clean up when recording stops
+        cleanupAudioAnalyzer();
+      }
 
-    return () => {
-      cleanupAudioAnalyzer();
-    };
-  }, [isRecording]);
+      return () => {
+        cleanupAudioAnalyzer();
+      };
+    },
+    [
+      /*isRecording*/
+    ],
+  );
 
   const setupAudioAnalyzer = async () => {
     try {
@@ -118,12 +123,12 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
       for (let i = 0; i < barCount; i++) {
         // Create symmetric pattern (radio wave style)
         const index = Math.floor((i * bufferLength) / barCount);
-        let value = dataArray[index] || 0;
+        const value = dataArray[index] ?? 0;
 
         // Apply curve for radio wave appearance
-        let position = i / barCount;
-        let symmetricPosition = Math.abs(position - 0.5) * 2; // 0 at center, 1 at edges
-        let multiplier = 1 - symmetricPosition * 0.7; // Taller in middle
+        const position = i / barCount;
+        const symmetricPosition = Math.abs(position - 0.5) * 2; // 0 at center, 1 at edges
+        const multiplier = 1 - symmetricPosition * 0.7; // Taller in middle
 
         // Apply curve for natural wave appearance
         const height = Math.max(4, value * multiplier * 0.5);
