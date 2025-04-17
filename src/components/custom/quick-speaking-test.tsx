@@ -35,7 +35,8 @@ export function SpeakTest() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  // Commented out as it's currently not used but might be needed in the future
+  // const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
   const router = useRouter();
   const { success, error, warning } = useToast();
@@ -142,8 +143,6 @@ export function SpeakTest() {
         // Request data every 1 second to ensure we're collecting chunks during recording
         const timeslice = 1000; // 1 second intervals
 
-        setAudioChunks([]);
-
         // Create a local variable to collect chunks to avoid state timing issues
         const chunks: Blob[] = [];
 
@@ -151,7 +150,7 @@ export function SpeakTest() {
           if (event.data.size > 0) {
             // Add to local array and update state
             chunks.push(event.data);
-            setAudioChunks(prev => [...prev, event.data]);
+            // setAudioChunks(prev => [...prev, event.data]);
           }
         });
 

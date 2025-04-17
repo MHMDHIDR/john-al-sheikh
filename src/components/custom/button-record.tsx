@@ -1,5 +1,5 @@
 import { Mic, Square } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 type RecordButtonProps = {
   isRecording: boolean;
@@ -14,35 +14,67 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const barsRef = useRef<HTMLDivElement[]>([]);
+  const visualizeRef = useRef<(() => void) | undefined>(undefined);
 
-  // Google-inspired colors
-  const colors = [
-    "#4285F4", // Google blue
-    "#EA4335", // Google red
-    "#FBBC05", // Google yellow
-    "#34A853", // Google green
-  ];
-
-  useEffect(
-    () => {
-      // Setup audio analyzer when recording starts
-      if (isRecording) {
-        setupAudioAnalyzer();
-      } else {
-        // Clean up when recording stops
-        cleanupAudioAnalyzer();
-      }
-
-      return () => {
-        cleanupAudioAnalyzer();
-      };
-    },
-    [
-      /*isRecording*/
+  // Google-inspired colors - memoized to prevent dependency changes on re-renders
+  const colors = useMemo(
+    () => [
+      "#4285F4", // Google blue
+      "#EA4335", // Google red
+      "#FBBC05", // Google yellow
+      "#34A853", // Google green
     ],
+    [],
   );
 
-  const setupAudioAnalyzer = async () => {
+  const visualize = useCallback(() => {
+    if (!analyserRef.current || !barsRef.current.length) return;
+
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const updateWaveform = () => {
+      if (!analyserRef.current) return;
+
+      analyserRef.current.getByteFrequencyData(dataArray);
+
+      // Calculate visualizer bars
+      const bars = barsRef.current;
+      const barCount = bars.length;
+
+      // Map frequency data to bar heights with smooth radio wave pattern
+      for (let i = 0; i < barCount; i++) {
+        // Create symmetric pattern (radio wave style)
+        const index = Math.floor((i * bufferLength) / barCount);
+        const value = dataArray[index] ?? 0;
+
+        // Apply curve for radio wave appearance
+        const position = i / barCount;
+        const symmetricPosition = Math.abs(position - 0.5) * 2; // 0 at center, 1 at edges
+        const multiplier = 1 - symmetricPosition * 0.7; // Taller in middle
+
+        // Apply curve for natural wave appearance
+        const height = Math.max(4, value * multiplier * 0.5);
+
+        const bar = bars[i];
+        if (bar) {
+          bar.style.height = `${height}px`;
+        }
+      }
+
+      animationFrameRef.current = requestAnimationFrame(updateWaveform);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(updateWaveform);
+  }, []);
+
+  // Store the visualize function in a ref to avoid circular dependencies
+  useEffect(() => {
+    visualizeRef.current = visualize;
+  }, [visualize]);
+
+  const setupAudioAnalyzer = useCallback(async () => {
     try {
       if (!waveContainerRef.current) return;
 
@@ -96,56 +128,16 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
 
-      // Start visualization
-      visualize();
+      // Start visualization using the ref to avoid circular dependencies
+      if (visualizeRef.current) {
+        visualizeRef.current();
+      }
     } catch (err) {
       console.error("Error setting up audio analyzer:", err);
     }
-  };
+  }, [colors]);
 
-  const visualize = () => {
-    if (!analyserRef.current || !barsRef.current.length) return;
-
-    const analyser = analyserRef.current;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const updateWaveform = () => {
-      if (!analyserRef.current) return;
-
-      analyserRef.current.getByteFrequencyData(dataArray);
-
-      // Calculate visualizer bars
-      const bars = barsRef.current;
-      const barCount = bars.length;
-
-      // Map frequency data to bar heights with smooth radio wave pattern
-      for (let i = 0; i < barCount; i++) {
-        // Create symmetric pattern (radio wave style)
-        const index = Math.floor((i * bufferLength) / barCount);
-        const value = dataArray[index] ?? 0;
-
-        // Apply curve for radio wave appearance
-        const position = i / barCount;
-        const symmetricPosition = Math.abs(position - 0.5) * 2; // 0 at center, 1 at edges
-        const multiplier = 1 - symmetricPosition * 0.7; // Taller in middle
-
-        // Apply curve for natural wave appearance
-        const height = Math.max(4, value * multiplier * 0.5);
-
-        const bar = bars[i];
-        if (bar) {
-          bar.style.height = `${height}px`;
-        }
-      }
-
-      animationFrameRef.current = requestAnimationFrame(updateWaveform);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(updateWaveform);
-  };
-
-  const cleanupAudioAnalyzer = () => {
+  const cleanupAudioAnalyzer = useCallback(() => {
     // Cancel animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -154,7 +146,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
 
     // Close audio context
     if (audioContextRef.current) {
-      audioContextRef.current.close().catch(console.error);
+      void audioContextRef.current.close();
       audioContextRef.current = null;
     }
 
@@ -166,7 +158,21 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
 
     // Clear analyzer reference
     analyserRef.current = null;
-  };
+  }, []);
+
+  useEffect(() => {
+    // Setup audio analyzer when recording starts
+    if (isRecording) {
+      void setupAudioAnalyzer();
+    } else {
+      // Clean up when recording stops
+      cleanupAudioAnalyzer();
+    }
+
+    return () => {
+      cleanupAudioAnalyzer();
+    };
+  }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer]);
 
   return (
     <div className="flex flex-col items-center">
