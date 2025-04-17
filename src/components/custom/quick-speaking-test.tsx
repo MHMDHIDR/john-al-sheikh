@@ -1,6 +1,5 @@
 "use client";
 
-import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
@@ -8,6 +7,7 @@ import { Timer } from "@/components/custom/timer";
 import { useToast } from "@/hooks/use-toast";
 import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { api } from "@/trpc/react";
+import type { Session } from "next-auth";
 
 const prompts = [
   "صِف وقتاً ساعدت فيه شخصاً ما.",

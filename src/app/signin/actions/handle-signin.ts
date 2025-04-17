@@ -6,7 +6,7 @@ import { signIn } from "@/server/auth";
 import { db } from "@/server/db";
 import { UserRole, users } from "@/server/db/schema";
 
-type SignInType = {
+export type SignInType = {
   message?: string | string[];
   success?: boolean;
   callbackUrl?: string;

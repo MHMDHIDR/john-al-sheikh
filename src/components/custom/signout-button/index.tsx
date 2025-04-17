@@ -13,7 +13,7 @@ export function SignoutButton() {
           sessionStorage.removeItem("ieltsResult");
         }
 
-        handleSignout();
+        await handleSignout();
       }}
       className="cursor-pointer"
       variant={"destructive"}

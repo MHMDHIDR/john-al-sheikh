@@ -12,13 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { env } from "@/env";
 import { handleSignin } from "./actions/handle-signin";
+import type { SignInType } from "./actions/handle-signin";
 
 export default function SiginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   const [state, handleSigninAction, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
+    async (prevState: SignInType, formData: FormData) => {
       return handleSignin({ ...prevState, callbackUrl }, formData);
     },
     {
@@ -28,8 +29,8 @@ export default function SiginForm() {
     },
   );
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl });
+  const handleGoogleSignIn = async () => {
+    await signIn("google", { callbackUrl });
   };
 
   return (
