@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
 import { Timer } from "@/components/custom/timer";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,10 @@ function isValidAudio(data: string): boolean {
   return parts.length > 1 && typeof parts[1] === "string" && parts[1].length > 100;
 }
 
+// Constants for audio detection timeouts (in milliseconds)
+const INITIAL_CHECK_DELAY = 3000; // Check for audio after 3 seconds
+const MAX_SILENCE_DURATION = 10000; // Stop recording after 10 seconds of silence
+
 export function SpeakTest() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,21 +38,100 @@ export function SpeakTest() {
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
   const router = useRouter();
-  const { success, error } = useToast();
+  const { success, error, warning } = useToast();
+
+  // References for timers and audio tracking
+  const initialCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAudioTimestampRef = useRef<number>(0);
+  const hasAudioBeenDetectedRef = useRef<boolean>(false);
 
   // tRPC mutations
   const transcribeAudioMutation = api.openai.transcribeAudio.useMutation();
   const analyzeIELTSSpeakingMutation = api.openai.analyzeIELTSSpeaking.useMutation();
 
+  // Helper function to stop all timers
+  const clearAllTimers = () => {
+    if (initialCheckTimerRef.current) {
+      clearTimeout(initialCheckTimerRef.current);
+      initialCheckTimerRef.current = null;
+    }
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  };
+
+  // Helper function to stop recording
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      clearAllTimers();
+    }
+  };
+
   const handleToggleRecording = async () => {
     if (isRecording) {
-      mediaRecorder?.stop();
-      setIsRecording(false);
+      stopRecording();
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+
+        // Reset audio detection state
+        hasAudioBeenDetectedRef.current = false;
+        lastAudioTimestampRef.current = Date.now();
+
+        // Setup audio analyzer to detect silence
+        const audioContext = new AudioContext();
+        const audioSource = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        audioSource.connect(analyser);
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        // Function to check if audio is being detected
+        const checkAudioLevel = () => {
+          analyser.getByteFrequencyData(dataArray);
+
+          // Calculate average audio level
+          let sum = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            sum += dataArray[i]!; // Use non-null assertion
+          }
+          const average = sum / bufferLength;
+
+          // If average is above threshold, audio is detected
+          if (average > 5) {
+            // Lower threshold for better detection
+            hasAudioBeenDetectedRef.current = true;
+            lastAudioTimestampRef.current = Date.now();
+            console.log("Audio detected with level:", average.toFixed(2));
+          }
+
+          // Check if we've been silent for too long
+          const timeSinceLastAudio = Date.now() - lastAudioTimestampRef.current;
+          if (hasAudioBeenDetectedRef.current && timeSinceLastAudio > MAX_SILENCE_DURATION) {
+            // Stop recording after silence duration reached
+            console.log(
+              "Stopping recording due to silence for",
+              (timeSinceLastAudio / 1000).toFixed(1),
+              "seconds",
+            );
+            success("توقف التسجيل بسبب الصمت لفترة طويلة");
+            stopRecording();
+            return;
+          }
+
+          // Continue checking as long as we're recording
+          if (isRecording) {
+            requestAnimationFrame(checkAudioLevel);
+          }
+        };
 
         // Ensure WebM audio format with good quality
         const recorder = new MediaRecorder(stream, {
@@ -56,17 +139,34 @@ export function SpeakTest() {
           audioBitsPerSecond: 128000,
         });
 
+        // Request data every 1 second to ensure we're collecting chunks during recording
+        const timeslice = 1000; // 1 second intervals
+
         setAudioChunks([]);
+
+        // Create a local variable to collect chunks to avoid state timing issues
+        const chunks: Blob[] = [];
 
         recorder.addEventListener("dataavailable", event => {
           if (event.data.size > 0) {
-            setAudioChunks(chunks => [...chunks, event.data]);
+            // Add to local array and update state
+            chunks.push(event.data);
+            setAudioChunks(prev => [...prev, event.data]);
           }
         });
 
         recorder.addEventListener("stop", () => {
           void (async () => {
-            if (audioChunks.length === 0) {
+            // Stop the audio context
+            audioContext.close().catch(console.error);
+
+            // Clear all timers
+            clearAllTimers();
+
+            console.log("Chunks collected:", chunks.length);
+
+            // Check both local chunks and state
+            if (chunks.length === 0) {
               error("لم يتم تسجيل أي صوت");
               return;
             }
@@ -75,8 +175,8 @@ export function SpeakTest() {
               setIsProcessing(true);
               success("جاري تحليل إجابتك...");
 
-              // Combine audio chunks into a single blob
-              const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+              // Use the local chunks array to avoid state timing issues
+              const audioBlob = new Blob(chunks, { type: "audio/webm" });
 
               // Check audio duration and size
               if (audioBlob.size < 1000) {
@@ -176,10 +276,29 @@ export function SpeakTest() {
           })();
         });
 
-        // Start recording with a timeout to automatically stop after MAX_RECORDING_TIME
-        recorder.start();
+        // Start recording
+        recorder.start(timeslice); // Start with timeslice to get frequent data events
         setMediaRecorder(recorder);
         setIsRecording(true);
+
+        // Debug MediaRecorder state
+        console.log("MediaRecorder started with state:", recorder.state);
+
+        // Add event listeners for MediaRecorder state changes
+        recorder.addEventListener("start", () => console.log("MediaRecorder started"));
+        recorder.addEventListener("pause", () => console.log("MediaRecorder paused"));
+        recorder.addEventListener("resume", () => console.log("MediaRecorder resumed"));
+        recorder.addEventListener("error", e => console.error("MediaRecorder error:", e));
+
+        // Start audio level checking
+        requestAnimationFrame(checkAudioLevel);
+
+        // Setup early audio detection check after 3 seconds
+        initialCheckTimerRef.current = setTimeout(() => {
+          if (!hasAudioBeenDetectedRef.current && isRecording) {
+            warning("يرجى التحدث بصوت أعلى أو التأكد من تشغيل الميكروفون");
+          }
+        }, INITIAL_CHECK_DELAY);
 
         // Auto-stop recording after MAX_RECORDING_TIME
         setTimeout(() => {
@@ -201,6 +320,7 @@ export function SpeakTest() {
       mediaRecorder.stop();
       setIsRecording(false);
       success("انتهى التسجيل");
+      clearAllTimers();
     }
   };
 
@@ -217,6 +337,7 @@ export function SpeakTest() {
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
       }
+      clearAllTimers();
     };
   }, [mediaRecorder, isRecording]);
 

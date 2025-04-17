@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { Error, Loading, Success } from "@/components/custom/icons";
 import type { ToastT } from "sonner";
 
-type ToastType = "success" | "error" | "loading";
+type ToastType = "success" | "error" | "loading" | "warning";
 
 type ToastStyles = {
   backgroundColor: string;
@@ -14,6 +14,7 @@ type ToastFunctions = {
   success: (message: string, options?: Omit<ToastT, "message">) => void;
   error: (message: string, options?: Omit<ToastT, "message">) => void;
   loading: (message: string, options?: Omit<ToastT, "message">) => void;
+  warning: (message: string, options?: Omit<ToastT, "message">) => void;
 };
 
 const toastStyles: Record<ToastType, ToastStyles> = {
@@ -26,6 +27,11 @@ const toastStyles: Record<ToastType, ToastStyles> = {
     backgroundColor: "#FDE7E7",
     color: "#C53030",
     border: "1px solid #C53030",
+  },
+  warning: {
+    backgroundColor: "#FDE7E7",
+    color: "#FFA955",
+    border: "1px solid #FFA955",
   },
   loading: {
     backgroundColor: "#F0F4FF",
@@ -40,6 +46,7 @@ const toastStyles: Record<ToastType, ToastStyles> = {
  *          success: (message: string, options?: Omit<ToastT, "message">) => void;
  *          error: (message: string, options?: Omit<ToastT, "message">) => void;
  *          loading : (message: string, options?: Omit<ToastT, "message">) => void;
+ *          warning: (message: string, options?: Omit<ToastT, "message">) => void;
  *        } - Toast functions
  */
 export function useToast(): ToastFunctions {
@@ -69,5 +76,7 @@ export function useToast(): ToastFunctions {
       showToast(message, "error", options),
     loading: (message: string, options?: Omit<ToastT, "message">) =>
       showToast(message, "loading", options),
+    warning: (message: string, options?: Omit<ToastT, "message">) =>
+      showToast(message, "warning", options),
   };
 }

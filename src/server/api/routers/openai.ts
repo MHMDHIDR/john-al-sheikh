@@ -93,30 +93,43 @@ export const openaiRouter = createTRPCRouter({
 
         // Create the OpenAI request
         const openaiPromise = openai.chat.completions.create({
-          // Use gpt-3.5-turbo instead of gpt-4 for faster responses
+          // Use GPT-3.5-turbo for faster responses its cheaper and faster
           model: "gpt-3.5-turbo",
-          // Reduce temperature for faster, more deterministic responses
-          temperature: 0.3,
-          // Set max tokens to limit response size and processing time
-          max_tokens: 600,
+          // Balanced temperature for creative yet consistent responses
+          temperature: 0.2,
+          // Set max tokens to allow for detailed feedback
+          max_tokens: 700,
           messages: [
             {
               role: "system",
-              // Simplified prompt for faster processing and structured output
-              content: `أنت مقيم IELTS. قم بتقييم إجابة الطالب على الموضوع: "${input.prompt}".
+              content: `You are an expert IELTS examiner evaluating a student's speaking response to the topic: "${input.prompt}".
 
-              قدم التقييم بصيغة JSON بنظام الكائنات بالشكل التالي بدون أي كلام آخر:
+              Analyze the speaking response based on the official IELTS speaking assessment criteria:
+              1. Fluency and Coherence
+              2. Lexical Resource (vocabulary)
+              3. Grammatical Range and Accuracy
+              4. Pronunciation
+
+              Provide a detailed assessment and feedback in Arabic language.
+              Return your feedback in the following JSON format with no additional text:
               {
-                "band": "رقم من 1 إلى 9 (مثل 6.5)",
-                "strengthPoints": ["نقطة قوة 1", "نقطة قوة 2"],
-                "improvementArea": [
-                  {"mistake": "خطأ 1", "correction": "تصحيح 1"},
-                  {"mistake": "خطأ 2", "correction": "تصحيح 2"}
+                "band": "A number from 1 to 9 (like 6.5) representing the overall speaking score",
+                "strengthPoints": [
+                  "Strength point 1 related to a specific IELTS criterion",
+                  "Strength point 2 related to another criterion"
                 ],
-                "tips": ["نصيحة 1", "نصيحة 2"]
+                "improvementArea": [
+                  {"mistake": "Description of specific language error", "correction": "Suggested correction"},
+                  {"mistake": "Description of another error", "correction": "Its correction"}
+                ],
+                "tips": [
+                  "Specific and practical tip 1",
+                  "Specific and practical tip 2"
+                ]
+
               }
 
-              كن مختصرا ودقيقا. قدم النص بشكل JSON فقط بدون أي كلام إضافي.`,
+              The response MUST be in Arabic language for all feedback points. Be concise and specific with actionable feedback. Provide only the JSON response with no additional text.`,
             },
             {
               role: "user",
