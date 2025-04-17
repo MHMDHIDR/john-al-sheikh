@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SpeakTest } from "@/components/custom/one-min-speaking-test";
+import { SpeakTest } from "@/components/custom/quick-speaking-test";
 import { auth } from "@/server/auth";
 
 export default async function Home() {
