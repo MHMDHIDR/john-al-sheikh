@@ -350,13 +350,12 @@ export function SpeakTest() {
           <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
 
           {isRecording && (
-            <div className="my-8 flex flex-col items-center">
+            <div className="my-6 flex flex-col items-center">
               <Timer
                 isRunning={isRecording}
                 onTimeUp={handleTimeUp}
                 totalSeconds={MAX_RECORDING_TIME}
               />
-              <p className="mt-2 font-medium text-red-600">جاري التسجيل...</p>
             </div>
           )}
 
@@ -367,7 +366,7 @@ export function SpeakTest() {
             </div>
           )}
 
-          <div className="mt-8 mb-2 flex justify-center">
+          <div className="my-10 flex justify-center">
             <ButtonRecord
               isRecording={isRecording}
               onClick={handleToggleRecording}
@@ -379,13 +378,11 @@ export function SpeakTest() {
             />
           </div>
 
-          <label className="text-gray-500" htmlFor="recording-button">
-            {isRecording
-              ? "انقر لإيقاف التسجيل"
-              : isProcessing
-                ? "جاري تحليل إجابتك..."
-                : "إضغط لبدأ المحادثة"}
-          </label>
+          {!isRecording && !isProcessing && (
+            <label className="block text-gray-500" htmlFor="recording-button">
+              إضغط لبدأ المحادثة
+            </label>
+          )}
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
