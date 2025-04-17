@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
 import { Timer } from "@/components/custom/timer";
 import { useToast } from "@/hooks/use-toast";
+import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { api } from "@/trpc/react";
 
 const prompts = [
@@ -19,9 +20,6 @@ const prompts = [
   "صِف كتاباً أو فيلماً أثر فيك.",
   "تحدث عن تغيير مهم حدث في حياتك.",
 ];
-
-// Max recording time in seconds
-const MAX_RECORDING_TIME = 60;
 
 // Helper function to make sure we have valid audio data
 function isValidAudio(data: string): boolean {
@@ -206,12 +204,15 @@ export function SpeakTest() {
     }
   };
 
+  // get random prompt from prompts array
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * prompts.length);
     setCurrentPrompt(prompts[randomIndex]);
   }, []);
 
   useEffect(() => {
+    // this is a cleanup function to stop the recording when the component unmounts
+    // to avoid memory leaks
     return () => {
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
@@ -225,9 +226,7 @@ export function SpeakTest() {
         <div className="text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900">اختبار المحادثة IELTS</h1>
           <p className="mb-2 text-xl text-gray-600">{currentPrompt}</p>
-          <p className="mb-8 text-gray-500">
-            يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. سيكون لديك 5 ثوانٍ للتحضير.
-          </p>
+          <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
 
           {isRecording && (
             <div className="my-8 flex flex-col items-center">
@@ -247,7 +246,7 @@ export function SpeakTest() {
             </div>
           )}
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 mb-2 flex justify-center">
             <ButtonRecord
               isRecording={isRecording}
               onClick={handleToggleRecording}
@@ -259,13 +258,13 @@ export function SpeakTest() {
             />
           </div>
 
-          <p className="mt-6 text-gray-500">
+          <label className="text-gray-500" htmlFor="recording-button">
             {isRecording
               ? "انقر لإيقاف التسجيل"
               : isProcessing
                 ? "جاري تحليل إجابتك..."
                 : "إضغط لبدأ المحادثة"}
-          </p>
+          </label>
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">

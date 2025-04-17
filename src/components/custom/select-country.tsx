@@ -26,11 +26,7 @@ export function SelectCountry({
   className,
 }: SelectCountryProps) {
   const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
   const popoverRef = useRef<HTMLDivElement>(null);
-
-  // just for building
-  console.log("searchValue", searchValue);
 
   // Find the selected country label
   const selectedCountry = nationality
@@ -70,11 +66,7 @@ export function SelectCountry({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" ref={popoverRef} align="start">
         <Command dir="rtl" className="bg-white">
-          <CommandInput
-            placeholder="ابحث عن الجنسية..."
-            onValueChange={setSearchValue}
-            className="text-right"
-          />
+          <CommandInput placeholder="ابحث عن الجنسية..." className="text-right" />
           <CommandEmpty className="text-center py-2">لا توجد نتائج</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-y-auto">
             {countryNames.map(country => (

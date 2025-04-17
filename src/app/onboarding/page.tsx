@@ -27,16 +27,17 @@ import { onboardingSchema } from "../schemas/onboarding";
 import type { OnboardingForm } from "../schemas/onboarding";
 
 export default function OnboardingPage() {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
   const { data: session } = useSession();
-  const { success: toastSuccess, error: toastError } = useToast();
-  const router = useRouter();
 
-  if (!session) {
+  // if user is not logged in, redirect to signin page
+  if (session === null) {
     redirect("/signin");
   }
+
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
+  const router = useRouter();
 
   // Move the form declaration before its use in useEffect
   const form = useForm<OnboardingForm>({

@@ -2,7 +2,7 @@ import { SessionProvider } from "next-auth/react";
 import Nav from "@/components/custom/nav";
 import { auth } from "@/server/auth";
 import { Providers } from "./providers";
-import { ThemeProvider } from "./providers/theme-provider";
+// import { ThemeProvider } from "./providers/theme-provider";
 import "@/styles/globals.css";
 import { Geist, IBM_Plex_Sans_Arabic } from "next/font/google";
 import type { Metadata } from "next";
@@ -45,14 +45,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <SessionProvider>
           <Providers>
             <Nav user={user} key={user?.image} isHidden />
-            <ThemeProvider
+            {/* <ThemeProvider
               attribute="class"
               defaultTheme={session?.user.theme ?? "light"}
               disableTransitionOnChange
               enableSystem
-            >
-              {children}
-            </ThemeProvider>
+            > */}
+            {children}
+            {/* </ThemeProvider> */}
           </Providers>
         </SessionProvider>
       </body>

@@ -1,6 +1,8 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FeedbackSection } from "@/components/custom/feedback-section";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,13 @@ type IELTSResult = {
 };
 
 export default function ResultsPage() {
+  const { data: session } = useSession();
+
+  // if user is not logged in, redirect to signin page
+  if (session === null) {
+    redirect("/signin");
+  }
+
   const [result, setResult] = useState<IELTSResult | null>(null);
 
   useEffect(() => {
@@ -60,7 +69,7 @@ export default function ResultsPage() {
           <p className="text-gray-700">{result.prompt}</p>
 
           <h3 className="mt-4 mb-2 text-lg font-medium text-gray-900">إجابتك:</h3>
-          <p className="text-gray-700 bg-white p-4 rounded border border-gray-200">
+          <p className="text-gray-700 bg-white p-4 text-justify ltr rounded border border-gray-200">
             {result.transcription}
           </p>
         </div>

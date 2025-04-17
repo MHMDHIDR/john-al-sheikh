@@ -260,14 +260,16 @@ export function AccountForm({ user }: { user: Session["user"] }) {
                 </div>
               </FormLabel>
               <FormControl className="relative">
-                <Switch
+                {/* <Switch
                   checked={field.value === "dark"}
                   onCheckedChange={checked => {
                     const theme = checked ? "dark" : "light";
                     form.setValue("theme", theme);
                   }}
                   disabled={!isEditingEnabled}
-                />
+                /> */}
+
+                <span className="text-sm text-gray-500">قريباً...</span>
               </FormControl>
               <FormMessage />
             </FormItem>
