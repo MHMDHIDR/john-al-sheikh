@@ -26,6 +26,7 @@ type IELTSResult = {
 
 export function ResultsDisplay() {
   const [result, setResult] = useState<IELTSResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,8 +35,10 @@ export function ResultsDisplay() {
 
       if (savedResult) {
         setResult(JSON.parse(savedResult) as IELTSResult);
+        setIsLoading(false);
       } else {
         // If no results are found, redirect to the test page
+        console.log("No IELTS results found in session storage, redirecting to test page");
         router.push("/test");
       }
     } catch (error) {
@@ -44,7 +47,7 @@ export function ResultsDisplay() {
     }
   }, [router]);
 
-  if (!result) {
+  if (isLoading || !result) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
         <div className="w-full max-w-2xl space-y-8 text-center">

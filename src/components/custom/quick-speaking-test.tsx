@@ -1,5 +1,6 @@
 "use client";
 
+import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
@@ -31,7 +32,7 @@ function isValidAudio(data: string): boolean {
 const INITIAL_CHECK_DELAY = 3000; // Check for audio after 3 seconds
 const MAX_SILENCE_DURATION = 10000; // Stop recording after 10 seconds of silence
 
-export function SpeakTest() {
+export function SpeakTest({ session }: { session: Session | null }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -255,7 +256,7 @@ export function SpeakTest() {
                   );
 
                   // Navigate to results page
-                  router.push("/results");
+                  router.replace(session?.user ? "/results" : "/signin?callbackUrl=/results");
                 } catch (fileErr) {
                   console.error("Error processing file:", fileErr);
                   error(fileErr instanceof Error ? fileErr.message : "حدث خطأ أثناء معالجة الملف");

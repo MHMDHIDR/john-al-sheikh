@@ -14,12 +14,23 @@ import { env } from "@/env";
 import { handleSignin } from "./actions/handle-signin";
 
 export default function SiginForm() {
-  const callbackUrl = useSearchParams().get("callbackUrl") ?? "/";
-  const [state, handleSigninAction, isPending] = useActionState(handleSignin, {
-    message: undefined,
-    success: true,
-    callbackUrl,
-  });
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+
+  const [state, handleSigninAction, isPending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      return handleSignin({ ...prevState, callbackUrl }, formData);
+    },
+    {
+      message: undefined,
+      success: true,
+      callbackUrl,
+    },
+  );
+
+  const handleGoogleSignIn = () => {
+    signIn("google", { callbackUrl });
+  };
 
   return (
     <Card className="min-w-96">
@@ -30,11 +41,11 @@ export default function SiginForm() {
       </CardHeader>
       <CardContent>
         <Button
-          onClick={() => signIn("google", { callbackUrl })}
+          onClick={handleGoogleSignIn}
           className="w-full text-white cursor-pointer bg-blue-500 hover:bg-blue-600"
         >
           <IconBrandGoogle className="inline-block w-6 h-6 mx-1" />
-          المتابعة عن طريق Google
+          المتابعة عن طريق حساب Google
         </Button>
 
         <Divider className="my-10" />

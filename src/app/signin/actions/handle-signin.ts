@@ -20,6 +20,8 @@ export async function handleSignin(state: SignInType, formData: FormData): Promi
   if (!validatedFields.success) {
     return {
       message: validatedFields.error.flatten().fieldErrors.email ?? "Invalid email",
+      success: false,
+      callbackUrl: state.callbackUrl,
     };
   }
 
@@ -34,10 +36,16 @@ export async function handleSignin(state: SignInType, formData: FormData): Promi
 
     await signIn("resend", { email, redirect: false, redirectTo });
 
-    return { success: true, message: "يرجى التحقق من بريدك الإلكتروني للدخول." };
+    return {
+      success: true,
+      message: "يرجى التحقق من بريدك الإلكتروني للدخول.",
+      callbackUrl: redirectTo,
+    };
   } catch (error) {
     return {
       message: error instanceof Error ? error.message : "حدث خطأ غير معروف",
+      success: false,
+      callbackUrl: state.callbackUrl,
     };
   }
 }

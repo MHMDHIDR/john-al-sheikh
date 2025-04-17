@@ -10,5 +10,5 @@ export default async function Home() {
     redirect("/onboarding");
   }
 
-  return <SpeakTest />;
+  return <SpeakTest session={session} />;
 }
