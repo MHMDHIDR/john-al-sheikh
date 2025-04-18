@@ -100,7 +100,7 @@ function Avatar({ user, className }: { user: Session["user"]; className?: string
           className="object-contain"
         />
       ) : (
-        <AvatarFallback className="text-orange-600 rounded-lg">
+        <AvatarFallback className="text-blue-600 rounded-lg">
           {fallbackUsername(user.name) ?? "User"}
         </AvatarFallback>
       )}
@@ -116,9 +116,9 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
       <Link
         href={href}
         className={clsx(
-          "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-orange-400 p-2 transition-colors hover:bg-orange-200/50 dark:hover:bg-orange-900/50 outline-orange-300",
+          "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/50 outline-blue-300",
           {
-            "text-orange-500 border-orange-500": pathname === href,
+            "text-blue-500 border-blue-500": pathname === href,
           },
         )}
       >

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FeedbackSection } from "@/components/custom/feedback-section";
 import { Button } from "@/components/ui/button";
+import { ConfettiCelebration } from "@/components/ui/confetti";
 
 type IELTSResult = {
   band: number;
@@ -28,6 +29,7 @@ export function ResultsDisplay() {
   const [result, setResult] = useState<IELTSResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { fireConfetti } = ConfettiCelebration();
 
   useEffect(() => {
     try {
@@ -46,6 +48,14 @@ export function ResultsDisplay() {
       router.push("/test");
     }
   }, [router]);
+
+  useEffect(() => {
+    if (result && !isLoading) {
+      setTimeout(() => {
+        fireConfetti();
+      }, 100);
+    }
+  }, [result, isLoading, fireConfetti]);
 
   if (isLoading || !result) {
     return (
