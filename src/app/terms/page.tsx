@@ -1,6 +1,14 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { env } from "@/env";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `شروط الإستخدام | ${env.NEXT_PUBLIC_APP_NAME}`,
+  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
+};
+
+export const dynamic = "force-static";
 
 export default function TermsPage() {
   return (
@@ -40,8 +48,8 @@ export default function TermsPage() {
 
       <h2 className="text-xl font-semibold mt-4 mb-2">٤. إخلاء المسؤولية</h2>
       <p className="mb-2">
-        يتم تقديم خدمتنا "كما هي" دون أي ضمانات. نحن لسنا مسؤولين عن أي أضرار أو خسائر ناتجة عن
-        استخدامك للخدمة.
+        يتم تقديم خدمتنا &quot;كما هي&quot; دون أي ضمانات. نحن لسنا مسؤولين عن أي أضرار أو خسائر
+        ناتجة عن استخدامك للخدمة.
       </p>
 
       <h2 className="text-xl font-semibold mt-4 mb-2">٥. الخصوصية</h2>

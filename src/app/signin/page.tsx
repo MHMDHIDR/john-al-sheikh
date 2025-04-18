@@ -1,9 +1,16 @@
 import { AlertCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { env } from "@/env";
 import { translateSring } from "@/lib/translate-string";
 import { auth } from "@/server/auth";
 import SiginForm from "./sigin-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `تسجيل الدخول | ${env.NEXT_PUBLIC_APP_NAME}`,
+  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
+};
 
 export default async function SignInPage({
   searchParams,

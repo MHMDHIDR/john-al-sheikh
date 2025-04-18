@@ -1,6 +1,13 @@
 import { notFound } from "next/navigation";
+import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { AccountForm } from "./account-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `الحساب | ${env.NEXT_PUBLIC_APP_NAME}`,
+  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
+};
 
 export default async function Account() {
   const session = await auth();

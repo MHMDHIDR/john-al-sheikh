@@ -1,13 +1,18 @@
 import { IconHome } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/server/auth";
+import { env } from "@/env";
 import { NotFoundIcon } from "../components/custom/icons";
+import type { Metadata } from "next";
 
-export default async function RootNotFound() {
-  const session = await auth();
-  const userRole = session?.user.role;
+export const metadata: Metadata = {
+  title: `لم يتم العثور على الصفحة | ${env.NEXT_PUBLIC_APP_NAME}`,
+  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
+};
 
+export const dynamic = "force-static";
+
+export default function RootNotFound() {
   return (
     <section className="h-screen flex items-center">
       <div className="container w-full px-6 mx-auto">
@@ -28,13 +33,6 @@ export default async function RootNotFound() {
                 الرجوع إلى الرئيسية
               </Button>
             </Link>
-            {userRole === "SUPER_ADMIN" && (
-              <Link href="/dashboard" className="w-full">
-                <Button type="button" variant={"pressable"} className="cursor-pointer">
-                  لوحة التحكم
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </div>
