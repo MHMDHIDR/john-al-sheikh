@@ -63,7 +63,7 @@ export function ConfettiSideCannons({
     const frame = () => {
       if (Date.now() > end) return;
 
-      confetti({
+      void confetti({
         particleCount: 2,
         angle: 60,
         spread: 55,
@@ -71,7 +71,7 @@ export function ConfettiSideCannons({
         origin: { x: 0, y: 0.5 },
         colors: colors,
       });
-      confetti({
+      void confetti({
         particleCount: 2,
         angle: 120,
         spread: 55,
@@ -106,14 +106,14 @@ export function ConfettiCelebration() {
     const colors = ["#26ccff", "#a25afd", "#ff5e7e", "#88ff5a", "#fcff42", "#ffa62d", "#ff36ff"];
 
     (function frame() {
-      confetti({
+      void confetti({
         particleCount: 7,
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.5 },
         colors: colors,
       });
-      confetti({
+      void confetti({
         particleCount: 7,
         angle: 120,
         spread: 55,
@@ -127,7 +127,7 @@ export function ConfettiCelebration() {
     })();
 
     // Also fire from the top
-    confetti({
+    void confetti({
       particleCount: 100,
       spread: 100,
       origin: { y: 0 },
