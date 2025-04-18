@@ -3,6 +3,7 @@
 import { IconBrandGoogle, IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export default function SiginForm() {
   };
 
   return (
-    <Card className="min-w-96">
+    <Card className="min-w-96 border-gray-300">
       <CardHeader>
         <CardDescription className="text-center">
           تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
@@ -73,6 +74,17 @@ export default function SiginForm() {
                 )}
                 تسجيل الدخول بالبريد الإلكتروني
               </Button>
+
+              <p className="text-sm text-gray-500">
+                بالمتابعة، أنت توافق على
+                <Link href="/terms" className="text-blue-500 inline-flex px-1 hover:underline">
+                  شروط الخدمة
+                </Link>
+                و
+                <Link href="/privacy" className="text-blue-500 inline-flex px-1 hover:underline">
+                  سياسة الخصوصية
+                </Link>
+              </p>
             </div>
           </div>
         </form>

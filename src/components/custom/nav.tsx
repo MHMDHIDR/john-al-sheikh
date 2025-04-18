@@ -23,8 +23,8 @@ export default function Nav({
 
   return (pathname.includes("/dashboard") || pathname.includes("/vendor-manager")) &&
     isHidden ? null : (
-    <header className="w-full border-b shadow-xs sticky top-0 z-40 bg-white dark:bg-black">
-      <div className="flex items-center justify-between p-1.5 max-w-(--breakpoint-xl) mx-auto">
+    <header className="w-full border-b border-gray-300 shadow-xs sticky top-0 z-40 bg-white dark:bg-black/90">
+      <div className="flex items-center justify-between px-2 md:px-1.5 p-1.5 md:py-2 max-w-(--breakpoint-xl) mx-auto">
         <Link href="/" className="flex select-none gap-x-2 text-xl font-bold text-primary">
           <Logo className="mx-auto h-7 w-7 stroke-1 stroke-current" />
           <span className="hidden sm:inline-flex">{env.NEXT_PUBLIC_APP_NAME}</span>

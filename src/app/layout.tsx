@@ -20,7 +20,8 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
 
 export const metadata: Metadata = {
   title: "John Al-Sheikh",
-  description: "John Al-Sheikh helps you practice your IELTS speaking skills with instant feedback",
+  description:
+    "John Al-Sheikh helps you practice your IELTS speaking skills with instant feedback.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
