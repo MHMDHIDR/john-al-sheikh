@@ -14,6 +14,8 @@ export async function middleware(req: NextRequest) {
     "/signin",
     "/signup",
     "/onboarding",
+    "/terms",
+    "/privacy",
     "/_next",
     "/logo.svg",
     "/favicon.ico",

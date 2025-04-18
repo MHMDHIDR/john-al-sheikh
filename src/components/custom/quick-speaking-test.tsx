@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
+import { AuroraText } from "../magicui/aurora-text";
 import type { Session } from "next-auth";
 
 const prompts = [
@@ -258,7 +259,7 @@ export function SpeakTest({ session }: { session: Session | null }) {
                   );
 
                   // Navigate to results page
-                  router.replace(session?.user ? "/results" : "/signin?callbackUrl=/results");
+                  router.replace("/results");
                 } catch (fileErr) {
                   console.error("Error processing file:", fileErr);
                   error(fileErr instanceof Error ? fileErr.message : "حدث خطأ أثناء معالجة الملف");
@@ -358,8 +359,16 @@ export function SpeakTest({ session }: { session: Session | null }) {
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">اختبار المحادثة IELTS</h1>
-          <p className="mb-2 text-xl text-gray-600">{currentPrompt}</p>
+          <h1 className="mb-5 text-2xl font-bold text-gray-900">
+            اختبار المحادثة
+            <span className="text-black mx-2">IELTS</span>
+          </h1>
+          <p className="mb-2 font-black text-3xl text-blue-600">
+            <AuroraText className="mx-2">
+              <span className="font-normal mx-2">موضوع المحادثة</span>
+              {currentPrompt}
+            </AuroraText>
+          </p>
           <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
 
           {isRecording && (
