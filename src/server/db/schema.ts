@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  decimal,
   index,
   integer,
   jsonb,
@@ -51,6 +52,7 @@ export const users = createTable("user", {
   age: integer("age"),
   nationality: varchar("nationality", { length: 100 }),
   hobbies: jsonb("hobbies").$type<string[]>(),
+  goalBand: decimal("goal_band", { precision: 3, scale: 1 }).$type<number>().default(5),
   role: userRoleEnum("role").notNull().default("USER"),
   status: userStatusEnum("status").notNull().default("PENDING"),
   emailVerified: timestamp("email_verified", {

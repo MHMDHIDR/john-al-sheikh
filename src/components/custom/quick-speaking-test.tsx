@@ -115,7 +115,6 @@ export function SpeakTest({ session }: { session: Session | null }) {
             // Lower threshold for better detection
             hasAudioBeenDetectedRef.current = true;
             lastAudioTimestampRef.current = Date.now();
-            console.log("Audio detected with level:", average.toFixed(2));
           }
 
           // Check if we've been silent for too long
@@ -284,15 +283,6 @@ export function SpeakTest({ session }: { session: Session | null }) {
         setMediaRecorder(recorder);
         setIsRecording(true);
 
-        // Debug MediaRecorder state
-        console.log("MediaRecorder started with state:", recorder.state);
-
-        // Add event listeners for MediaRecorder state changes
-        recorder.addEventListener("start", () => console.log("MediaRecorder started"));
-        recorder.addEventListener("pause", () => console.log("MediaRecorder paused"));
-        recorder.addEventListener("resume", () => console.log("MediaRecorder resumed"));
-        recorder.addEventListener("error", e => console.error("MediaRecorder error:", e));
-
         // Start audio level checking
         requestAnimationFrame(checkAudioLevel);
 
@@ -365,8 +355,7 @@ export function SpeakTest({ session }: { session: Session | null }) {
           </h1>
           <p className="mb-2 font-black text-3xl text-blue-600">
             <AuroraText className="mx-2">
-              <span className="font-normal mx-2">موضوع المحادثة</span>
-              {currentPrompt}
+              <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
             </AuroraText>
           </p>
           <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>

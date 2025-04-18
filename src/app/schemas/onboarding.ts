@@ -1,4 +1,4 @@
-import { isValidPhoneNumber } from "libphonenumber-js";
+// import { isValidPhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 
 export const onboardingSchema = z.object({
@@ -14,23 +14,30 @@ export const onboardingSchema = z.object({
   gender: z.enum(["male", "female"], {
     invalid_type_error: "يرجى اختيار الجنس",
   }),
-  age: z
+  goalBand: z
     .number({
-      message: "يرجى كتابة عمرك بشكل صحيح",
+      message: "يرجى اختيار الدرجة التي تهدف لها بشكل صحيح",
     })
-    .min(10, "يجب أن يكون عمرك 10 عامًا على الأقل")
-    .max(100, "يجب أن يكون عمرك 100 عامًا على الأكثر"),
-  nationality: z.string().min(1, "يرجى اختيار الجنسية"),
-  phone: z
-    .string()
-    // .optional()
-    .refine(
-      value => {
-        // if (!value) return true; // Skip validation if value is empty/undefined
-        return isValidPhoneNumber(value);
-      },
-      { message: "يرجى تقديم رقم هاتف صالح" },
-    ),
+    .min(1, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9")
+    .max(9, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9"),
+
+  // age: z
+  //   .number({
+  //     message: "يرجى كتابة عمرك بشكل صحيح",
+  //   })
+  //   .min(10, "يجب أن يكون عمرك 10 عامًا على الأقل")
+  //   .max(100, "يجب أن يكون عمرك 100 عامًا على الأكثر"),
+  // nationality: z.string().min(1, "يرجى اختيار الجنسية"),
+  // phone: z
+  //   .string()
+  //   // .optional()
+  //   .refine(
+  //     value => {
+  //       // if (!value) return true; // Skip validation if value is empty/undefined
+  //       return isValidPhoneNumber(value);
+  //     },
+  //     { message: "يرجى تقديم رقم هاتف صالح" },
+  //   ),
   hobbies: z.array(z.string()).min(1, "يرجى اختيار هواية واحدة على الأقل"),
   profileImage: z.instanceof(File).optional(),
 });

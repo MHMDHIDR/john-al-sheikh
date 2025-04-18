@@ -74,8 +74,7 @@ export const usersRouter = createTRPCRouter({
   onboardUser: protectedProcedure
     .input(onboardingModifiedSchema)
     .mutation(async ({ ctx, input }) => {
-      const { displayName, username, gender, age, phone, nationality, hobbies, profileImage } =
-        input;
+      const { displayName, username, gender, goalBand, hobbies, profileImage } = input;
 
       // Check if username is already taken
       const usernameExists = await ctx.db.query.users.findFirst({
@@ -96,9 +95,7 @@ export const usersRouter = createTRPCRouter({
           displayName,
           username,
           gender,
-          age,
-          phone,
-          nationality,
+          goalBand,
           hobbies,
           ...(profileImage && { image: profileImage }),
           profileCompleted: true,
@@ -108,6 +105,22 @@ export const usersRouter = createTRPCRouter({
         .returning();
 
       return updatedUser;
+    }),
+
+  checkUsernameAvailability: protectedProcedure
+    .input(z.object({ username: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { username } = input;
+
+      // Check if username is already taken
+      const usernameExists = await ctx.db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.username, username),
+      });
+
+      // Return true if username is available, false if it's taken
+      return {
+        isAvailable: !usernameExists || usernameExists.id === ctx.session.user.id,
+      };
     }),
 
   deleteProfileImage: protectedProcedure.mutation(async ({ ctx }) => {

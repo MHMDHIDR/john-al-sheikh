@@ -63,7 +63,7 @@ export function useToast(): ToastFunctions {
     toast(toastContent, {
       ...options,
       style: { ...toastStyles[type], gap: "1.5rem" },
-      className: "ltr rtl:rtl rtl:text-right select-none",
+      className: "rtl rtl:rtl rtl:text-right select-none",
       position: "bottom-center",
       duration: 3000,
     });

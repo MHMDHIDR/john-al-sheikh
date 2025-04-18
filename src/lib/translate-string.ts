@@ -8,6 +8,9 @@ export const translateSring = (string: string) => {
     case "results": {
       return "صفحة نتائج اختبار المحادثة السريع";
     }
+    case "mock-test": {
+      return "اختبار المحادثة التجريبي";
+    }
     default: {
       return string;
     }

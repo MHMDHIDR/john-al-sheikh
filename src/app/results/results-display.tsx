@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { FeedbackSection } from "@/components/custom/feedback-section";
 import { Button } from "@/components/ui/button";
 import { ConfettiCelebration } from "@/components/ui/confetti";
+import type { Session } from "next-auth";
 
 type IELTSResult = {
   band: number;
@@ -25,39 +26,41 @@ type IELTSResult = {
   prompt: string;
 };
 
-export function ResultsDisplay() {
+export function ResultsDisplay({ session }: { session: Session | null }) {
   const [result, setResult] = useState<IELTSResult | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { fireConfetti } = ConfettiCelebration();
 
   useEffect(() => {
-    try {
-      const savedResult = sessionStorage.getItem("ieltsResult");
+    const savedResult = sessionStorage.getItem("ieltsResult");
 
-      if (savedResult) {
-        setResult(JSON.parse(savedResult) as IELTSResult);
-        setIsLoading(false);
-      } else {
-        // If no results are found, redirect to the test page
-        console.log("No IELTS results found in session storage, redirecting to test page");
-        router.push("/test");
-      }
+    if (!savedResult) {
+      router.replace("/");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setResult(JSON.parse(savedResult) as IELTSResult);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error loading results:", error);
-      router.push("/test");
+      router.replace("/");
     }
   }, [router]);
 
   useEffect(() => {
-    if (result && !isLoading) {
-      setTimeout(() => {
-        fireConfetti();
-      }, 100);
+    if (result) {
+      if (result.band > 5 && !isLoading) {
+        setTimeout(() => {
+          fireConfetti();
+        }, 100);
+      }
     }
   }, [result, isLoading, fireConfetti]);
 
-  if (isLoading || !result) {
+  if (isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
         <div className="w-full max-w-2xl space-y-8 text-center">
@@ -67,6 +70,9 @@ export function ResultsDisplay() {
       </main>
     );
   }
+
+  // if result is null don't show anything
+  if (!result) return null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
@@ -124,7 +130,9 @@ export function ResultsDisplay() {
 
         <div className="mt-8 text-center">
           <Button asChild variant="pressable">
-            <Link href="/mock-test">تقدم لإختبار محادثة تجريبي</Link>
+            <Link href={!session ? "signin?callbackUrl=/mock-test" : "/mock-test"}>
+              تقدم لإختبار محادثة تجريبي
+            </Link>
           </Button>
         </div>
       </div>
