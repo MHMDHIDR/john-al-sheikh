@@ -180,7 +180,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
         id="recording-button"
         className={`relative flex h-16 w-16 cursor-pointer items-center justify-center rounded-full transition-all ${
           isRecording ? "bg-white shadow-lg" : "bg-blue-500 hover:bg-blue-600"
-        } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+        } ${disabled ? "cursor-not-allowed pointer-events-none opacity-50" : ""}`}
         onClick={onClick}
         disabled={disabled}
       >

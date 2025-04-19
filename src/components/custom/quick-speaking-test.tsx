@@ -10,7 +10,6 @@ import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { AuroraText } from "../magicui/aurora-text";
-import type { Session } from "next-auth";
 
 const prompts = [
   "صِف وقتاً ساعدت فيه شخصاً ما.",
@@ -25,314 +24,357 @@ const prompts = [
   "تحدث عن تغيير مهم حدث في حياتك.",
 ];
 
-// Helper function to make sure we have valid audio data
-function isValidAudio(data: string): boolean {
-  const parts = data.split(",");
-  return parts.length > 1 && typeof parts[1] === "string" && parts[1].length > 100;
+// Constants for timeouts (in milliseconds)
+const INITIAL_CHECK_DELAY = 3000; // Check for English at 3 seconds
+const FINAL_CHECK_DELAY = 10000; // Final check at 10 seconds
+
+// Add this helper at the top level after the prompts array
+function isActualEnglishSpeech(text: string): { isValid: boolean; cleanText: string } {
+  // Split into words
+  const words = text
+    .toLowerCase()
+    // Split on any non-letter character
+    .split(/[^a-z]+/)
+    .filter(word => {
+      // Only accept words that:
+      // 1. Are at least 2 letters
+      // 2. Are actual English words (not transcription artifacts)
+      // 3. Are not common "hallucinated" instructions
+      const commonHallucinations = new Set([
+        "translate",
+        "transcribe",
+        "speech",
+        "only",
+        "english",
+        "language",
+        "languages",
+        "audio",
+        "from",
+        "other",
+        "please",
+        "thank",
+        "you",
+        "hello",
+        "hi",
+        "hey",
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "there",
+        "here",
+        "where",
+        "what",
+        "when",
+        "who",
+        "why",
+        "how",
+        "do",
+        "does",
+        "did",
+        "done",
+        "am",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "having",
+        "can",
+        "could",
+        "will",
+        "would",
+        "shall",
+        "should",
+        "may",
+        "might",
+        "must",
+        "ought",
+      ]);
+
+      return (
+        word.length >= 2 &&
+        !commonHallucinations.has(word) &&
+        // Only accept words that contain English vowels (to filter out non-English sounds)
+        /[aeiou]/.test(word)
+      );
+    });
+
+  // We need at least 5 valid English content words
+  const isValid = words.length >= 5;
+
+  // Return the cleaned text only if valid
+  return {
+    isValid,
+    // Reconstruct the original text but only with valid words
+    cleanText: isValid ? words.join(" ") : "",
+  };
 }
 
-// Constants for audio detection timeouts (in milliseconds)
-const INITIAL_CHECK_DELAY = 3000; // Check for audio after 3 seconds
-const MAX_SILENCE_DURATION = 10000; // Stop recording after 10 seconds of silence
-
-export function SpeakTest({ session }: { session: Session | null }) {
+export function SpeakTest() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  // Commented out as it's currently not used but might be needed in the future
-  // const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
+
+  // References
+  const audioChunks = useRef<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Hooks
   const router = useRouter();
-  const { success, error, warning } = useToast();
-
-  // References for timers and audio tracking
-  const initialCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastAudioTimestampRef = useRef<number>(0);
-  const hasAudioBeenDetectedRef = useRef<boolean>(false);
-
-  // tRPC mutations
+  const { success, error: errorToast, warning } = useToast();
   const transcribeAudioMutation = api.openai.transcribeAudio.useMutation();
   const analyzeIELTSSpeakingMutation = api.openai.analyzeIELTSSpeaking.useMutation();
 
-  // Helper function to stop all timers
-  const clearAllTimers = () => {
-    if (initialCheckTimerRef.current) {
-      clearTimeout(initialCheckTimerRef.current);
-      initialCheckTimerRef.current = null;
+  // Clear resources
+  const clearResources = () => {
+    timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+    timeoutsRef.current = [];
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
+
+    audioChunks.current = [];
+  };
+
+  // Check for English speech in audio
+  const checkForEnglishSpeech = async (): Promise<{
+    hasEnglish: boolean;
+    transcription?: string;
+  }> => {
+    if (audioChunks.current.length === 0) return { hasEnglish: false };
+
+    try {
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+      if (audioBlob.size < 1000) return { hasEnglish: false };
+
+      const reader = new FileReader();
+      const base64Audio = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(audioBlob);
+      });
+
+      const transcriptionResult = await transcribeAudioMutation.mutateAsync({
+        audioBase64: base64Audio,
+        fileType: "audio/webm",
+      });
+
+      if (!transcriptionResult.success || !transcriptionResult.text) {
+        return { hasEnglish: false };
+      }
+
+      const { isValid, cleanText } = isActualEnglishSpeech(transcriptionResult.text);
+
+      return {
+        hasEnglish: isValid,
+        transcription: isValid ? cleanText : undefined,
+      };
+    } catch (error) {
+      console.error(error);
+      return { hasEnglish: false };
     }
   };
 
-  // Helper function to stop recording
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      clearAllTimers();
-    }
-  };
-
+  // Handle recording toggle
   const handleToggleRecording = async () => {
     if (isRecording) {
-      stopRecording();
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      clearResources();
+      setIsRecording(false);
     } else {
       try {
+        audioChunks.current = [];
+        setIsRecording(true);
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
         });
 
-        // Reset audio detection state
-        hasAudioBeenDetectedRef.current = false;
-        lastAudioTimestampRef.current = Date.now();
-
-        // Setup audio analyzer to detect silence
-        const audioContext = new AudioContext();
-        const audioSource = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        audioSource.connect(analyser);
-
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        // Function to check if audio is being detected
-        const checkAudioLevel = () => {
-          analyser.getByteFrequencyData(dataArray);
-
-          // Calculate average audio level
-          let sum = 0;
-          for (let i = 0; i < bufferLength; i++) {
-            sum += dataArray[i]!; // Use non-null assertion
-          }
-          const average = sum / bufferLength;
-
-          // If average is above threshold, audio is detected
-          if (average > 5) {
-            // Lower threshold for better detection
-            hasAudioBeenDetectedRef.current = true;
-            lastAudioTimestampRef.current = Date.now();
-          }
-
-          // Check if we've been silent for too long
-          const timeSinceLastAudio = Date.now() - lastAudioTimestampRef.current;
-          if (hasAudioBeenDetectedRef.current && timeSinceLastAudio > MAX_SILENCE_DURATION) {
-            // Stop recording after silence duration reached
-            console.log(
-              "Stopping recording due to silence for",
-              (timeSinceLastAudio / 1000).toFixed(1),
-              "seconds",
-            );
-            success("توقف التسجيل بسبب الصمت لفترة طويلة");
-            stopRecording();
-            return;
-          }
-
-          // Continue checking as long as we're recording
-          if (isRecording) {
-            requestAnimationFrame(checkAudioLevel);
-          }
-        };
-
-        // Ensure WebM audio format with good quality
+        streamRef.current = stream;
         const recorder = new MediaRecorder(stream, {
           mimeType: "audio/webm;codecs=opus",
           audioBitsPerSecond: 128000,
         });
 
-        // Request data every 1 second to ensure we're collecting chunks during recording
-        const timeslice = 1000; // 1 second intervals
+        mediaRecorderRef.current = recorder;
 
-        // Create a local variable to collect chunks to avoid state timing issues
-        const chunks: Blob[] = [];
-
+        // Handle audio data
         recorder.addEventListener("dataavailable", event => {
           if (event.data.size > 0) {
-            // Add to local array and update state
-            chunks.push(event.data);
-            // setAudioChunks(prev => [...prev, event.data]);
+            audioChunks.current.push(event.data);
           }
         });
 
+        // Handle recording stop
         recorder.addEventListener("stop", () => {
           void (async () => {
-            // Stop the audio context
-            audioContext.close().catch(console.error);
+            // Store audio chunks before clearing resources
+            const finalAudioChunks = [...audioChunks.current];
 
-            // Clear all timers
-            clearAllTimers();
+            // Clear resources and update state
+            clearResources();
+            setIsRecording(false);
 
-            console.log("Chunks collected:", chunks.length);
-
-            // Check both local chunks and state
-            if (chunks.length === 0) {
-              error("لم يتم تسجيل أي صوت");
+            if (finalAudioChunks.length === 0) {
+              errorToast("لم يتم تسجيل أي كلام");
               return;
             }
 
             try {
               setIsProcessing(true);
-              success("جاري تحليل إجابتك...");
 
-              // Use the local chunks array to avoid state timing issues
-              const audioBlob = new Blob(chunks, { type: "audio/webm" });
+              // Create blob from stored chunks
+              const audioBlob = new Blob(finalAudioChunks, { type: "audio/webm" });
+              const reader = new FileReader();
+              const base64Audio = await new Promise<string>((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(audioBlob);
+              });
 
-              // Check audio duration and size
-              if (audioBlob.size < 1000) {
-                error("التسجيل الصوتي قصير جداً");
+              const transcriptionResult = await transcribeAudioMutation.mutateAsync({
+                audioBase64: base64Audio,
+                fileType: "audio/webm",
+              });
+
+              if (!transcriptionResult.success || !transcriptionResult.text) {
+                // console.warn("لم يتم اكتشاف كلام باللغة الإنجليزية");
                 setIsProcessing(false);
                 return;
               }
 
-              console.log("Audio size:", audioBlob.size, "bytes");
-
-              // Convert blob to base64
-              const reader = new FileReader();
-              reader.readAsDataURL(audioBlob);
-
-              reader.onloadend = async () => {
-                try {
-                  const base64Audio = reader.result as string;
-
-                  if (!isValidAudio(base64Audio)) {
-                    error("التسجيل الصوتي غير صالح");
-                    setIsProcessing(false);
-                    return;
-                  }
-
-                  // Transcribe audio using tRPC endpoint
-                  const transcriptionResult = await transcribeAudioMutation.mutateAsync({
-                    audioBase64: base64Audio,
-                    fileType: "audio/webm",
-                  });
-
-                  // If transcription failed, show the error message
-                  if (!transcriptionResult.success) {
-                    error("فشل في تحويل الصوت إلى نص");
-                    setIsProcessing(false);
-                    return;
-                  }
-
-                  const transcribedText = transcriptionResult.text;
-
-                  if (!transcribedText || transcribedText.trim() === "") {
-                    error("لم يتم التعرف على أي كلام في التسجيل");
-                    setIsProcessing(false);
-                    return;
-                  }
-
-                  // Get the current prompt for analysis - ensure it's always a string
-                  const defaultPrompt = "تحدث عن أي موضوع تختاره"; // Fallback prompt
-                  const promptForAnalysis = currentPrompt ?? prompts[0] ?? defaultPrompt;
-
-                  console.log("Transcription==>", transcribedText);
-
-                  // Analyze transcription using tRPC endpoint
-                  const analysisResult = await analyzeIELTSSpeakingMutation.mutateAsync({
-                    transcription: transcribedText,
-                    prompt: promptForAnalysis,
-                  });
-
-                  if (!analysisResult.success || !analysisResult.feedback) {
-                    error("فشل في تحليل الإجابة");
-                    setIsProcessing(false);
-                    return;
-                  }
-
-                  const { feedback } = analysisResult;
-
-                  // Store results in sessionStorage to access on results page
-                  sessionStorage.setItem(
-                    "ieltsResult",
-                    JSON.stringify({
-                      band: feedback.band,
-                      strengths: feedback.strengths,
-                      areasToImprove: feedback.areasToImprove,
-                      improvementTips: feedback.improvementTips,
-                      transcription: transcribedText,
-                      prompt: promptForAnalysis,
-                    }),
-                  );
-
-                  // Navigate to results page
-                  router.replace("/results");
-                } catch (fileErr) {
-                  console.error("Error processing file:", fileErr);
-                  error(fileErr instanceof Error ? fileErr.message : "حدث خطأ أثناء معالجة الملف");
-                  setIsProcessing(false);
-                }
-              };
-
-              reader.onerror = () => {
-                error("فشل في قراءة الملف الصوتي");
+              const { isValid, cleanText } = isActualEnglishSpeech(transcriptionResult.text);
+              if (!isValid) {
+                errorToast("لم يتم اكتشاف كلام باللغة الإنجليزية");
                 setIsProcessing(false);
-              };
+                return;
+              }
+
+              // If we have English speech, analyze it
+              const analysisResult = await analyzeIELTSSpeakingMutation.mutateAsync({
+                transcription: cleanText,
+                prompt: currentPrompt ?? "صِف وقتاً ساعدت فيه شخصاً ما.",
+              });
+
+              if (!analysisResult.success) {
+                errorToast(analysisResult.error ?? "فشل في تحليل الإجابة");
+                setIsProcessing(false);
+                return;
+              }
+
+              if (!analysisResult.feedback) {
+                errorToast("فشل في تحليل الإجابة");
+                setIsProcessing(false);
+                return;
+              }
+
+              // Store results and navigate
+              sessionStorage.setItem(
+                "ieltsResult",
+                JSON.stringify({
+                  band: analysisResult.feedback.band,
+                  strengths: analysisResult.feedback.strengths,
+                  areasToImprove: analysisResult.feedback.areasToImprove,
+                  improvementTips: analysisResult.feedback.improvementTips,
+                  transcription: transcriptionResult.text,
+                  prompt: currentPrompt,
+                }),
+              );
+
+              router.replace("/results");
             } catch (err) {
-              console.error("Error processing audio:", err);
-              error(err instanceof Error ? err.message : "حدث خطأ أثناء معالجة التسجيل");
+              console.error(err);
+              errorToast("حدث خطأ أثناء معالجة التسجيل");
               setIsProcessing(false);
             }
           })();
         });
 
-        // Start recording
-        recorder.start(timeslice); // Start with timeslice to get frequent data events
-        setMediaRecorder(recorder);
-        setIsRecording(true);
-
-        // Start audio level checking
-        requestAnimationFrame(checkAudioLevel);
-
-        // Setup early audio detection check after 3 seconds
-        initialCheckTimerRef.current = setTimeout(() => {
-          if (!hasAudioBeenDetectedRef.current && isRecording) {
-            warning("يرجى التحدث بصوت أعلى أو التأكد من تشغيل الميكروفون");
-          }
+        // Check for English at 3 seconds
+        const initialCheckTimeout = setTimeout(() => {
+          void (async () => {
+            if (recorder.state === "recording") {
+              const { hasEnglish } = await checkForEnglishSpeech();
+              if (!hasEnglish) {
+                warning("يرجى التحدث بصوت أعلى وباللغة الإنجليزية");
+              }
+            }
+          })();
         }, INITIAL_CHECK_DELAY);
+        timeoutsRef.current.push(initialCheckTimeout);
 
-        // Auto-stop recording after MAX_RECORDING_TIME
-        setTimeout(() => {
+        // Check for English at 10 seconds and STOP if no English detected
+        const finalCheckTimeout = setTimeout(() => {
+          void (async () => {
+            if (recorder.state === "recording") {
+              const { hasEnglish } = await checkForEnglishSpeech();
+              if (!hasEnglish) {
+                recorder.stop();
+                errorToast("توقف التسجيل - لم يتم اكتشاف كلام باللغة الإنجليزية");
+              }
+            }
+          })();
+        }, FINAL_CHECK_DELAY);
+
+        timeoutsRef.current.push(finalCheckTimeout);
+
+        // Auto-stop at MAX_RECORDING_TIME
+        const maxTimeTimeout = setTimeout(() => {
           if (recorder.state === "recording") {
             recorder.stop();
-            setIsRecording(false);
             success("انتهى التسجيل");
           }
         }, MAX_RECORDING_TIME * 1000);
+        timeoutsRef.current.push(maxTimeTimeout);
+
+        recorder.start(500);
       } catch (err) {
-        console.error("Error accessing microphone:", err);
-        error("لا يمكن الوصول إلى الميكروفون");
+        errorToast("لا يمكن الوصول إلى الميكروفون");
+        clearResources();
+        setIsRecording(false);
+        console.error(err);
       }
     }
   };
 
+  // Timer complete handler
   const handleTimeUp = () => {
-    if (isRecording && mediaRecorder) {
-      mediaRecorder.stop();
+    if (isRecording && mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
       success("انتهى التسجيل");
-      clearAllTimers();
     }
   };
 
-  // get random prompt from prompts array
+  // Initialize with random prompt
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * prompts.length);
     setCurrentPrompt(prompts[randomIndex]);
   }, []);
 
+  // Cleanup on unmount
   useEffect(() => {
-    // this is a cleanup function to stop the recording when the component unmounts
-    // to avoid memory leaks
     return () => {
-      if (mediaRecorder && isRecording) {
-        mediaRecorder.stop();
-      }
-      clearAllTimers();
+      clearResources();
     };
-  }, [mediaRecorder, isRecording]);
+  }, []);
 
   return (
     <main className="relative select-none flex min-h-screen flex-col items-center justify-center bg-white p-4 overflow-hidden">

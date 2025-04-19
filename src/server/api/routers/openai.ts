@@ -7,6 +7,8 @@ import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
+const DEFAULT_BAND_SCORE = 4.0;
+
 type IELTSFeedback = {
   band: number;
   strengths: {
@@ -22,6 +24,101 @@ type IELTSFeedback = {
   improvementTips: string[];
 };
 
+// Add this helper at the top level
+function isActualEnglishSpeech(text: string): { isValid: boolean; cleanText: string } {
+  // Split into words
+  const words = text
+    .toLowerCase()
+    // Split on any non-letter character
+    .split(/[^a-z]+/)
+    .filter(word => {
+      // Only accept words that:
+      // 1. Are at least 2 letters
+      // 2. Are actual English words (not transcription artifacts)
+      // 3. Are not common "hallucinated" instructions
+      const commonHallucinations = new Set([
+        "translate",
+        "transcribe",
+        "speech",
+        "only",
+        "english",
+        "language",
+        "languages",
+        "audio",
+        "from",
+        "other",
+        "please",
+        "thank",
+        "you",
+        "hello",
+        "hi",
+        "hey",
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "there",
+        "here",
+        "where",
+        "what",
+        "when",
+        "who",
+        "why",
+        "how",
+        "do",
+        "does",
+        "did",
+        "done",
+        "am",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "having",
+        "can",
+        "could",
+        "will",
+        "would",
+        "shall",
+        "should",
+        "may",
+        "might",
+        "must",
+        "ought",
+      ]);
+
+      return (
+        word.length >= 2 &&
+        !commonHallucinations.has(word) &&
+        // Only accept words that contain English vowels (to filter out non-English sounds)
+        /[aeiou]/.test(word)
+      );
+    });
+
+  // We need at least 5 valid English content words
+  const isValid = words.length >= 5;
+
+  // Return the cleaned text only if valid
+  return {
+    isValid,
+    // Reconstruct the original text but only with valid words
+    cleanText: isValid ? words.join(" ") : "",
+  };
+}
+
+// Add this helper at the top level
+function containsArabicText(text: string): boolean {
+  // Arabic Unicode range
+  return /[\u0600-\u06FF]/.test(text);
+}
+
 export const openaiRouter = createTRPCRouter({
   transcribeAudio: publicProcedure
     .input(
@@ -34,40 +131,74 @@ export const openaiRouter = createTRPCRouter({
       try {
         // Check for empty audio data
         const base64Data = input.audioBase64.split(",")[1];
-        if (!base64Data || base64Data.length < 50) {
+        if (!base64Data || base64Data.length < 1000) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Audio data is empty or too short",
+            message: "Audio data is too short or empty",
           });
         }
 
         // Convert base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
 
-        console.log("Sending audio to OpenAI, size:", buffer.length, "bytes");
+        // Ensure audio is substantial
+        if (buffer.length < 10 * 1024) {
+          return {
+            success: true,
+            text: "", // Return empty text for very small audio
+          };
+        }
 
         // Create a unique filename for the audio
         const filename = `audio-${Date.now()}.webm`;
-
-        // Use OpenAI's toFile helper to create a File object from the buffer
         const audioFile = await toFile(buffer, filename);
 
-        // Send directly to OpenAI's API for transcription
-        const transcription = await openai.audio.transcriptions.create({
+        // First try to detect if there's any non-English speech
+        const initialTranscription = await openai.audio.transcriptions.create({
           file: audioFile,
-          model: "gpt-4o-transcribe",
-          language: "en",
+          model: "whisper-1",
+          temperature: 0,
+          response_format: "text",
         });
 
+        // If we detect any Arabic text, immediately return empty
+        if (containsArabicText(initialTranscription)) {
+          return {
+            success: true,
+            text: "",
+          };
+        }
+
+        // Now try to transcribe with strict English-only setting
+        const transcription = await openai.audio.transcriptions.create({
+          file: audioFile,
+          model: "whisper-1",
+          language: "en",
+          temperature: 0,
+          response_format: "text",
+          prompt:
+            "Transcribe English speech only. If you hear any non-English speech, return an empty string. Do not translate.",
+        });
+
+        // Clean and validate the transcribed text
+        const { isValid, cleanText } = isActualEnglishSpeech(transcription.trim());
+
+        // Double-check for any Arabic text in the transcription
+        if (containsArabicText(cleanText)) {
+          return {
+            success: true,
+            text: "",
+          };
+        }
+
+        // Only return text if it contains valid English speech
         return {
           success: true,
-          text: transcription.text || "",
+          text: isValid ? cleanText : "",
         };
       } catch (error) {
         console.error("Transcription error:", error);
-        if (error instanceof TRPCError) {
-          throw error;
-        }
+        if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: error instanceof Error ? error.message : "Failed to transcribe audio",
@@ -84,6 +215,15 @@ export const openaiRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       try {
+        // Verify we have actual English speech to analyze
+        const { isValid, cleanText } = isActualEnglishSpeech(input.transcription);
+        if (!isValid) {
+          return {
+            success: false,
+            error: "No valid English speech detected in the recording.",
+          };
+        }
+
         // Use a timeout to ensure we don't exceed Vercel's limits
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
@@ -96,9 +236,9 @@ export const openaiRouter = createTRPCRouter({
           // Use GPT-3.5-turbo for faster responses its cheaper and faster
           model: "gpt-3.5-turbo",
           // Balanced temperature for creative yet consistent responses
-          temperature: 0.2,
+          temperature: 0,
           // Set max tokens to allow for detailed feedback
-          max_tokens: 700,
+          max_tokens: 800,
           messages: [
             {
               role: "system",
@@ -113,21 +253,29 @@ export const openaiRouter = createTRPCRouter({
               Provide a detailed assessment and feedback in Arabic language.
               Return your feedback in the following JSON format with no additional text:
               {
-                "band": "A number from 1 to 9 (like 6.5) representing the overall speaking score",
+                "band": "Give a number from 1 to 9 (like 4.5) representing the overall speaking score, always give a lower band score than the actual score",
+                "overallSummary": "A comprehensive analysis (3-4 sentences) explaining why the candidate received this band score, highlighting their overall performance across all criteria",
                 "strengthPoints": [
-                  "Strength point 1 related to a specific IELTS criterion",
-                  "Strength point 2 related to another criterion"
+                  "Specific strength point 1 related to a criterion",
+                  "Specific strength point 2 related to another criterion"
                 ],
                 "improvementArea": [
-                  {"mistake": "Description of specific language error", "correction": "Suggested correction"},
-                  {"mistake": "Description of another error", "correction": "Its correction"}
+                  {
+                    "originalText": "The exact problematic phrase/sentence from the transcript",
+                    "mistake": "Description of what's wrong with this specific usage",
+                    "correction": "Give the same original text in English, but with a better way to express the same idea with proper grammar/vocabulary/pronunciation"
+                  }
                 ],
                 "tips": [
                   "Specific and practical tip 1",
                   "Specific and practical tip 2"
                 ]
-
               }
+
+              Important Notes:
+              1. The overallSummary should be different from strengthPoints, providing a comprehensive analysis
+              2. For improvementArea, always quote the exact problematic text from the transcript
+              3. Corrections should demonstrate how to better express the same idea
 
               The response MUST be in Arabic language for all feedback points. Be concise and specific with actionable feedback. Provide only the JSON response with no additional text.`,
             },
@@ -147,16 +295,19 @@ export const openaiRouter = createTRPCRouter({
             // Try to parse the JSON response
             const parsed = JSON.parse(analysisText.trim()) as {
               band: string;
+              overallSummary: string;
               strengthPoints: string[];
-              improvementArea: { mistake: string; correction: string }[];
+              improvementArea: { originalText: string; mistake: string; correction: string }[];
               tips: string[];
             };
 
             // Create the feedback object from the parsed JSON
             const feedback: IELTSFeedback = {
-              band: parseFloat(parsed.band) || 6.0,
+              band: parseFloat(parsed.band) || DEFAULT_BAND_SCORE,
               strengths: {
-                summary: parsed.strengthPoints?.[0] ?? "أظهر المتحدث قدرة جيدة على التواصل",
+                summary:
+                  parsed.overallSummary ??
+                  "أظهر المتحدث مستوى جيد من الكفاءة في التحدث باللغة الإنجليزية مع قدرة على التعبير عن الأفكار بشكل واضح",
                 points: Array.isArray(parsed.strengthPoints)
                   ? parsed.strengthPoints
                   : ["أظهر المتحدث قدرة جيدة على التواصل"],
@@ -164,7 +315,10 @@ export const openaiRouter = createTRPCRouter({
               areasToImprove: {
                 errors: Array.isArray(parsed.improvementArea)
                   ? parsed.improvementArea.map(item => ({
-                      mistake: item.mistake ?? "بعض الأخطاء النحوية البسيطة",
+                      mistake:
+                        item.originalText && item.mistake
+                          ? `${item.originalText} - ${item.mistake}`
+                          : "بعض الأخطاء النحوية البسيطة",
                       correction: item.correction ?? "يمكن تحسين الدقة النحوية",
                     }))
                   : [
@@ -206,7 +360,7 @@ function provideFallbackResponse() {
   return {
     success: true,
     feedback: {
-      band: 6.0, // Default reasonable band score
+      band: DEFAULT_BAND_SCORE,
       strengths: {
         summary: "يظهر المتحدث قدرة جيدة على التواصل",
         points: [
