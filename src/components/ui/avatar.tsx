@@ -38,6 +38,7 @@ const AvatarImage = React.forwardRef<
     height={40}
     placeholder={blurDataURL ? "blur" : "empty"}
     blurDataURL={blurDataURL}
+    draggable={false}
   />
 ));
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;

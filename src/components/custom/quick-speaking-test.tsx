@@ -299,7 +299,7 @@ export function SpeakTest() {
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
           <h1 className="mb-5 text-2xl font-bold text-gray-900">
-            اختبار المحادثة
+            اختبار التحدث السريع
             <span className="text-black mx-2">IELTS</span>
           </h1>
           <p className="mb-2 font-black text-3xl text-blue-600">

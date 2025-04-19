@@ -52,7 +52,7 @@ export function ResultsDisplay({ session }: { session: Session | null }) {
 
   useEffect(() => {
     if (result) {
-      if (result.band > 5 && !isLoading) {
+      if (result.band > 6 && !isLoading) {
         setTimeout(() => {
           fireConfetti();
         }, 100);

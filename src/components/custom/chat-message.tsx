@@ -26,7 +26,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
 
           <div className="flex items-center justify-between gap-2 mt-1">
-            <span className="text-xs text-gray-500">{timestamp || "00:00"}</span>
+            <span className="text-xs text-gray-500">{timestamp ?? "00:00"}</span>
             {!isReply && (
               <Button variant="ghost" size="sm" className="p-1 h-auto" onClick={onReply}>
                 <MessageCircleReply className="h-4 w-4" />

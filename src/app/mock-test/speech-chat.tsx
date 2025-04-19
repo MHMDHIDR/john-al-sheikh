@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { AudioControls } from "@/components/custom/audio-controls";
 import { ChatMessage } from "@/components/custom/chat-message";

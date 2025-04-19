@@ -175,6 +175,7 @@ export function AccountForm({ user }: { user: Session["user"] }) {
                       placeholder="blur"
                       blurDataURL={user.blurImageDataURL ?? "/logo.svg"}
                       className="object-contain w-20 h-20 rounded-full shadow-sm"
+                      draggable={false}
                     />
                   ) : (
                     <Avatar className="w-20 h-20 rounded-full shadow-sm text-primary">

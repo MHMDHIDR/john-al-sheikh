@@ -1,11 +1,16 @@
-"use client";
-
-import { AuroraText } from "@/components/magicui/aurora-text";
+import { redirect } from "next/navigation";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { cn } from "@/lib/utils";
+import { auth } from "@/server/auth";
 import { SpeechChat } from "./speech-chat";
 
-export default function MockTest() {
+export default async function MockTest() {
+  const session = await auth();
+
+  if (!session?.user) {
+    return redirect("/signin");
+  }
+
   return (
     <main className="relative select-none flex min-h-screen flex-col items-center justify-center bg-white p-4 overflow-hidden">
       <InteractiveGridPattern

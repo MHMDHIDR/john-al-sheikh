@@ -25,11 +25,7 @@ type IELTSFeedback = {
   improvementTips: string[];
 };
 
-// Add this helper at the top level
-
-// Add this helper at the top level
 function containsArabicText(text: string): boolean {
-  // Arabic Unicode range
   return /[\u0600-\u06FF]/.test(text);
 }
 
@@ -138,12 +134,53 @@ export const openaiRouter = createTRPCRouter({
           };
         }
 
-        // Use a timeout to ensure we don't exceed Vercel's limits
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error("Request timeout - operation took too long"));
-          }, 8000); // Set timeout to 8 seconds to stay under Vercel's 10s limit
+        // First, validate the content is English and relevant to the prompt
+        const validationResponse = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          temperature: 0,
+          messages: [
+            {
+              role: "system",
+              content: `You are a content validator for IELTS speaking responses.
+              Given a prompt and a response, determine if:
+              1. The response is in English
+              2. The response is relevant to the prompt
+              3. The response contains meaningful content (not just filler words or incomplete thoughts)
+
+              Return a JSON response in this format:
+              {
+                "isValid": boolean,
+                "reason": "explanation if invalid"
+              }`,
+            },
+            {
+              role: "user",
+              content: `Prompt: "${input.prompt}"
+              Response: "${cleanText}"`,
+            },
+          ],
         });
+
+        const validationResult = JSON.parse(
+          validationResponse.choices[0]?.message.content ?? "{}",
+        ) as {
+          isValid: boolean;
+          reason: string;
+        };
+
+        if (!validationResult.isValid) {
+          return {
+            success: false,
+            error: "المحتوى غير مرتبط بموضوع المحادثة أو غير مكتمل",
+          };
+        }
+
+        // Use a timeout to ensure we don't exceed Vercel's limits
+        // const timeoutPromise = new Promise<never>((_, reject) => {
+        //   setTimeout(() => {
+        //     reject(new Error("Request timeout - operation took too long"));
+        //   }, 8000); // Set timeout to 8 seconds to stay under Vercel's 10s limit
+        // });
 
         // Create the OpenAI request
         const openaiPromise = openai.chat.completions.create({
@@ -202,7 +239,8 @@ export const openaiRouter = createTRPCRouter({
 
         try {
           // Race the OpenAI request against the timeout
-          const response = await Promise.race([openaiPromise, timeoutPromise]);
+          // const response = await Promise.race([openaiPromise, timeoutPromise]);
+          const response = await openaiPromise;
           const analysisText = response.choices[0]?.message.content ?? "";
 
           try {
