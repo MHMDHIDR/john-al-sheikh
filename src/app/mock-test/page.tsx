@@ -8,7 +8,7 @@ export default async function MockTest() {
   const session = await auth();
 
   if (!session?.user) {
-    return redirect("/signin");
+    return redirect("/signin?callbackUrl=/mock-test");
   }
 
   return (

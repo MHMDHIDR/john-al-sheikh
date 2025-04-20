@@ -6,4 +6,5 @@ export default {
   dialect: "postgresql",
   dbCredentials: { url: env.DATABASE_URL },
   tablesFilter: ["jas_*"],
+  out: "./src/server/db/migrations",
 } satisfies Config;
