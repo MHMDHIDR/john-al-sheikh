@@ -10,30 +10,35 @@ export function Timer({ isRunning, onTimeUp, totalSeconds }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
 
   useEffect(() => {
-    if (!isRunning) {
-      setTimeLeft(totalSeconds);
-      return;
-    }
+    setTimeLeft(totalSeconds);
+  }, [totalSeconds]);
 
-    if (timeLeft === 0) {
-      onTimeUp();
-      return;
-    }
+  useEffect(() => {
+    if (!isRunning) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning, timeLeft, onTimeUp, totalSeconds]);
+  }, [isRunning, onTimeUp]);
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(1, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
 
   return (
-    <div className="text-3xl font-medium tracking-tight text-gray-900">{formatTime(timeLeft)}</div>
+    <div className="text-center">
+      <div className="text-4xl font-mono font-bold text-primary">
+        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">Time Remaining</p>
+    </div>
   );
 }
