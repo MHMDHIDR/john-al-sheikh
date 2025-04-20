@@ -32,6 +32,7 @@ export const userRoleEnum = pgEnum("jas_user_role", [
 export const userStatusEnum = pgEnum("jas_user_status", ["PENDING", "ACTIVE", "SUSPENDED"]);
 export const themeEnum = pgEnum("jas_theme", ["light", "dark"]);
 export const genderEnum = pgEnum("jas_gender", ["male", "female"]);
+export const speakingTestEnum = pgEnum("jas_speaking_test_type", ["MOCK", "PRACTICE", "OFFICIAL"]);
 
 export type themeEnumType = (typeof themeEnum.enumValues)[number];
 export type genderEnumType = (typeof genderEnum.enumValues)[number];
@@ -132,9 +133,47 @@ export const rateLimits = createTable("rate_limit", {
 });
 export type RateLimits = typeof rateLimits.$inferSelect;
 
+export const speakingTests = createTable("speaking_test", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  type: speakingTestEnum("type").notNull().default("MOCK"),
+  transcription: jsonb("transcription").$type<{
+    messages: Array<{
+      role: "examiner" | "user";
+      content: string;
+      timestamp: string;
+    }>;
+  }>(),
+  topic: varchar("topic", { length: 255 }).notNull(),
+  band: decimal("band", { precision: 3, scale: 1 }).$type<number>(),
+  feedback: jsonb("feedback").$type<{
+    strengths: {
+      summary: string;
+      points: string[];
+    };
+    areasToImprove: {
+      errors: Array<{
+        mistake: string;
+        correction: string;
+      }>;
+    };
+    improvementTips: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SpeakingTest = typeof speakingTests.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
+  speakingTests: many(speakingTests),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -143,4 +182,8 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const speakingTestsRelations = relations(speakingTests, ({ one }) => ({
+  user: one(users, { fields: [speakingTests.userId], references: [users.id] }),
 }));
