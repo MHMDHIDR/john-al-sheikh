@@ -43,12 +43,12 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-2">
-      <div className={`text-2xl font-bold ${getTimerColor()}`}>
+    <div className="flex flex-col items-center select-none justify-center space-y-1">
+      <div className={`text-xl font-bold ${getTimerColor()}`}>
         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>
-      <div className="text-sm text-muted-foreground">
-        {mode === "preparation" ? "Preparation Time" : "Recording Time"}
+      <div className="text-xs font-bold text-muted-foreground">
+        {mode === "preparation" ? "وقت التحضير" : "وقت التسجيل"}
       </div>
     </div>
   );

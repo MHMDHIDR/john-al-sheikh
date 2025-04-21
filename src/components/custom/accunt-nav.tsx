@@ -56,8 +56,8 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
           variant="outline"
           className="inline-flex cursor-pointer justify-between px-0 shadow"
         >
-          <Avatar user={user} className="rounded-sm rounded-r-none size-8" />
-          <span className="px-2">{truncateUsername(user.name)}</span>
+          <Avatar user={user} className="rounded-sm rounded-r size-8" />
+          <span className="pl-2 pr-1 select-none">{truncateUsername(user.name)}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side={"right"} className="flex flex-col bg-white">
@@ -125,7 +125,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
         className={clsx(
           "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/50 outline-blue-300",
           {
-            "text-blue-500 border-blue-500": pathname === href,
+            "text-blue-500 border-blue-600 bg-blue-50": pathname === href,
           },
         )}
       >

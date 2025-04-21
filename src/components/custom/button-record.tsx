@@ -5,9 +5,15 @@ type RecordButtonProps = {
   isRecording: boolean;
   onClick: () => void;
   disabled?: boolean;
+  waves?: boolean;
 };
 
-export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordButtonProps) {
+export function ButtonRecord({
+  isRecording,
+  onClick,
+  disabled = false,
+  waves = true,
+}: RecordButtonProps) {
   const waveContainerRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -162,7 +168,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
 
   useEffect(() => {
     // Setup audio analyzer when recording starts
-    if (isRecording) {
+    if (isRecording && waves) {
       void setupAudioAnalyzer();
     } else {
       // Clean up when recording stops
@@ -172,7 +178,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
     return () => {
       cleanupAudioAnalyzer();
     };
-  }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer]);
+  }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer, waves]);
 
   return (
     <div className="flex flex-col items-center">
@@ -194,7 +200,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
         )}
       </button>
 
-      {isRecording && (
+      {isRecording && waves && (
         <div className="-mt-8 flex h-32 w-80 items-center justify-center" ref={waveContainerRef} />
       )}
     </div>
