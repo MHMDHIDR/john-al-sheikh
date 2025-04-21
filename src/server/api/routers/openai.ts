@@ -307,6 +307,90 @@ export const openaiRouter = createTRPCRouter({
         return provideFallbackResponse();
       }
     }),
+
+  // Text-to-speech procedure for the IELTS examiner
+  textToSpeech: publicProcedure
+    .input(z.object({ text: z.string().min(1, "Text cannot be empty") }))
+    .mutation(async ({ input }) => {
+      try {
+        // Generate speech using OpenAI's TTS API
+        const mp3Response = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: "alloy",
+          input: input.text,
+        });
+
+        // Convert the audio to base64 for frontend playback
+        const buffer = Buffer.from(await mp3Response.arrayBuffer());
+        const base64Audio = `data:audio/mp3;base64,${buffer.toString("base64")}`;
+
+        return { success: true, audio: base64Audio };
+      } catch (error) {
+        console.error("TTS error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to generate speech",
+        });
+      }
+    }),
+
+  // Get follow-up question based on candidate response
+  getFollowUpQuestion: publicProcedure
+    .input(
+      z.object({
+        candidateResponse: z.string(),
+        currentSection: z.string().default("Introduction"),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Skip processing if candidate response is empty or too short
+        if (!input.candidateResponse || input.candidateResponse.length < 10) {
+          return {
+            success: false,
+            error: "Response too short to analyze",
+            question: "Could you please elaborate more about yourself?",
+          };
+        }
+
+        // Generate a follow-up question using OpenAI
+        const response = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          temperature: 0.5,
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional IELTS speaking examiner conducting the ${input.currentSection} section.
+              Based on the candidate's response, generate ONE natural follow-up question that:
+              1. Is directly related to what they just said
+              2. Encourages them to expand on a detail they mentioned
+              3. Is conversational and friendly in tone
+              4. Is brief (max 15 words)
+
+              The question should appear natural in a real IELTS exam. Do not include any additional text, just the question.`,
+            },
+            {
+              role: "user",
+              content: `Candidate's response: "${input.candidateResponse}"`,
+            },
+          ],
+          max_tokens: 100,
+        });
+
+        const followUpQuestion =
+          response.choices[0]?.message.content?.trim() ??
+          "Could you tell me more about your interests?";
+
+        return { success: true, question: followUpQuestion };
+      } catch (error) {
+        console.error("Follow-up question error:", error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to generate follow-up question",
+          question: "What do you like to do in your free time?",
+        };
+      }
+    }),
 });
 
 // Helper function to provide a fallback response

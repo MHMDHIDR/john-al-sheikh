@@ -181,7 +181,7 @@ export function ButtonRecord({
   }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer, waves]);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex relative flex-col items-center">
       <button
         id="recording-button"
         className={`relative flex h-16 w-16 cursor-pointer items-center justify-center rounded-full transition-all ${
@@ -201,7 +201,10 @@ export function ButtonRecord({
       </button>
 
       {isRecording && waves && (
-        <div className="-mt-8 flex h-32 w-80 items-center justify-center" ref={waveContainerRef} />
+        <div
+          className="-mt-8 flex h-32 w-88 items-center justify-center absolute -z-10"
+          ref={waveContainerRef}
+        />
       )}
     </div>
   );
