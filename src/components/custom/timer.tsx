@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 
-type TimerProps = {
+interface TimerProps {
   isRunning: boolean;
   onTimeUp: () => void;
   totalSeconds: number;
-};
+  mode: "preparation" | "recording";
+}
 
-export function Timer({ isRunning, onTimeUp, totalSeconds }: TimerProps) {
+export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
 
   useEffect(() => {
@@ -18,7 +19,8 @@ export function Timer({ isRunning, onTimeUp, totalSeconds }: TimerProps) {
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) {
+        // Only call onTimeUp and clear interval when we actually hit zero
+        if (prev <= 0) {
           clearInterval(timer);
           onTimeUp();
           return 0;
@@ -27,18 +29,27 @@ export function Timer({ isRunning, onTimeUp, totalSeconds }: TimerProps) {
       });
     }, 1000);
 
+    // Cleanup on unmount or when isRunning changes
     return () => clearInterval(timer);
   }, [isRunning, onTimeUp]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
+  const getTimerColor = () => {
+    if (mode === "preparation") return "text-blue-600";
+    if (timeLeft <= 10) return "text-red-600";
+    return "text-green-600";
+  };
+
   return (
-    <div className="text-center">
-      <div className="text-4xl font-mono font-bold text-primary">
+    <div className="flex flex-col items-center justify-center space-y-2">
+      <div className={`text-2xl font-bold ${getTimerColor()}`}>
         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">Time Remaining</p>
+      <div className="text-sm text-muted-foreground">
+        {mode === "preparation" ? "Preparation Time" : "Recording Time"}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
-import { SpeechChat } from "./speech-chat";
 
 export default async function MockTestPage() {
   const session = await auth();
@@ -11,7 +10,7 @@ export default async function MockTestPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <SpeechChat userId={session.user.id} />
+      <h1 className="text-3xl font-bold text-gray-900">Mock Test</h1>
     </main>
   );
 }

@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader } from "lucide-react";
-import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -30,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
 import { onboardingSchema } from "../schemas/onboarding";
 import type { OnboardingForm } from "../schemas/onboarding";
+import type { Session } from "next-auth";
 
 export default function OnboardingForm({ session }: { session: Session }) {
   const [profileImage, setProfileImage] = useState<string | null>(null);

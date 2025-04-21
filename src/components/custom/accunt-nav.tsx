@@ -1,6 +1,12 @@
 "use client";
 
-import { IconHome, IconPackage, IconSettings, IconUser } from "@tabler/icons-react";
+import {
+  IconHome,
+  IconPackage,
+  IconSettings,
+  IconSpeakerphone,
+  IconUser,
+} from "@tabler/icons-react";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,6 +38,7 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
       icon: IconSettings,
       label: "لوحة التحكم",
     },
+    { href: "/mock-test", icon: IconSpeakerphone, label: "اختبار المحادثة" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
       ? {

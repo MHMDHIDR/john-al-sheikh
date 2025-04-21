@@ -315,6 +315,7 @@ export function SpeakTest() {
                 isRunning={isRecording}
                 onTimeUp={handleTimeUp}
                 totalSeconds={MAX_RECORDING_TIME}
+                mode="recording"
               />
             </div>
           )}
