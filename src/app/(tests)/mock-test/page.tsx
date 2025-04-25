@@ -2,239 +2,328 @@
 
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ButtonRecord } from "@/components/custom/button-record";
 import { Timer } from "@/components/custom/timer";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
+import { MAX_RECORDING_TIME } from "@/lib/constants";
+import {
+  clearAudioBuffer,
+  closeOpenaiConnection,
+  commitAudioBuffer,
+  detectNonIELTSContent,
+  getOpenaiWebrtcInstance,
+  handleSectionTransition,
+  OpenAIRealtimeEvent,
+  sendSessionUpdate,
+  sendTextMessage,
+} from "@/lib/openai-realtime";
 import { cn } from "@/lib/utils";
-import { api } from "@/trpc/react";
 
-// Define message type for the speaking test conversation
 type SpeakingTestMessage = {
   role: "examiner" | "candidate";
   content: string;
   timestamp: string;
 };
 
+type SectionName = "الأولى" | "الثانية" | "الثالثة";
+
 export default function MockTestPage() {
-  // State for the speaking test
-  // const [sectionName, setSectionName] = useState<string>("الأولى");
+  const [sectionName, setSectionName] = useState<SectionName>("الأولى");
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [messages, setMessages] = useState<SpeakingTestMessage[]>([]);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [timerRunning, setTimerRunning] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [showOverlay, setShowOverlay] = useState<boolean>(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentSection, setCurrentSection] = useState<number>(1);
+  const [isExaminerSpeaking, setIsExaminerSpeaking] = useState<boolean>(false);
+  const [sectionTopic, setSectionTopic] = useState<string>("");
+  const [preparationMode, setPreparationMode] = useState<boolean>(false);
 
-  // tRPC mutations
-  const textToSpeech = api.openai.textToSpeech.useMutation();
-  const transcribeAudio = api.openai.transcribeAudio.useMutation();
-  const getFollowUp = api.openai.getFollowUpQuestion.useMutation();
+  // Ref to store WebRTC connection
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const testTranscriptRef = useRef<string>("");
 
-  // Initialize audio element
-  useEffect(() => {
-    audioRef.current = new Audio();
-
-    // Handle audio playback end event
-    audioRef.current.addEventListener("ended", handleAudioEnded);
-
-    return () => audioRef.current?.removeEventListener("ended", handleAudioEnded);
-  }, []);
-
-  // Function to start the test with examiner introduction
-  const initializeTest = async () => {
-    // Initial examiner message
-    const examinerIntro = {
-      role: "examiner" as const,
-      content:
-        "Hi, I'm John Al-Sheikh, an experienced IELTS examiner. I will conduct your IELTS speaking test today. Can you please introduce yourself?",
-      timestamp: new Date().toISOString(),
-    };
-
-    // Add message to state
-    setMessages([examinerIntro]);
-
-    // Speak the introduction using OpenAI TTS
-    await speakExaminerMessage(examinerIntro.content);
-  };
-
-  // Start test after user interaction (to allow audio playback)
-  const handleStartTest = () => {
-    setShowOverlay(false);
-    // Start the test after user interaction
-    void initializeTest();
-  };
-
-  // Function to speak examiner messages
-  const speakExaminerMessage = async (text: string) => {
+  // Initialize WebRTC connection to OpenAI
+  const initializeWebRTC = useCallback(async () => {
     try {
-      setIsProcessing(true);
-      const result = await textToSpeech.mutateAsync({ text });
-
-      if (result.success && audioRef.current) {
-        // Play the audio
-        audioRef.current.src = result.audio;
-        await audioRef.current.play();
+      // Get audio element for AI speech playback
+      const audioElement = document.querySelector("audio");
+      if (!audioElement) {
+        throw new Error("Audio element not found");
       }
-    } catch (error) {
-      console.error("Failed to speak examiner message:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+      audioElementRef.current = audioElement;
 
-  // Toggle recording state and handle recording logic
-  const toggleRecording = async () => {
-    if (isRecording) {
-      // Stop recording
-      mediaRecorder?.stop();
-      setIsRecording(false);
-      setTimerRunning(false);
-    } else {
-      try {
-        // Start recording
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
+      // Create WebRTC connection
+      const { pc, dc } = await getOpenaiWebrtcInstance(audioElement);
+      peerConnectionRef.current = pc;
+      dataChannelRef.current = dc;
 
-        // Clear previous chunks
-        setAudioChunks([]);
+      console.log("WebRTC connection established");
 
-        // Set up recording event handlers
-        recorder.ondataavailable = event => {
-          if (event.data.size > 0) {
-            setAudioChunks(chunks => [...chunks, event.data]);
+      // Set up data channel event handlers
+      dc.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data) as OpenAIRealtimeEvent;
+
+          // Handle different message types
+          switch (message.type) {
+            case "session.created":
+              console.log("Session created:", message);
+              // Start the test with section 1
+              handleSectionTransition(dc, 1);
+              break;
+
+            case "response.text.partial":
+            case "response.text.new":
+              if (message.data?.text) {
+                // Add examiner message
+                addMessage("examiner", message.data.text);
+                setIsExaminerSpeaking(true);
+              }
+              break;
+
+            case "response.text.done":
+              setIsExaminerSpeaking(false);
+              // Auto-start recording after AI finishes speaking
+              setTimeout(() => {
+                if (!isRecording && !preparationMode) {
+                  toggleRecording();
+                }
+              }, 1000);
+              break;
+
+            case "conversation.item.input_audio_transcription.completed":
+              if (message.transcription?.text) {
+                const text = message.transcription.text.trim();
+                if (text) {
+                  // Check if the content is IELTS-appropriate
+                  const isNonIELTSContent = detectNonIELTSContent(text);
+
+                  if (isNonIELTSContent) {
+                    // Send a reminder to stay on topic
+                    sendTextMessage(
+                      dc,
+                      "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test.",
+                    );
+                  } else {
+                    // Add candidate message
+                    addMessage("candidate", text);
+
+                    // Save transcript for later analysis
+                    testTranscriptRef.current += `Candidate: ${text}\n`;
+
+                    // Store conversation in sessionStorage
+                    saveConversationToStorage();
+                  }
+                }
+              }
+              break;
+
+            case "input_audio_buffer.speech_stopped":
+              if (isRecording && !preparationMode) {
+                // Stop recording when speech stops
+                toggleRecording();
+              }
+              break;
+
+            default:
+              // Handle other event types if needed
+              break;
           }
-        };
-
-        recorder.onstop = async () => {
-          // Convert audio chunks to blob
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
-          // Convert blob to base64
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = async () => {
-            const base64Audio = reader.result as string;
-
-            // Transcribe the audio
-            await handleAudioTranscription(base64Audio);
-          };
-
-          // Stop all tracks
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        // Start recording
-        recorder.start();
-        setMediaRecorder(recorder);
-        setIsRecording(true);
-        setTimerRunning(true);
-
-        // Set timeout for automatic stop (60 seconds max)
-        setTimeout(() => {
-          if (recorder.state === "recording") {
-            recorder.stop();
-            setIsRecording(false);
-            setTimerRunning(false);
-          }
-        }, 60000);
-      } catch (error) {
-        console.error("Error starting recording:", error);
-      }
-    }
-  };
-
-  // Handle audio transcription and get follow-up
-  const handleAudioTranscription = async (audioBase64: string) => {
-    try {
-      setIsProcessing(true);
-      // Transcribe the audio
-      const transcription = await transcribeAudio.mutateAsync({
-        audioBase64,
-        fileType: "audio/webm",
-      });
-
-      if (transcription.success) {
-        // Add candidate message
-        const candidateMessage: SpeakingTestMessage = {
-          role: "candidate",
-          content: transcription.text || "I'm sorry, I couldn't hear what you said.",
-          timestamp: new Date().toISOString(),
-        };
-
-        setMessages(prev => [...prev, candidateMessage]);
-
-        // If we got a valid transcription, get a follow-up question
-        if (transcription.text && transcription.text.length > 0) {
-          await getFollowUpQuestion(transcription.text);
-        } else {
-          // Fallback for no speech detected
-          const fallbackQuestion = "I didn't catch that. Could you please introduce yourself?";
-          const examinerMessage: SpeakingTestMessage = {
-            role: "examiner",
-            content: fallbackQuestion,
-            timestamp: new Date().toISOString(),
-          };
-
-          setMessages(prev => [...prev, examinerMessage]);
-          await speakExaminerMessage(fallbackQuestion);
+        } catch (error) {
+          console.error("Error processing WebRTC message:", error);
         }
-      }
-    } catch (error) {
-      console.error("Error processing audio:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Handle when TTS audio finishes playing
-  const handleAudioEnded = useCallback(() => {
-    // Start recording automatically after examiner speaks
-    if (messages.length > 0 && messages[messages.length - 1]?.role === "examiner") {
-      // Slight delay to make it feel more natural
-      setTimeout(() => {
-        void toggleRecording();
-      }, 500);
-    }
-  }, [messages]);
-
-  // Get follow-up question based on candidate's response
-  const getFollowUpQuestion = async (candidateResponse: string) => {
-    try {
-      setIsProcessing(true);
-      const followUp = await getFollowUp.mutateAsync({
-        candidateResponse,
-        currentSection: "Introduction",
-      });
-
-      // Add examiner message with the follow-up question
-      const examinerMessage: SpeakingTestMessage = {
-        role: "examiner",
-        content: followUp.question,
-        timestamp: new Date().toISOString(),
       };
 
-      setMessages(prev => [...prev, examinerMessage]);
+      // Initialize the session configuration
+      await sendSessionUpdate(dc);
 
-      // Speak the follow-up question
-      await speakExaminerMessage(followUp.question);
+      return { pc, dc };
     } catch (error) {
-      console.error("Error getting follow-up question:", error);
-    } finally {
-      setIsProcessing(false);
+      console.error("Failed to initialize WebRTC:", error);
+      return { pc: null, dc: null };
     }
-  };
+  }, [isRecording, preparationMode]);
+
+  // Function to add a message to the conversation
+  const addMessage = useCallback((role: "examiner" | "candidate", content: string) => {
+    setMessages(prevMessages => [
+      ...prevMessages,
+      {
+        role,
+        content,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    // Save to transcript reference
+    if (role === "examiner") {
+      testTranscriptRef.current += `Examiner: ${content}\n`;
+    }
+  }, []);
+
+  // Save conversation to sessionStorage
+  const saveConversationToStorage = useCallback(() => {
+    try {
+      sessionStorage.setItem(
+        "ieltsConversation",
+        JSON.stringify({
+          messages,
+          transcript: testTranscriptRef.current,
+          currentSection,
+          topic: sectionTopic,
+        }),
+      );
+    } catch (error) {
+      console.error("Failed to save conversation to storage:", error);
+    }
+  }, [messages, currentSection, sectionTopic]);
+
+  // Handle starting the test
+  const handleStartTest = useCallback(() => {
+    setShowOverlay(false);
+    setIsProcessing(true);
+
+    // Initialize WebRTC
+    void initializeWebRTC().then(({ pc, dc }) => {
+      if (pc && dc) {
+        peerConnectionRef.current = pc;
+        dataChannelRef.current = dc;
+        setIsProcessing(false);
+      } else {
+        setIsProcessing(false);
+        // Show error message if initialization fails
+        alert("Failed to connect to the examiner. Please try again.");
+      }
+    });
+  }, [initializeWebRTC]);
+
+  // Start/stop recording
+  const toggleRecording = useCallback(() => {
+    if (!dataChannelRef.current || dataChannelRef.current.readyState !== "open") {
+      console.error("Cannot toggle recording: WebRTC data channel not ready");
+      return;
+    }
+
+    // Toggle recording state
+    setIsRecording(prevState => {
+      const newState = !prevState;
+      const dc = dataChannelRef.current;
+
+      if (newState && dc) {
+        // Start recording
+        clearAudioBuffer(dc);
+        setTimerRunning(true);
+      } else if (dc) {
+        // Stop recording
+        commitAudioBuffer(dc);
+        setTimerRunning(false);
+      }
+
+      return newState;
+    });
+  }, []);
 
   // Handle timer completion
-  const handleTimeUp = () => {
-    if (isRecording) {
-      void toggleRecording();
+  const handleTimeUp = useCallback(() => {
+    const dc = dataChannelRef.current;
+    if (!dc || dc.readyState !== "open") {
+      console.error("WebRTC data channel not ready");
+      return;
     }
-  };
+
+    if (preparationMode) {
+      // After preparation time, switch to recording mode
+      setPreparationMode(false);
+      setTimerRunning(false);
+
+      // Inform the candidate that preparation time is up
+      sendTextMessage(
+        dc,
+        "Your preparation time is up. Please start speaking about the topic now. You have 2 minutes.",
+      );
+
+      // Start recording after a short delay
+      setTimeout(() => {
+        toggleRecording();
+      }, 2000);
+    } else {
+      // Normal recording time up
+      setIsRecording(false);
+      setTimerRunning(false);
+
+      if (dc) {
+        // Progress to next section based on current section
+        if (currentSection === 1) {
+          // Move to section 2
+          setCurrentSection(2);
+          setSectionName("الثانية");
+          setPreparationMode(true);
+
+          // Generate a random topic for section 2
+          const topics = [
+            "Describe a skill you would like to learn",
+            "Describe a place you enjoy visiting",
+            "Describe a person who has influenced you",
+            "Describe a hobby or activity you enjoy",
+            "Describe a challenge you have overcome",
+          ];
+          const randomIndex = Math.floor(Math.random() * topics.length);
+          const selectedTopic = topics[randomIndex] || "Describe a skill you would like to learn";
+          setSectionTopic(selectedTopic);
+
+          // Send section 2 instructions with the selected topic
+          const section2Prompt = `Now, let's move on to Section 2. I'm going to give you a topic to talk about. The topic is: ${selectedTopic}. You have one minute to prepare and then you should speak for up to two minutes. You can make notes if you wish.`;
+          sendTextMessage(dc, section2Prompt);
+
+          // Start preparation timer
+          setTimeout(() => {
+            setTimerRunning(true);
+          }, 2000);
+        } else if (currentSection === 2) {
+          // Move to section 3
+          setCurrentSection(3);
+          setSectionName("الثالثة");
+
+          // Send section 3 instructions
+          handleSectionTransition(dc, 3);
+        } else {
+          // Test complete
+          sendTextMessage(dc, "The test is now complete. Thank you for your participation.");
+
+          // Save final conversation and navigate to results page
+          saveConversationToStorage();
+
+          // Navigate to results page
+          setTimeout(() => {
+            alert("Test complete! Your results have been saved.");
+          }, 3000);
+        }
+      }
+    }
+  }, [currentSection, preparationMode, saveConversationToStorage, toggleRecording]);
+
+  // Placeholder function for section duration
+  const getSectionDuration = useCallback((): number => {
+    if (preparationMode) {
+      return 60; // 1 minute preparation time
+    } else if (currentSection === 2 && !preparationMode) {
+      return 120; // 2 minutes speaking time for section 2
+    } else {
+      return MAX_RECORDING_TIME; // Default time for other sections
+    }
+  }, [currentSection, preparationMode]);
+
+  // Cleanup function for WebRTC resources
+  useEffect(() => {
+    return () => {
+      closeOpenaiConnection();
+    };
+  }, []);
 
   return (
     <main className="min-h-fit bg-white flex flex-col items-center">
@@ -247,16 +336,20 @@ export default function MockTestPage() {
           <div className="bg-white select-none rounded-lg p-8 shadow-lg max-w-md text-center">
             <h2 className="mb-6 text-2xl font-bold">اختبار المحادثة باللغة الإنجليزية</h2>
             <p className="mb-8 text-gray-600">
-              سيقوم {env.NEXT_PUBLIC_APP_NAME} بتوجيه أسئلة لك باللغة الإنجليزية. يرجى الإجابة بشكل
-              طبيعي كما في اختبار حقيقي.
+              سيقوم{" "}
+              <strong className="text-blue-700" aria-label={env.NEXT_PUBLIC_APP_NAME}>
+                {env.NEXT_PUBLIC_APP_NAME}
+              </strong>{" "}
+              بتوجيه أسئلة لك باللغة الإنجليزية. يرجى الإجابة بشكل طبيعي كما في اختبار حقيقي.
             </p>
             <Button
               variant="pressable"
               size="lg"
               className="cursor-pointer font-black text-lg"
               onClick={handleStartTest}
+              disabled={isProcessing}
             >
-              إبدا الإختبار
+              {isProcessing ? "جاري التحميل..." : "إبدا الإختبار"}
             </Button>
           </div>
         </div>
@@ -276,6 +369,13 @@ export default function MockTestPage() {
 
         <div className="relative z-10 flex flex-col min-h-[600px] bg-white rounded-lg overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4 ltr">
+            {preparationMode && currentSection === 2 && (
+              <div className="bg-blue-50 p-4 rounded-lg text-center my-4">
+                <h3 className="font-bold text-blue-800 mb-2">وقت التحضير</h3>
+                <p className="text-blue-700">{sectionTopic}</p>
+              </div>
+            )}
+
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -297,6 +397,24 @@ export default function MockTestPage() {
                 </div>
               </div>
             ))}
+
+            {isProcessing && messages.length === 0 && (
+              <div className="flex justify-center py-2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-blue-500 border-t-transparent"></div>
+              </div>
+            )}
+
+            {isExaminerSpeaking && (
+              <div className="flex justify-start">
+                <div className="bg-blue-100 text-blue-900 max-w-[80%] rounded-lg p-3">
+                  <div className="flex space-x-1 items-center">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse delay-100"></div>
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse delay-200"></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -306,24 +424,14 @@ export default function MockTestPage() {
           <Timer
             isRunning={timerRunning}
             onTimeUp={handleTimeUp}
-            totalSeconds={10} // TODO: change to 60 after debugging is done
-            mode={isRecording ? "recording" : "preparation"}
+            totalSeconds={getSectionDuration()}
+            mode={preparationMode ? "preparation" : "recording"}
           />
-          {/* <strong>المرحلة {sectionName}</strong> */}
-          <strong>المرحلة الأولى</strong>
-        </div>
-
-        <div className="p-2 border-t border-t-gray-200">
-          <div className="flex justify-center">
-            <ButtonRecord
-              isRecording={isRecording}
-              onClick={toggleRecording}
-              disabled={isProcessing || showOverlay}
-              waves={false}
-            />
-          </div>
+          <strong>المرحلة {sectionName}</strong>
         </div>
       </div>
+
+      <audio className="hidden" controls />
     </main>
   );
 }
