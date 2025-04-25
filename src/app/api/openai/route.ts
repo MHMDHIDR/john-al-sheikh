@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     // Send the offer to OpenAI's API
     const baseUrl = "https://api.openai.com/v1/realtime";
-    const model = "gpt-4o-realtime-preview";
+    const model = "gpt-4o-mini-realtime-preview";
     const response = await fetch(`${baseUrl}?model=${model}`, {
       method: "POST",
       body: sdpOffer,

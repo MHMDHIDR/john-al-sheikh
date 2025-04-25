@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-interface TimerProps {
+type TimerProps = {
   isRunning: boolean;
   onTimeUp: () => void;
   totalSeconds: number;
   mode: "preparation" | "recording";
-}
+};
 
 export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
@@ -14,7 +14,6 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   useEffect(() => {
     // Reset time when total seconds changes or when running starts
     if (isRunning) {
-      console.log(`Timer reset to ${totalSeconds} and started`);
       setTimeLeft(totalSeconds);
     }
 
@@ -26,12 +25,10 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
       setTimeLeft(prev => {
         // Log every tick for debugging
         const newVal = prev - 1;
-        console.log(`Timer tick: ${prev} -> ${newVal}`);
 
         // Handle reaching zero
         if (prev <= 1) {
           clearInterval(intervalId);
-          console.log("Timer reached zero, calling onTimeUp");
           setTimeout(onTimeUp, 0); // Use setTimeout to avoid state update issues
           return 0;
         }
@@ -41,7 +38,6 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
 
     // Clean up on unmount or when dependencies change
     return () => {
-      console.log("Clearing timer interval");
       clearInterval(intervalId);
     };
   }, [isRunning, totalSeconds, onTimeUp]);
@@ -63,7 +59,7 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>
       <div className="text-xs font-bold text-muted-foreground">
-        {mode === "preparation" ? "وقت التحضير" : "وقت التسجيل"}
+        {mode === "preparation" ? "وقت التحضير" : "الوقت المتبقي من نهاية الاختبار"}
       </div>
     </div>
   );

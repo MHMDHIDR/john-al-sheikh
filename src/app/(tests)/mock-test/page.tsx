@@ -1,13 +1,11 @@
 "use client";
 
-import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Timer } from "@/components/custom/timer";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
-import { MAX_RECORDING_TIME } from "@/lib/constants";
 import {
   clearAudioBuffer,
   closeOpenaiConnection,
@@ -27,19 +25,16 @@ type SpeakingTestMessage = {
   timestamp: string;
 };
 
-type SectionName = "الأولى" | "الثانية" | "الثالثة";
-
 export default function MockTestPage() {
-  const [sectionName, setSectionName] = useState<SectionName>("الأولى");
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [messages, setMessages] = useState<SpeakingTestMessage[]>([]);
-  const [timerRunning, setTimerRunning] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [showOverlay, setShowOverlay] = useState<boolean>(true);
   const [currentSection, setCurrentSection] = useState<number>(1);
   const [isExaminerSpeaking, setIsExaminerSpeaking] = useState<boolean>(false);
   const [sectionTopic, setSectionTopic] = useState<string>("");
   const [preparationMode, setPreparationMode] = useState<boolean>(false);
+  const [testTimerRunning, setTestTimerRunning] = useState<boolean>(false);
 
   // Ref to store WebRTC connection
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -107,7 +102,7 @@ export default function MockTestPage() {
                     // Send a reminder to stay on topic
                     sendTextMessage(
                       dc,
-                      "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test.",
+                      `Sorry, speaking about ${text} is not allowd here. Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about outside the IELTS test. Let's focus on the matter at hand.`,
                     );
                   } else {
                     // Add candidate message
@@ -183,6 +178,20 @@ export default function MockTestPage() {
     }
   }, [messages, currentSection, sectionTopic]);
 
+  // Handle complete test timeout - 10 minutes (600 seconds)
+  const handleTestComplete = useCallback(() => {
+    console.log("IELTS test complete - reached 10 minute time limit");
+
+    // Close WebRTC connection
+    closeOpenaiConnection();
+
+    // Save final conversation
+    saveConversationToStorage();
+
+    // Show completion message
+    alert("IELTS test time is up. Thank you for your participation.");
+  }, [saveConversationToStorage]);
+
   // Handle starting the test
   const handleStartTest = useCallback(() => {
     setShowOverlay(false);
@@ -194,6 +203,9 @@ export default function MockTestPage() {
         peerConnectionRef.current = pc;
         dataChannelRef.current = dc;
         setIsProcessing(false);
+
+        // Start the 10-minute test timer
+        setTestTimerRunning(true);
       } else {
         setIsProcessing(false);
         // Show error message if initialization fails
@@ -217,11 +229,9 @@ export default function MockTestPage() {
       if (newState && dc) {
         // Start recording
         clearAudioBuffer(dc);
-        setTimerRunning(true);
       } else if (dc) {
         // Stop recording
         commitAudioBuffer(dc);
-        setTimerRunning(false);
       }
 
       return newState;
@@ -239,7 +249,6 @@ export default function MockTestPage() {
     if (preparationMode) {
       // After preparation time, switch to recording mode
       setPreparationMode(false);
-      setTimerRunning(false);
 
       // Inform the candidate that preparation time is up
       sendTextMessage(
@@ -254,14 +263,12 @@ export default function MockTestPage() {
     } else {
       // Normal recording time up
       setIsRecording(false);
-      setTimerRunning(false);
 
       if (dc) {
         // Progress to next section based on current section
         if (currentSection === 1) {
           // Move to section 2
           setCurrentSection(2);
-          setSectionName("الثانية");
           setPreparationMode(true);
 
           // Generate a random topic for section 2
@@ -281,13 +288,10 @@ export default function MockTestPage() {
           sendTextMessage(dc, section2Prompt);
 
           // Start preparation timer
-          setTimeout(() => {
-            setTimerRunning(true);
-          }, 2000);
+          setTimeout(() => {}, 2000);
         } else if (currentSection === 2) {
           // Move to section 3
           setCurrentSection(3);
-          setSectionName("الثالثة");
 
           // Send section 3 instructions
           handleSectionTransition(dc, 3);
@@ -306,17 +310,6 @@ export default function MockTestPage() {
       }
     }
   }, [currentSection, preparationMode, saveConversationToStorage, toggleRecording]);
-
-  // Placeholder function for section duration
-  const getSectionDuration = useCallback((): number => {
-    if (preparationMode) {
-      return 60; // 1 minute preparation time
-    } else if (currentSection === 2 && !preparationMode) {
-      return 120; // 2 minutes speaking time for section 2
-    } else {
-      return MAX_RECORDING_TIME; // Default time for other sections
-    }
-  }, [currentSection, preparationMode]);
 
   // Cleanup function for WebRTC resources
   useEffect(() => {
@@ -369,42 +362,14 @@ export default function MockTestPage() {
 
         <div className="relative z-10 flex flex-col min-h-[600px] bg-white rounded-lg overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4 ltr">
-            {preparationMode && currentSection === 2 && (
-              <div className="bg-blue-50 p-4 rounded-lg text-center my-4">
-                <h3 className="font-bold text-blue-800 mb-2">وقت التحضير</h3>
-                <p className="text-blue-700">{sectionTopic}</p>
-              </div>
-            )}
-
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={clsx("flex", {
-                  "justify-start": message.role === "examiner",
-                  "justify-end": message.role === "candidate",
-                })}
-              >
-                <div
-                  className={clsx("max-w-[80%] rounded-lg p-3", {
-                    "bg-blue-100 text-blue-900": message.role === "examiner",
-                    "bg-green-100 text-green-900": message.role === "candidate",
-                  })}
-                >
-                  <p className="text-sm ltr">{message.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {isProcessing && messages.length === 0 && (
+            {isProcessing && (
               <div className="flex justify-center py-2">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-blue-500 border-t-transparent"></div>
               </div>
             )}
 
             {isExaminerSpeaking && (
+              // this is to show the examiner is speaking by the animation of the dots
               <div className="flex justify-start">
                 <div className="bg-blue-100 text-blue-900 max-w-[80%] rounded-lg p-3">
                   <div className="flex space-x-1 items-center">
@@ -421,13 +386,14 @@ export default function MockTestPage() {
 
       <div className="sticky bottom-0 z-20 w-full bg-gray-50 flex flex-col">
         <div className="flex justify-between items-center select-none px-4 py-2">
-          <Timer
-            isRunning={timerRunning}
-            onTimeUp={handleTimeUp}
-            totalSeconds={getSectionDuration()}
-            mode={preparationMode ? "preparation" : "recording"}
-          />
-          <strong>المرحلة {sectionName}</strong>
+          {testTimerRunning && (
+            <Timer
+              isRunning={testTimerRunning}
+              onTimeUp={handleTestComplete}
+              totalSeconds={600} // 10 minutes
+              mode="recording"
+            />
+          )}
         </div>
       </div>
 
