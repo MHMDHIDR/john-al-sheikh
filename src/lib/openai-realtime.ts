@@ -1,5 +1,14 @@
 // Configuration for IELTS speaking test
+
+export const TEST_DURATION = 600; // 10 minutes
+
 export const VOICE = "ash";
+
+// Event type for test state
+export const TEST_EVENTS = {
+  TEST_ENDED: "test_ended",
+  SECTION_CHANGED: "section_changed",
+};
 
 export const SYSTEM_MESSAGE = `Introduce yourself as "John Al-Sheikh", the IELTS examiner, Before starting the test, please remind the candidate that the test will last for 10 minutes, as this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
 
@@ -20,6 +29,8 @@ Section 2: Individual Long Turn (2-3 minutes)
 
 Section 3: Two-way Discussion (3-4 minutes)
 - Ask TWO deeper, more abstract questions related to the Section 2 topic, and allow the candidate to speak for up to 2 minutes for each question.
+
+After receiving answers to these questions, inform the candidate that the test is now complete and thank them for their participation. End the test.
 
 Important guidelines:
 - DO NOT offer the candidate any recordings of any kind.
@@ -67,6 +78,9 @@ let peerConnection: RTCPeerConnection | null = null;
 let dataChannel: RTCDataChannel | null = null;
 let audioQueue: Uint8Array[] = [];
 let isAudioQueueProcessing = false;
+let testTimer: NodeJS.Timeout | null = null;
+let isTestEnded = false;
+let testEndedListeners: Array<() => void> = [];
 
 // List of IELTS-appropriate topics to check against
 const IELTS_TOPICS = [
@@ -105,6 +119,29 @@ const IELTS_TOPICS = [
   "learning",
   "history",
 ];
+
+// Function to setup a timer for the test
+export function setupTestTimer(durationInSeconds: number, callback: () => void): void {
+  // Clear any existing timer
+  clearTestTimer();
+
+  // Set up a new timer
+  testTimer = setTimeout(() => {
+    callback();
+    clearTestTimer();
+  }, durationInSeconds * 1000);
+
+  console.log(`Test timer set for ${durationInSeconds} seconds`);
+}
+
+// Function to clear the test timer
+export function clearTestTimer(): void {
+  if (testTimer) {
+    clearTimeout(testTimer);
+    testTimer = null;
+    console.log("Test timer cleared");
+  }
+}
 
 // Check if text contains non-IELTS content
 export function detectNonIELTSContent(text: string): boolean {
@@ -373,6 +410,11 @@ export function sendTextMessage(dc: RTCDataChannel, text: string): void {
     return;
   }
 
+  // Check if this message indicates the test has ended
+  if (detectTestEndPhrases(text)) {
+    triggerTestEnded();
+  }
+
   const message = {
     type: "response.create",
     response: {
@@ -459,8 +501,21 @@ export function handleSectionTransition(dc: RTCDataChannel, sectionNumber: numbe
     {
       1: "Begin with section 1 of the IELTS test: Introduction and General Questions.",
       2: "Transition to section 2 of the IELTS test: Individual Long Turn. Give the candidate a topic and allow them one minute to prepare.",
-      3: "Transition to section 3 of the IELTS test: Two-way Discussion related to the section 2 topic.",
+      3: "Transition to section 3 of the IELTS test: Two-way Discussion related to the section 2 topic. After receiving answers to your questions, inform the candidate that the test is now complete and thank them for their participation.",
     }[sectionNumber] || "";
+
+  // Update sessionStorage with current section
+  try {
+    const currentDataStr = sessionStorage.getItem("ieltsConversation");
+    if (currentDataStr) {
+      const currentData = JSON.parse(currentDataStr);
+      currentData.currentSection = sectionNumber;
+      sessionStorage.setItem("ieltsConversation", JSON.stringify(currentData));
+      console.log(`📝 Updated section in sessionStorage: ${sectionNumber}`);
+    }
+  } catch (error) {
+    console.error("Failed to update section in sessionStorage:", error);
+  }
 
   const message = {
     type: "response.create",
@@ -552,5 +607,98 @@ export function closeOpenaiConnection(): void {
   if (peerConnection) {
     peerConnection.close();
     peerConnection = null;
+  }
+}
+
+// Function to detect key phrases indicating test completion
+export function detectTestEndPhrases(text: string): boolean {
+  const endPhrases = [
+    "the test is now complete",
+    "thank you for your participation",
+    "that concludes the test",
+    "that's the end of the test",
+    "end of the speaking test",
+    "this is the end of the test",
+    "we have reached the end of the test",
+    "the speaking test is now over",
+    "that brings us to the end of the test",
+    "we've now finished the test",
+  ];
+
+  const lowerText = text.toLowerCase();
+  return endPhrases.some(phrase => lowerText.includes(phrase));
+}
+
+// Add listener for test ended event
+export function onTestEnded(callback: () => void): () => void {
+  testEndedListeners.push(callback);
+
+  // Return function to remove the listener
+  return () => {
+    testEndedListeners = testEndedListeners.filter(listener => listener !== callback);
+  };
+}
+
+// Trigger test ended event
+export function triggerTestEnded(): void {
+  if (isTestEnded) return; // Prevent multiple triggers
+
+  console.log("Test ended event triggered");
+  isTestEnded = true;
+
+  // Save this information to sessionStorage
+  try {
+    const currentData = sessionStorage.getItem("ieltsConversation");
+    if (currentData) {
+      const parsedData = JSON.parse(currentData);
+      parsedData.testEnded = true;
+      sessionStorage.setItem("ieltsConversation", JSON.stringify(parsedData));
+    }
+  } catch (error) {
+    console.error("Failed to update sessionStorage with test ended status:", error);
+  }
+
+  // Notify all listeners
+  testEndedListeners.forEach(callback => {
+    try {
+      callback();
+    } catch (error) {
+      console.error("Error in test ended listener:", error);
+    }
+  });
+}
+
+// Check if test has ended
+export function hasTestEnded(): boolean {
+  return isTestEnded;
+}
+
+// Utility function to update sessionStorage with transcript data
+export function updateTranscriptInSessionStorage(
+  text: string,
+  role: "examiner" | "candidate",
+): void {
+  try {
+    const currentDataStr = sessionStorage.getItem("ieltsConversation");
+    if (!currentDataStr) {
+      console.warn("Cannot update transcript: No conversation data found in sessionStorage");
+      return;
+    }
+
+    const currentData = JSON.parse(currentDataStr);
+    const newLine = `${role === "examiner" ? "Examiner" : "Candidate"}: ${text}`;
+
+    // Add to transcript if not already included
+    if (!currentData.transcript.includes(newLine)) {
+      currentData.transcript += `${newLine}\n`;
+
+      // Update storage
+      sessionStorage.setItem("ieltsConversation", JSON.stringify(currentData));
+      console.log(
+        `✅ Updated transcript in sessionStorage for ${role}: ${text.substring(0, 30)}...`,
+      );
+    }
+  } catch (error) {
+    console.error("Failed to update transcript in sessionStorage:", error);
   }
 }

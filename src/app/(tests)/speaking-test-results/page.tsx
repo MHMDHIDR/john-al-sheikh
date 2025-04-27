@@ -1,45 +1,63 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 type Results = {
-  band: number;
-  strengths: {
-    summary: string;
-    points: string[];
+  fluencyAndCoherence: number;
+  lexicalResource: number;
+  grammaticalRangeAndAccuracy: number;
+  pronunciation: number;
+  overallBand: number;
+  feedback: {
+    overall: string;
+    fluencyAndCoherence: string;
+    lexicalResource: string;
+    grammaticalRangeAndAccuracy: string;
+    pronunciation: string;
   };
-  areasToImprove: {
-    errors: Array<{
-      mistake: string;
-      correction: string;
-    }>;
-  };
-  improvementTips: string[];
 };
 
 export default function SpeakingTestResults() {
   const [results, setResults] = useState<Results | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const storedResults = sessionStorage.getItem("ieltsResult");
     if (storedResults) {
-      setResults(JSON.parse(storedResults) as Results);
-    } else {
-      // Redirect if no results found
-      window.location.href = "/mock-test";
+      try {
+        setResults(JSON.parse(storedResults) as Results);
+      } catch (error) {
+        console.error("Error parsing results:", error);
+      }
     }
+    setLoading(false);
   }, []);
 
-  if (!results) {
+  // Redirect if no results found after checking
+  useEffect(() => {
+    if (!loading && !results) {
+      router.push("/mock-test");
+    }
+  }, [loading, results, router]);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-t-transparent"></div>
       </div>
     );
   }
+
+  if (!results) return null;
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
@@ -59,65 +77,105 @@ export default function SpeakingTestResults() {
           <AuroraText className="mx-2 text-3xl font-bold text-gray-900">
             Speaking Test Results
           </AuroraText>
-          <div className="mt-4 text-5xl font-bold text-blue-600">{results.band}</div>
+          <div className="mt-4 text-5xl font-bold text-blue-600">
+            {results.overallBand.toFixed(1)}
+          </div>
           <p className="mt-2 text-gray-600">Overall Band Score</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Strengths */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-gray-900">Strengths</h3>
-            <p className="mb-4 text-gray-600">{results.strengths.summary}</p>
-            <ul className="space-y-2">
-              {results.strengths.points.map((point, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="mr-2 text-green-500">✓</span>
-                  <span className="text-gray-700">{point}</span>
-                </li>
-              ))}
-            </ul>
+        <Card className="p-6 shadow-sm">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Detailed Assessment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Fluency & Coherence:</span>
+                <span className="text-blue-600 font-bold">
+                  {results.fluencyAndCoherence.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Lexical Resource:</span>
+                <span className="text-blue-600 font-bold">
+                  {results.lexicalResource.toFixed(1)}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Grammatical Range:</span>
+                <span className="text-blue-600 font-bold">
+                  {results.grammaticalRangeAndAccuracy.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Pronunciation:</span>
+                <span className="text-blue-600 font-bold">{results.pronunciation.toFixed(1)}</span>
+              </div>
+            </div>
           </div>
+        </Card>
 
-          {/* Areas to Improve */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-gray-900">Areas to Improve</h3>
-            <ul className="space-y-4">
-              {results.areasToImprove.errors.map((error, index) => (
-                <li key={index} className="space-y-2">
-                  <div className="flex items-start">
-                    <span className="mr-2 text-red-500">✗</span>
-                    <span className="text-gray-700">{error.mistake}</span>
-                  </div>
-                  <div className="ml-6 text-sm text-gray-600">
-                    <span className="font-medium">Suggestion: </span>
-                    {error.correction}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="grid gap-6 md:grid-cols-1">
+          {/* Overall Feedback */}
+          <Card className="p-6 shadow-sm">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">Overall Assessment</h3>
+            <p className="text-gray-700">{results.feedback.overall}</p>
+          </Card>
         </div>
 
-        {/* Improvement Tips */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-xl font-semibold text-gray-900">Improvement Tips</h3>
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {results.improvementTips.map((tip, index) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2 text-blue-500">•</span>
-                <span className="text-gray-700">{tip}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Fluency & Coherence */}
+          <Card className="p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Fluency & Coherence</h3>
+              <span className="text-blue-600 font-bold">
+                {results.fluencyAndCoherence.toFixed(1)}
+              </span>
+            </div>
+            <Separator className="my-2" />
+            <p className="text-gray-700">{results.feedback.fluencyAndCoherence}</p>
+          </Card>
+
+          {/* Lexical Resource */}
+          <Card className="p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Lexical Resource</h3>
+              <span className="text-blue-600 font-bold">{results.lexicalResource.toFixed(1)}</span>
+            </div>
+            <Separator className="my-2" />
+            <p className="text-gray-700">{results.feedback.lexicalResource}</p>
+          </Card>
+
+          {/* Grammatical Range */}
+          <Card className="p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Grammatical Range</h3>
+              <span className="text-blue-600 font-bold">
+                {results.grammaticalRangeAndAccuracy.toFixed(1)}
+              </span>
+            </div>
+            <Separator className="my-2" />
+            <p className="text-gray-700">{results.feedback.grammaticalRangeAndAccuracy}</p>
+          </Card>
+
+          {/* Pronunciation */}
+          <Card className="p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Pronunciation</h3>
+              <span className="text-blue-600 font-bold">{results.pronunciation.toFixed(1)}</span>
+            </div>
+            <Separator className="my-2" />
+            <p className="text-gray-700">{results.feedback.pronunciation}</p>
+          </Card>
         </div>
 
         <div className="text-center">
-          <button
-            onClick={() => (window.location.href = "/mock-test")}
+          <Link
+            href="/mock-test"
             className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Take Another Test
-          </button>
+          </Link>
         </div>
       </div>
     </main>

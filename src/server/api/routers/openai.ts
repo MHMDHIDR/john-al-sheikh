@@ -5,6 +5,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { isActualEnglishSpeech } from "@/lib/check-is-actual-english-speech";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { speakingTests } from "@/server/db/schema";
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
@@ -304,6 +305,84 @@ export const openaiRouter = createTRPCRouter({
       } catch (error) {
         console.error("Analysis error:", error);
         return provideFallbackResponse();
+      }
+    }),
+
+  saveSpeakingTest: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        type: z.enum(["MOCK", "PRACTICE", "OFFICIAL"]).default("MOCK"),
+        transcription: z.object({
+          messages: z.array(
+            z.object({
+              role: z.enum(["examiner", "user"]),
+              content: z.string(),
+              timestamp: z.string(),
+            }),
+          ),
+        }),
+        topic: z.string(),
+        band: z.number().optional(),
+        feedback: z
+          .object({
+            strengths: z.object({
+              summary: z.string(),
+              points: z.array(z.string()),
+            }),
+            areasToImprove: z.object({
+              errors: z.array(
+                z.object({
+                  mistake: z.string(),
+                  correction: z.string(),
+                }),
+              ),
+            }),
+            improvementTips: z.array(z.string()),
+          })
+          .optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Check if user is authenticated
+      if (!ctx.session) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to save a speaking test",
+        });
+      }
+
+      try {
+        // Insert the speaking test into the database
+        const result = await ctx.db
+          .insert(speakingTests)
+          .values({
+            userId: input.userId,
+            type: input.type,
+            transcription: input.transcription,
+            topic: input.topic,
+            band: input.band,
+            feedback: input.feedback,
+          })
+          .returning();
+
+        if (!result[0]) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to save speaking test: no result returned",
+          });
+        }
+
+        return {
+          success: true,
+          id: result[0].id,
+        };
+      } catch (error) {
+        console.error("Failed to save speaking test:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save speaking test",
+        });
       }
     }),
 });
