@@ -17,7 +17,7 @@ export default function IELTSSpeakingRecorder() {
 
   const agentId = env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
 
-  const { status, isSpeaking, startSession, endSession, setVolume } = useConversation({
+  const { status, startSession, endSession, setVolume } = useConversation({
     onConnect: () => {
       console.log("Connected to ElevenLabs");
     },
@@ -50,7 +50,7 @@ export default function IELTSSpeakingRecorder() {
       }
     };
 
-    requestMicPermission();
+    void requestMicPermission();
   }, []);
 
   const handleStartConversation = async () => {
@@ -75,9 +75,9 @@ export default function IELTSSpeakingRecorder() {
     }
   };
 
-  const toggleMute = async () => {
+  const toggleMute = () => {
     try {
-      await setVolume({ volume: isMuted ? 1 : 0 });
+      setVolume({ volume: isMuted ? 1 : 0 });
       setIsMuted(!isMuted);
     } catch (error) {
       setErrorMessage("Failed to change volume");
@@ -118,13 +118,16 @@ export default function IELTSSpeakingRecorder() {
           )}
         </div>
 
+        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {!hasPermission && (
+          <p className="text-yellow-600 text-xs">
+            Please allow microphone access to use voice chat
+          </p>
+        )}
+
         {/* <div className="text-center text-sm">
           {status === "connected" && (
             <p className="text-green-600">{isSpeaking ? "Agent is speaking..." : "Listening..."}</p>
-          )}
-          {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-          {!hasPermission && (
-            <p className="text-yellow-600">Please allow microphone access to use voice chat</p>
           )}
         </div> */}
       </CardContent>

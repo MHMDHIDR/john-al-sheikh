@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import type { AdminNavItems } from "@/types";
+import type { AdminNavItems } from "@/app/types";
 
 export function AppSidebar({ items }: { items: AdminNavItems }) {
   const pathname = usePathname();

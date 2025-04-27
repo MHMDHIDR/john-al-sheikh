@@ -7,7 +7,7 @@ export type MockTestMessage = {
   audioUrl?: string; // For examiner's TTS audio
 };
 
-type MockTestState = {
+export type MockTestState = {
   messages: MockTestMessage[];
   currentSection: "intro" | "topic" | "followup" | "complete";
   selectedTopic?: string;
@@ -32,7 +32,7 @@ export function MockTestContextProvider({ children }: { children: React.ReactNod
   const [state, setState] = useState<MockTestState>(() => {
     if (typeof window === "undefined") return { messages: [], currentSection: "intro" };
     const saved = sessionStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : { messages: [], currentSection: "intro" };
+    return saved ? (JSON.parse(saved) as MockTestState) : { messages: [], currentSection: "intro" };
   });
 
   useEffect(() => {

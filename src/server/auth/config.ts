@@ -69,7 +69,7 @@ export const authConfig = {
                 id: user.id, // Use the same user ID that will be used for the account
                 name: profile.name ?? user.name ?? "Unknown",
                 email: profile.email!,
-                image: profile.picture ?? user.image ?? getFullImageUrl("logo.svg"),
+                image: (profile.picture as string) ?? user.image ?? getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
               })
@@ -89,7 +89,7 @@ export const authConfig = {
           if (existingUser && !existingUser.image) {
             await db
               .update(users)
-              .set({ image: profile.picture ?? getFullImageUrl("logo.svg") })
+              .set({ image: (profile.picture as string) ?? getFullImageUrl("logo.svg") })
               .where(eq(users.email, user.email!));
           }
 

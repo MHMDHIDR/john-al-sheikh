@@ -7,7 +7,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { auth } from "@/server/auth";
 import { UserRole } from "@/server/db/schema";
-import type { AdminNavItems } from "@/types";
+import type { AdminNavItems } from "@/app/types";
 
 export default async function DashboardLayout({
   children,

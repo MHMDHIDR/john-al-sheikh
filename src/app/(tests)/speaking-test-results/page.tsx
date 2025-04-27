@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
