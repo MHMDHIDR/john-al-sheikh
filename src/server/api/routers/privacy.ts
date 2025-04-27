@@ -32,7 +32,7 @@ export const privacyRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "لا يوجد محتوى للخصوصية" });
       }
 
-      return ctx.db
+      await ctx.db
         .update(privacyContent)
         .set({
           content: input.content,

@@ -14,13 +14,14 @@ export const metadata: Metadata = {
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 
-// export const dynamic = "force-static";
-
 export default async function PrivacyPage() {
-  const session = await auth();
   const content = await api.privacy.getLatestContent();
-
   if (!content) notFound();
+
+  const session = await auth();
+  const isAdmin = session?.user
+    ? checkRoleAccess(session.user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
+    : false;
 
   const LAST_UPDATED_DATE_OPTIONS = {
     weekday: "long",
@@ -46,10 +47,7 @@ export default async function PrivacyPage() {
         {new Date(content.updatedAt).toLocaleDateString("ar-SA", LAST_UPDATED_DATE_OPTIONS)}
       </p>
 
-      <PrivacyContent
-        content={content.content}
-        isAdmin={checkRoleAccess(session?.user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])}
-      />
+      <PrivacyContent content={content.content} isAdmin={isAdmin} />
     </div>
   );
 }
