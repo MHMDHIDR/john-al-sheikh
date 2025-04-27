@@ -31,7 +31,7 @@ export default async function PrivacyPage() {
   } as Intl.DateTimeFormatOptions;
 
   return (
-    <div className="container mx-auto px-4 py-8 text-right" dir="rtl">
+    <div className="container mx-auto px-4 py-8 text-right max-w-[800px]" dir="rtl">
       <Link
         href="/"
         className="flex items-center justify-start gap-2 text-lg hover:underline underline-offset-6"
