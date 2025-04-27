@@ -1,6 +1,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { openaiRouter } from "./routers/openai";
 import { optimizeImageRouter } from "./routers/optimize-image";
+import { privacyRouter } from "./routers/privacy";
 import { S3Router } from "./routers/s3";
 import { usersRouter } from "./routers/users";
 
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   optimizeImage: optimizeImageRouter,
   S3: S3Router,
   openai: openaiRouter,
+  privacy: privacyRouter,
 });
 
 // export type definition of API

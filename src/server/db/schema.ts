@@ -170,6 +170,22 @@ export const speakingTests = createTable("speaking_test", {
 
 export type SpeakingTest = typeof speakingTests.$inferSelect;
 
+export const privacyContent = createTable("privacy_content", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  content: text("content").notNull(),
+  version: integer("version").notNull().default(1),
+  isPublished: boolean("is_published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdById: varchar("created_by_id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -186,4 +202,11 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const speakingTestsRelations = relations(speakingTests, ({ one }) => ({
   user: one(users, { fields: [speakingTests.userId], references: [users.id] }),
+}));
+
+export const privacyContentRelations = relations(privacyContent, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [privacyContent.createdById],
+    references: [users.id],
+  }),
 }));
