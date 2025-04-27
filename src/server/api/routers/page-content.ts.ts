@@ -1,19 +1,27 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { privacyContent, UserRole } from "@/server/db/schema";
+import { contentTypeEnum, pageContent, UserRole } from "@/server/db/schema";
 
-export const privacyRouter = createTRPCRouter({
-  getLatestContent: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.db.query.privacyContent.findFirst({
-      where: (privacyContent, { eq }) => eq(privacyContent.isPublished, true),
-    });
-  }),
+export const pageContentRouter = createTRPCRouter({
+  getLatestContent: publicProcedure
+    .input(z.enum(contentTypeEnum.enumValues))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.query.pageContent.findFirst({
+        where: and(eq(pageContent.type, input), eq(pageContent.isPublished, true)),
+      });
+    }),
 
   updateContent: protectedProcedure
-    .input(z.object({ content: z.string(), isPublished: z.boolean().optional() }))
+    .input(
+      z.object({
+        type: z.enum(contentTypeEnum.enumValues),
+        content: z.string(),
+        isPublished: z.boolean().optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const IS_AUTHORIZED = checkRoleAccess(ctx.session.user.role, [
         UserRole.SUPER_ADMIN,
@@ -24,8 +32,8 @@ export const privacyRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح بالوصول" });
       }
 
-      const latest = await ctx.db.query.privacyContent.findFirst({
-        orderBy: [desc(privacyContent.version)],
+      const latest = await ctx.db.query.pageContent.findFirst({
+        where: eq(pageContent.type, input.type),
       });
 
       if (!latest) {
@@ -33,14 +41,14 @@ export const privacyRouter = createTRPCRouter({
       }
 
       await ctx.db
-        .update(privacyContent)
+        .update(pageContent)
         .set({
+          type: input.type,
           content: input.content,
-          version: latest.version,
           isPublished: input.isPublished ?? true,
           publishedAt: new Date(),
           createdById: ctx.session.user.id,
         })
-        .where(eq(privacyContent.id, latest.id));
+        .where(eq(pageContent.id, latest.id));
     }),
 });

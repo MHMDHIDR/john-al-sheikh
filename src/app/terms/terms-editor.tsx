@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
 
-export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin: boolean }) {
+export function TermsContent({ content, isAdmin }: { content: string; isAdmin: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -30,9 +30,9 @@ export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin:
 
   const { success, error: errorToast } = useToast();
 
-  const updatePrivacyContent = api.pageContent.updateContent.useMutation({
+  const updateTermsContent = api.pageContent.updateContent.useMutation({
     onSuccess: () => {
-      success("تم تعديل المحتوى الخاص بالخصوصية");
+      success("تم تعديل المحتوى الخاص بالشروط والأحكام");
     },
     onError: error => {
       errorToast(error.message);
@@ -53,7 +53,7 @@ export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin:
   const handleSave = async () => {
     if (!editor) return;
 
-    await updatePrivacyContent.mutateAsync({ content: editor.getHTML(), type: "PRIVACY" });
+    await updateTermsContent.mutateAsync({ content: editor.getHTML(), type: "TERMS" });
   };
 
   return (
@@ -75,8 +75,8 @@ export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin:
             {isEditing ? "إلغاء" : "تعديل"}
           </Button>
           {isEditing && (
-            <Button onClick={handleSave} disabled={updatePrivacyContent.isPending} variant="active">
-              {updatePrivacyContent.isPending ? <Loader2 className="size-4 animate-spin" /> : "حفظ"}
+            <Button onClick={handleSave} disabled={updateTermsContent.isPending} variant="active">
+              {updateTermsContent.isPending ? <Loader2 className="size-4 animate-spin" /> : "حفظ"}
             </Button>
           )}
         </div>

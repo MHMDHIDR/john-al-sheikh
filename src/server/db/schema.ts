@@ -33,11 +33,13 @@ export const userStatusEnum = pgEnum("jas_user_status", ["PENDING", "ACTIVE", "S
 export const themeEnum = pgEnum("jas_theme", ["light", "dark"]);
 export const genderEnum = pgEnum("jas_gender", ["male", "female"]);
 export const speakingTestEnum = pgEnum("jas_speaking_test_type", ["MOCK", "PRACTICE", "OFFICIAL"]);
+export const contentTypeEnum = pgEnum("jas_content_type", ["PRIVACY", "TERMS"]);
 
 export type themeEnumType = (typeof themeEnum.enumValues)[number];
 export type genderEnumType = (typeof genderEnum.enumValues)[number];
-
 export type UserRoleType = keyof typeof UserRole;
+export type PageContent = typeof pageContent.$inferSelect;
+export type ContentType = (typeof contentTypeEnum.enumValues)[number];
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
@@ -170,13 +172,13 @@ export const speakingTests = createTable("speaking_test", {
 
 export type SpeakingTest = typeof speakingTests.$inferSelect;
 
-export const privacyContent = createTable("privacy_content", {
+export const pageContent = createTable("page_content", {
   id: varchar("id", { length: 255 })
     .notNull()
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  type: contentTypeEnum("type").notNull(),
   content: text("content").notNull(),
-  version: integer("version").notNull().default(1),
   isPublished: boolean("is_published").notNull().default(false),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -204,9 +206,9 @@ export const speakingTestsRelations = relations(speakingTests, ({ one }) => ({
   user: one(users, { fields: [speakingTests.userId], references: [users.id] }),
 }));
 
-export const privacyContentRelations = relations(privacyContent, ({ one }) => ({
+export const pageContentRelations = relations(pageContent, ({ one }) => ({
   createdBy: one(users, {
-    fields: [privacyContent.createdById],
+    fields: [pageContent.createdById],
     references: [users.id],
   }),
 }));

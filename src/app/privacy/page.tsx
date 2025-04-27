@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PrivacyPage() {
-  const content = await api.privacy.getLatestContent();
+  const content = await api.pageContent.getLatestContent("PRIVACY");
   if (!content) notFound();
 
   const session = await auth();
@@ -42,7 +42,7 @@ export default async function PrivacyPage() {
 
       <h1 className="text-center text-2xl font-bold my-6">سياسة الخصوصية</h1>
 
-      <p className="mb-4" data-updated-at>
+      <p className="mb-4" data-page-content-intro>
         آخر تحديث:{" "}
         {new Date(content.updatedAt).toLocaleDateString("ar-SA", LAST_UPDATED_DATE_OPTIONS)}
       </p>
