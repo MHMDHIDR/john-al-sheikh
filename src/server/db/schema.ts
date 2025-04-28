@@ -14,9 +14,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
+// Create everything with the jas_ prefix to match table naming
 export const createTable = pgTableCreator(name => `jas_${name}`);
-
-// First, create all enums with the jas_ prefix to match table naming
 
 export const UserRole = {
   SUPER_ADMIN: "SUPER_ADMIN",

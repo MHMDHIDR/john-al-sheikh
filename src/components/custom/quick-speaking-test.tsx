@@ -347,7 +347,7 @@ export function SpeakTest() {
         </div>
 
         <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
-          <h3 className="mb-2 text-lg font-medium text-gray-900 drop-shadow-sm">التعليمات:</h3>
+          <h2 className="mb-2 text-lg font-medium text-gray-900 drop-shadow-sm">التعليمات:</h2>
           <ul className="list-disc space-y-2 text-gray-700 drop-shadow-sm">
             <li>تحدث بوضوح في الميكروفون</li>
             <li>حاول استخدام مجموعة متنوعة من المفردات والتراكيب النحوية</li>
