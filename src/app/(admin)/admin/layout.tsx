@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   const user = session?.user;
-  const ALLOWED_ROLES = [UserRole.SUPER_ADMIN] as const;
+  const ALLOWED_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN] as const;
 
   const adminNavItems: AdminNavItems = {
     navMain: [
