@@ -16,7 +16,9 @@ export default function Divider({
       )}
     >
       {children ? (
-        <span className="z-10 px-2 select-none bg-background text-primary/80">{children}</span>
+        <span className="z-10 px-2 select-none bg-background text-primary/70 text-sm">
+          {children}
+        </span>
       ) : null}
     </div>
   );

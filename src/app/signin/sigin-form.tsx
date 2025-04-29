@@ -36,58 +36,66 @@ export default function SiginForm() {
   };
 
   return (
-    <Card className="min-w-96 border-gray-300 select-none">
-      <CardHeader>
-        <h1 className="mb-6 text-2xl font-bold text-center">تسجيل الدخول إلى حسابك</h1>
-        <CardDescription className="text-center">
-          تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button onClick={handleGoogleSignIn} variant={"outline"} className="w-full cursor-pointer">
-          <GoogleIcon className="inline-block mx-1" />
-          المتابعة عن طريق حساب Google
-        </Button>
+    <div className="flex flex-col items-center gap-y-2">
+      <Card className="w-96 md:min-w-110 border-gray-300 select-none">
+        <CardHeader className="md:px-10">
+          <h1 className="mb-6 text-2xl font-bold text-center">تسجيل الدخول إلى حسابك</h1>
+          <CardDescription className="text-center">
+            تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="md:px-10">
+          <Button
+            onClick={handleGoogleSignIn}
+            variant={"outline"}
+            className="w-full cursor-pointer h-10"
+          >
+            <GoogleIcon className="inline-block mx-1" />
+            المتابعة عن طريق حساب Google
+          </Button>
 
-        <Divider className="my-5" />
+          <Divider className="my-5">أو</Divider>
 
-        <form action={handleSigninAction} className="space-y-3">
-          <div className="items-center w-full grid gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="email">
-                <strong>البريد الإلكتروني</strong>
-              </Label>
-              {!state.success && <span className="text-red-700">{state.message}</span>}
-              {state.success && <span className="text-green-700">{state.message}</span>}
-              <Input type="email" name="email" id="email" placeholder="البريد الإلكتروني" />
-              <Button
-                className={clsx("w-full cursor-pointer bg-gray-200 text-black hover:bg-gray-300", {
-                  "pointer-events-none cursor-not-allowed": isPending,
-                })}
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <IconLoader className="w-5 h-5 mr-2 animate-spin" />
-                ) : (
-                  <IconMail className="inline-block w-6 h-6 mx-1" />
-                )}
-                تسجيل الدخول بالبريد الإلكتروني
-              </Button>
-
-              <p className="text-sm text-gray-500">
-                بالمتابعة، أنت توافق على
-                <Link href="/terms" className="text-blue-500 inline-flex px-1 hover:underline">
-                  شروط الخدمة
-                </Link>
-                و
-                <Link href="/privacy" className="text-blue-500 inline-flex px-1 hover:underline">
-                  سياسة الخصوصية
-                </Link>
-              </p>
+          <form action={handleSigninAction} className="space-y-3">
+            <div className="items-center w-full grid gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="email">
+                  <strong>البريد الإلكتروني</strong>
+                </Label>
+                {!state.success && <span className="text-red-700">{state.message}</span>}
+                {state.success && <span className="text-green-700">{state.message}</span>}
+                <Input type="email" name="email" id="email" placeholder="البريد الإلكتروني" />
+                <Button
+                  className={clsx(
+                    "w-full h-10 cursor-pointer bg-gray-200 text-black hover:bg-gray-300",
+                    {
+                      "pointer-events-none cursor-not-allowed": isPending,
+                    },
+                  )}
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <IconLoader className="size-6 mr-2 animate-spin" />
+                  ) : (
+                    <IconMail className="inline-block size-6 mx-1" />
+                  )}
+                  تسجيل الدخول بالبريد الإلكتروني
+                </Button>
+              </div>
             </div>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+      <p className="text-sm text-gray-500">
+        بالمتابعة، أنت توافق على
+        <Link href="/terms" className="text-blue-500 inline-flex px-1 hover:underline">
+          شروط الخدمة
+        </Link>
+        و
+        <Link href="/privacy" className="text-blue-500 inline-flex px-1 hover:underline">
+          سياسة الخصوصية
+        </Link>
+      </p>
+    </div>
   );
 }
