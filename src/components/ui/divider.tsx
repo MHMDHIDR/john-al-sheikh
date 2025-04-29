@@ -1,6 +1,13 @@
 import { cn } from "@/lib/utils";
+import type { JSX } from "react";
 
-export function Divider({ children, className }: { children?: string; className?: string }) {
+export default function Divider({
+  children,
+  className,
+}: {
+  children?: string | JSX.Element;
+  className?: string;
+}) {
   return (
     <div
       className={cn(
@@ -14,5 +21,3 @@ export function Divider({ children, className }: { children?: string; className?
     </div>
   );
 }
-
-export default Divider;

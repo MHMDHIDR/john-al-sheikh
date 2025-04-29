@@ -21,8 +21,7 @@ export default function Nav({
   const { data: session } = useSession();
   const currentUser = session?.user ?? user;
 
-  return (pathname.includes("/dashboard") || pathname.includes("/vendor-manager")) &&
-    isHidden ? null : (
+  return pathname.includes("/admin") && isHidden ? null : (
     <header className="w-full border-b border-gray-300 shadow-xs sticky top-0 z-40 bg-white dark:bg-black/90">
       <div className="flex items-center justify-between px-2 md:px-1.5 p-1.5 md:py-2 max-w-(--breakpoint-xl) mx-auto">
         <Link href="/" className="flex select-none gap-x-2 text-xl font-bold text-primary">
@@ -31,9 +30,7 @@ export default function Nav({
         </Link>
         <nav className="flex items-center gap-4">
           {user ? (
-            <>
-              <AccountNav user={currentUser!} />
-            </>
+            <AccountNav user={currentUser!} />
           ) : (
             <Link href="/signin">
               <Button className="cursor-pointer">تسجيل الدخول</Button>

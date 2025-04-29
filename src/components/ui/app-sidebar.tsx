@@ -34,8 +34,8 @@ export function AppSidebar({ items }: { items: AdminNavItems }) {
   };
 
   return (
-    <Sidebar>
-      <SidebarContent className="select-none">
+    <Sidebar side="right">
+      <SidebarContent className="select-none py-14">
         {items.navMain.map(item => (
           <SidebarGroup key={item.title}>
             <SidebarGroupLabel>

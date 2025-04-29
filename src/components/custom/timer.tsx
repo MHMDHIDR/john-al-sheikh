@@ -54,12 +54,16 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   };
 
   return (
-    <div className="flex flex-col items-center select-none justify-center space-y-1">
+    <div className="flex flex-col items-center select-none justify-center md:space-y-1.5 space-x-1.5 md:space-x-0">
       <div className={`text-xl font-bold ${getTimerColor()}`}>
         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>
       <div className="text-xs font-bold text-muted-foreground">
-        {mode === "preparation" ? "وقت التحضير" : "الوقت المتبقي من نهاية الاختبار"}
+        {mode === "preparation" ? (
+          "وقت التحضير"
+        ) : (
+          <span className="hidden md:inline-flex">الوقت المتبقي من نهاية الاختبار</span>
+        )}
       </div>
     </div>
   );

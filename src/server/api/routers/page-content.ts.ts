@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";

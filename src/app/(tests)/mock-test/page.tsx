@@ -1,18 +1,18 @@
 "use client";
 
-import { useConversation } from "@11labs/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import IELTSSpeakingRecorder from "@/components/custom/ielts-speaking-recorder";
-import { Timer } from "@/components/custom/timer";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { cn } from "@/lib/utils";
 
 export default function MockTestPage() {
-  const { messages } = useMockTestStore();
-  const { status } = useConversation();
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? "";
 
+  const { messages } = useMockTestStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -22,12 +22,16 @@ export default function MockTestPage() {
   useEffect(() => scrollToBottom(), [messages]);
 
   return (
-    <main className="min-h-fit bg-white flex flex-col items-center">
-      <AuroraText className="m-2 mt-0 sticky top-12 py-1 shadow bg-white w-full text-center z-20 text-2xl font-bold text-gray-900 select-none">
+    <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip">
+      <AuroraText
+        className={
+          "m-2 sticky mt-0 top-12 md:top-13 py-1.5 mx-0 shadow min-w-full text-center z-20 text-xl font-bold bg-white/50 backdrop-blur-md text-gray-900 select-none"
+        }
+      >
         اختبار المحادثة
       </AuroraText>
 
-      <div className="relative w-full max-w-4xl mx-auto">
+      <div className="relative w-full max-w-4xl">
         <InteractiveGridPattern
           className={cn(
             "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -39,7 +43,7 @@ export default function MockTestPage() {
           squaresClassName="hover:fill-blue-200"
         />
 
-        <div className="relative z-10 flex flex-col min-h-[600px] bg-white rounded-lg overflow-hidden">
+        <div className="relative z-10 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4 ltr">
             {messages.map((message, index) => (
               <div
@@ -68,17 +72,9 @@ export default function MockTestPage() {
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-20 w-full bg-gray-50 flex flex-col">
-        <IELTSSpeakingRecorder />
-        <div className="flex justify-between items-center select-none px-4 py-2">
-          <Timer
-            mode={"recording"}
-            isRunning={status === "connected"}
-            onTimeUp={() => {
-              console.log("Time's up!");
-            }}
-            totalSeconds={300}
-          />
+      <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 py-2 backdrop-blur-md flex flex-col">
+        <div className="flex justify-between items-center select-none px-4">
+          <IELTSSpeakingRecorder userId={userId} />
         </div>
       </div>
     </main>

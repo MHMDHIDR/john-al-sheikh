@@ -58,7 +58,7 @@ export function DataTable<TData extends BaseEntity>({
         }
         onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
-        className={clsx("relative w-4 h-4 flex items-center justify-center", {
+        className={clsx("relative w-4 h-4 flex items-center justify-center mx-3", {
           "hover:after:content-['✔'] hover:after:absolute hover:after:top-0 hover:after:left-0 hover:after:w-full hover:after:h-full hover:after:flex hover:after:items-center hover:after:justify-center hover:after:text-xs":
             !table.getIsAllPageRowsSelected(),
         })}
@@ -69,7 +69,7 @@ export function DataTable<TData extends BaseEntity>({
         checked={row.getIsSelected()}
         onCheckedChange={value => row.toggleSelected(!!value)}
         aria-label="Select row"
-        className={clsx("relative w-4 h-4 flex items-center justify-center", {
+        className={clsx("relative w-4 h-4 flex items-center justify-center mx-3", {
           "hover:after:content-['✔'] hover:after:absolute hover:after:top-0 hover:after:left-0 hover:after:w-full hover:after:h-full hover:after:flex hover:after:items-center hover:after:justify-center hover:after:text-xs":
             !row.getIsSelected(),
         })}

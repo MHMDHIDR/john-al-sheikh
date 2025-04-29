@@ -1,135 +1,386 @@
 "use client";
 
-import { useConversation } from "@11labs/react";
-import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { env } from "@/env";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
+import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
+import { vapi } from "@/lib/vapi.sdk";
+import { api } from "@/trpc/react";
+import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
+import type { Session } from "next-auth";
 
-export default function IELTSSpeakingRecorder() {
+const IELTS_ASSISTANT_CONFIG = {
+  name: "IELTS Examiner",
+  firstMessage:
+    "Hey there, I'm John Al-Sheikh, the IELTS examiner, can you please introduce yourself?",
+  model: {
+    provider: "openai",
+    model: "gpt-3.5-turbo",
+    temperature: 0.4,
+    messages: [
+      {
+        role: "system",
+        content: `
+          Introduce yourself as "John Al-Sheikh", the IELTS examiner, Before starting the test, please remind the candidate that the test will last for 10 minutes, as this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
+
+          First and foremost, ask the candidate to introduce himself/herself, you MUST wait for the candidate to respond first.
+
+          After the candidate has introduced himself/herself, begin with section 1 of the test.
+          Section 1: Introduction and General Questions (2-3 minutes)
+          - DO NOT proceed to Section 1 until the candidate has introduced himself/herself.
+          - Ask the candidate about familiar topics like their home, family, work, studies, or interests.
+          - Ask ONE follow-up question based on their response.
+
+          Section 2: Individual Long Turn (2-3 minutes)
+          - Give the candidate a topic title.
+          - Allow them ONE minute to prepare.
+          - DO NOT give the candidate any other instructions or commands on when to start speaking.
+          - Let them speak for up to TWO minutes without interruption.
+          - The topic should be general enough for anyone to discuss (e.g., "Describe a skill you would like to learn", "Describe a time you were late for work", "A hobby you enjoy doing at free time", "Describe a time you were in a traffic jam").
+
+          Section 3: Two-way Discussion (3-4 minutes)
+          - Ask TWO deeper, more abstract questions related to the Section 2 topic, and allow the candidate to speak for up to 2 minutes for each question.
+
+          After receiving answers to these questions, inform the candidate that the test is now complete and thank them for their participation. End the test by saying EXACTLY "That concludes our IELTS speaking test. Thank you for your participation."
+
+          Important guidelines:
+          - DO NOT offer the candidate any recordings of any kind.
+          - Speak clearly and use professional language.
+          - Ask one question at a time.
+          - Allow the candidate to finish speaking before responding.
+          - Do not provide feedback on performance during the test.
+          - Be encouraging but neutral in your responses.
+          - Keep track of which section you're in and manage the timing accordingly.
+          - Indicate clearly when moving to a new section.
+          - ALWAYS end the test with the EXACT phrase: "That concludes our IELTS speaking test. Thank you for your participation."
+
+          CRITICAL Notice: You must STRICTLY stay within the scope of the IELTS speaking test. If the candidate attempts to discuss any unrelated topics or asks you about anything outside the test context, respond with: "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test." Do not deviate from your role as an IELTS examiner under any circumstances.
+        `,
+      },
+    ],
+  },
+  voice: {
+    provider: "11labs",
+    voiceId: "mark",
+  },
+  transcriber: {
+    provider: "deepgram",
+    model: "nova-2",
+    language: "en-US",
+  },
+} as CreateAssistantDTO;
+
+// Words or phrases that indicate the test is complete
+const TEST_CONCLUSION_PHRASES = [
+  "concludes our",
+  "end of the test",
+  "test is complete",
+  "test is now complete",
+  "test has ended",
+  "thank you for your participation",
+  "that concludes",
+];
+
+export default function IELTSSpeakingRecorder({ userId }: { userId: Session["user"]["id"] }) {
   const [hasPermission, setHasPermission] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [permissionRequested, setPermissionRequested] = useState(false);
+  const [isTestCompleted, setIsTestCompleted] = useState(false);
+  const [isProcessingResults, setIsProcessingResults] = useState(false);
 
-  const { addMessage } = useMockTestStore();
+  const router = useRouter();
+  const { messages, clearTest, addMessage } = useMockTestStore();
 
-  const agentId = env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+  const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
+  const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
 
-  const { status, startSession, endSession, setVolume } = useConversation({
+  // Check if the message contains any test conclusion phrases
+  const isTestConclusionMessage = useCallback((content: string) => {
+    const lowerContent = content.toLowerCase();
+    return TEST_CONCLUSION_PHRASES.some(phrase => lowerContent.includes(phrase));
+  }, []);
+
+  // Process the test results
+  const processTestResults = useCallback(async () => {
+    if (isProcessingResults || messages.length < 3) return; // Make sure we have enough messages
+
+    setIsProcessingResults(true);
+
+    try {
+      // Check if we have any messages to analyze
+      if (messages.length < 3) {
+        setErrorMessage("لم يتم إكمال الاختبار بشكل صحيح");
+        setIsProcessingResults(false);
+        setIsTestCompleted(false);
+        return;
+      }
+
+      // Get topic from examiner messages (typically from section 2)
+      const topicMessage = messages.find(
+        msg =>
+          msg.role === "examiner" &&
+          (msg.content.toLowerCase().includes("describe") ||
+            msg.content.toLowerCase().includes("talk about")),
+      );
+
+      const topic = topicMessage?.content ?? "IELTS Speaking Test";
+
+      // Use the new procedure that analyzes the full conversation
+      const analysis = await analyzeFullIELTSConversation.mutateAsync({
+        conversation: messages,
+      });
+
+      if (analysis.success && analysis.feedback) {
+        // Create results object from the new structured feedback
+        const results = {
+          overallBand: analysis.feedback.band,
+          fluencyAndCoherence: analysis.feedback.fluencyAndCoherence,
+          lexicalResource: analysis.feedback.lexicalResource,
+          grammaticalRangeAndAccuracy: analysis.feedback.grammaticalRangeAndAccuracy,
+          pronunciation: analysis.feedback.pronunciation,
+          feedback: analysis.feedback.feedback,
+        };
+
+        // Save results to session storage
+        sessionStorage.setItem("ieltsResult", JSON.stringify(results));
+
+        // Save results to the database
+        try {
+          // Convert messages format for database
+          const transformedMessages = messages.map(msg => ({
+            role: msg.role === "examiner" ? ("examiner" as const) : ("user" as const),
+            content: msg.content,
+            timestamp: msg.timestamp,
+          }));
+
+          // Save to database
+          await saveSpeakingTest.mutateAsync({
+            userId,
+            type: "MOCK",
+            transcription: {
+              messages: transformedMessages,
+            },
+            topic: topic,
+            band: analysis.feedback.band,
+            feedback: {
+              strengths: analysis.feedback.strengths,
+              areasToImprove: analysis.feedback.areasToImprove,
+              improvementTips: analysis.feedback.improvementTips,
+            },
+          });
+
+          console.log("Speaking test results saved to database");
+        } catch (dbError) {
+          console.error("Error saving to database:", dbError);
+          // Continue anyway to show results to user
+        }
+
+        // Clear test data
+        clearTest();
+
+        // Navigate to results page
+        router.push("/speaking-test-results");
+      } else {
+        // Set error message and prevent further processing attempts
+        setErrorMessage(analysis.error ?? "فشل في تحليل نتائج الاختبار");
+        setIsTestCompleted(false); // Reset this flag to prevent further attempts
+      }
+    } catch (error) {
+      console.error("Error processing test results:", error);
+      setErrorMessage("حدث خطأ أثناء معالجة نتائج الاختبار");
+      setIsTestCompleted(false); // Reset this flag to prevent further attempts
+    } finally {
+      setIsProcessingResults(false);
+    }
+  }, [
+    messages,
+    analyzeFullIELTSConversation,
+    saveSpeakingTest,
+    clearTest,
+    router,
+    userId,
+    isProcessingResults,
+  ]);
+
+  // Process results when test is completed
+  useEffect(() => {
+    if (isTestCompleted && !isProcessingResults) {
+      void processTestResults();
+    }
+  }, [isTestCompleted, isProcessingResults, processTestResults]);
+
+  const { callStatus, isMuted, startSession, setVolume } = useVapiConversation({
     onConnect: () => {
-      console.log("Connected to ElevenLabs");
+      console.info("Connected to IELTS Assistant Agent");
     },
     onDisconnect: () => {
-      console.log("Disconnected from ElevenLabs");
+      console.info("Disconnected from IELTS Assistant Agent");
+      // We don't need to call processTestResults here as the useEffect will handle it
+      // This was causing duplicate calls and potential infinite loops
     },
-    onMessage: ({ message: content, source }) => {
-      const role = source === "ai" ? "examiner" : "candidate";
+    onMessage: message => {
+      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
       const timestamp = new Date().toLocaleTimeString();
+      const messageContent = { role, content: message.content, timestamp };
+      addMessage(messageContent);
 
-      addMessage({ role, content, timestamp });
-
-      console.log("Received message:", content);
+      // Check if this message indicates test completion
+      if (role === "examiner" && isTestConclusionMessage(message.content)) {
+        setIsTestCompleted(true);
+        // Add a small delay to let the message be processed
+        setTimeout(() => {
+          // You could use vapi.send() here if needed
+          // Or use vapi.stop() to end the call after the test is concluded
+          vapi.stop();
+        }, 5000);
+      }
     },
-    onError: (error: string | Error) => {
-      setErrorMessage(typeof error === "string" ? error : error.message);
-      console.error("Error:", error);
+    onError: error => {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "errorMsg" in error
+            ? (error as { errorMsg: string }).errorMsg
+            : JSON.stringify(error);
+      setErrorMessage(
+        typeof error === "object" && error !== null && "errorMsg" in error
+          ? (error as { errorMsg: string }).errorMsg
+          : errorMsg,
+      );
+      console.error("Error:", errorMsg);
+    },
+    onSpeechStart: () => {
+      console.log("Speech started");
+    },
+    onSpeechEnd: () => {
+      console.log("Speech ended");
     },
   });
 
-  useEffect(() => {
-    // Request microphone permission on component mount
-    const requestMicPermission = async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setHasPermission(true);
-      } catch (error) {
-        setErrorMessage("Microphone access denied");
-        console.error("Error accessing microphone:", error);
-      }
-    };
+  const requestMicPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setHasPermission(true);
+      setErrorMessage("");
+      setShowPermissionDialog(false);
 
-    void requestMicPermission();
-  }, []);
+      // Clean up the stream when permission is granted
+      stream.getTracks().forEach(track => track.stop());
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون");
+      setShowPermissionDialog(true);
+    }
+  };
+
+  // Handle initial permission check
+  useEffect(() => {
+    if (!permissionRequested) {
+      void requestMicPermission();
+      setPermissionRequested(true);
+    }
+  }, [permissionRequested]);
 
   const handleStartConversation = async () => {
+    if (!hasPermission) {
+      setShowPermissionDialog(true);
+      return;
+    }
+
     try {
-      // Replace with your actual agent ID or URL
-      const conversationId = await startSession({
-        agentId,
-      });
-      console.log("Started conversation:", conversationId);
+      setErrorMessage("");
+      setIsTestCompleted(false);
+      await startSession(IELTS_ASSISTANT_CONFIG);
     } catch (error) {
-      setErrorMessage("Failed to start conversation");
+      setErrorMessage(typeof error === "string" ? error : (error as Error).message);
       console.error("Error starting conversation:", error);
     }
   };
 
-  const handleEndConversation = async () => {
-    try {
-      await endSession();
-    } catch (error) {
-      setErrorMessage("Failed to end conversation");
-      console.error("Error ending conversation:", error);
-    }
-  };
+  // const handleEndConversation = async () => {
+  //   try {
+  //     endSession();
+  //   } catch (error) {
+  //     setErrorMessage("فشل الانتهاء من المحادثة");
+  //     console.error("Error ending conversation:", error);
+  //   }
+  // };
 
   const toggleMute = () => {
     try {
-      setVolume({ volume: isMuted ? 1 : 0 });
-      setIsMuted(!isMuted);
+      setVolume(isMuted ? 1 : 0);
     } catch (error) {
-      setErrorMessage("Failed to change volume");
       console.error("Error changing volume:", error);
     }
   };
 
+  const isConnected = callStatus === CallStatus.ACTIVE;
+
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader hidden>
-        <CardTitle className="flex items-center justify-between"></CardTitle>
-      </CardHeader>
+      {errorMessage && (
+        <CardHeader className="py-0 text-center">
+          <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
+        </CardHeader>
+      )}
       <CardContent className="p-0">
         <div className="flex justify-center items-center gap-x-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleMute}
-            disabled={status !== "connected"}
+            disabled={!isConnected}
+            title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
           >
-            {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-5" />}
           </Button>
 
-          {status === "connected" ? (
-            <Button variant="destructive" onClick={handleEndConversation} className="w-full">
-              <MicOff className="mx-2 h-4 w-4" />
-              إيقاف المحادثة
-            </Button>
-          ) : (
+          {!isConnected && (
             <Button
               onClick={handleStartConversation}
-              disabled={!hasPermission}
+              disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
               className="w-full cursor-pointer"
             >
-              <Mic className="mx-2 h-4 w-4" />
-              بدأ المحادثة
+              <Mic className="mx-2 size-5" />
+              {callStatus === CallStatus.CONNECTING
+                ? "جاري بدأ الاختبار..."
+                : isProcessingResults
+                  ? "جاري معالجة النتائج..."
+                  : "بدأ الاختبار"}
             </Button>
           )}
         </div>
 
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-        {!hasPermission && (
-          <p className="text-yellow-600 text-xs">
-            Please allow microphone access to use voice chat
-          </p>
-        )}
-
-        {/* <div className="text-center text-sm">
-          {status === "connected" && (
-            <p className="text-green-600">{isSpeaking ? "Agent is speaking..." : "Listening..."}</p>
-          )}
-        </div> */}
+        <ConfirmationDialog
+          open={showPermissionDialog}
+          onOpenChange={setShowPermissionDialog}
+          title="الميكروفون مطلوب"
+          description={
+            <div className="flex flex-col text-right">
+              <p>
+                <strong>يرجى السماح بوصول الميكروفون لاستخدام المحادثة بالصوت</strong>
+              </p>
+              <Link
+                href="https://support.google.com/chrome/answer/2693767?hl=en-GB"
+                target="_blank"
+              >
+                <Button variant="link" className="px-0">
+                  <ExternalLink className="size-4" />
+                  كيف أسمح بوصول الميكروفون للمحادثة بالصوت؟
+                </Button>
+              </Link>
+            </div>
+          }
+          buttonText="السماح بوصول الميكروفون"
+          buttonClass="bg-yellow-600 hover:bg-yellow-700"
+          onConfirm={requestMicPermission}
+        />
       </CardContent>
     </Card>
   );

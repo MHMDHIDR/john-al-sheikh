@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { JohnAlSheikhLoadingPage } from "@/components/custom/loading";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Card } from "@/components/ui/card";
@@ -22,6 +23,17 @@ type Results = {
     grammaticalRangeAndAccuracy: string;
     pronunciation: string;
   };
+  strengths?: {
+    summary: string;
+    points: string[];
+  };
+  areasToImprove?: {
+    errors: Array<{
+      mistake: string;
+      correction: string;
+    }>;
+  };
+  improvementTips?: string[];
 };
 
 export default function SpeakingTestResults() {
@@ -49,17 +61,16 @@ export default function SpeakingTestResults() {
   }, [loading, results, router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-t-transparent"></div>
-      </div>
-    );
+    return <JohnAlSheikhLoadingPage />;
   }
 
   if (!results) return null;
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+    <main
+      className="min-h-screen bg-white flex flex-col select-none items-center justify-center p-4"
+      dir="rtl"
+    >
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -74,26 +85,26 @@ export default function SpeakingTestResults() {
       <div className="relative z-10 w-full max-w-4xl space-y-8">
         <div className="text-center">
           <AuroraText className="mx-2 text-3xl font-bold text-gray-900">
-            Speaking Test Results
+            نتائج اختبار المحادثة
           </AuroraText>
           <div className="mt-4 text-5xl font-bold text-blue-600">
             {results.overallBand.toFixed(1)}
           </div>
-          <p className="mt-2 text-gray-600">Overall Band Score</p>
+          <p className="mt-2 text-gray-600">الدرجة الكلية</p>
         </div>
 
         <Card className="p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Detailed Assessment</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">التقييم التفصيلي</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Fluency & Coherence:</span>
+                <span className="font-medium">الطلاقة والتماسك:</span>
                 <span className="text-blue-600 font-bold">
                   {results.fluencyAndCoherence.toFixed(1)}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Lexical Resource:</span>
+                <span className="font-medium">الثروة اللغوية:</span>
                 <span className="text-blue-600 font-bold">
                   {results.lexicalResource.toFixed(1)}
                 </span>
@@ -101,13 +112,13 @@ export default function SpeakingTestResults() {
             </div>
             <div className="flex flex-col">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Grammatical Range:</span>
+                <span className="font-medium">المدى والدقة النحوية:</span>
                 <span className="text-blue-600 font-bold">
                   {results.grammaticalRangeAndAccuracy.toFixed(1)}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Pronunciation:</span>
+                <span className="font-medium">النطق:</span>
                 <span className="text-blue-600 font-bold">{results.pronunciation.toFixed(1)}</span>
               </div>
             </div>
@@ -117,7 +128,7 @@ export default function SpeakingTestResults() {
         <div className="grid gap-6 md:grid-cols-1">
           {/* Overall Feedback */}
           <Card className="p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-gray-900">Overall Assessment</h3>
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">التقييم العام</h3>
             <p className="text-gray-700">{results.feedback.overall}</p>
           </Card>
         </div>
@@ -126,7 +137,7 @@ export default function SpeakingTestResults() {
           {/* Fluency & Coherence */}
           <Card className="p-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Fluency & Coherence</h3>
+              <h3 className="text-lg font-semibold text-gray-900">الطلاقة والتماسك</h3>
               <span className="text-blue-600 font-bold">
                 {results.fluencyAndCoherence.toFixed(1)}
               </span>
@@ -138,7 +149,7 @@ export default function SpeakingTestResults() {
           {/* Lexical Resource */}
           <Card className="p-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Lexical Resource</h3>
+              <h3 className="text-lg font-semibold text-gray-900">الثروة اللغوية</h3>
               <span className="text-blue-600 font-bold">{results.lexicalResource.toFixed(1)}</span>
             </div>
             <Separator className="my-2" />
@@ -148,7 +159,7 @@ export default function SpeakingTestResults() {
           {/* Grammatical Range */}
           <Card className="p-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Grammatical Range</h3>
+              <h3 className="text-lg font-semibold text-gray-900">المدى والدقة النحوية</h3>
               <span className="text-blue-600 font-bold">
                 {results.grammaticalRangeAndAccuracy.toFixed(1)}
               </span>
@@ -160,7 +171,7 @@ export default function SpeakingTestResults() {
           {/* Pronunciation */}
           <Card className="p-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Pronunciation</h3>
+              <h3 className="text-lg font-semibold text-gray-900">النطق</h3>
               <span className="text-blue-600 font-bold">{results.pronunciation.toFixed(1)}</span>
             </div>
             <Separator className="my-2" />
@@ -168,12 +179,57 @@ export default function SpeakingTestResults() {
           </Card>
         </div>
 
+        {/* Strengths */}
+        {results.strengths && results.strengths.points.length > 0 && (
+          <Card className="p-6 shadow-sm">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">نقاط القوة</h3>
+            <div className="space-y-2">
+              {results.strengths.points.map((point, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="mr-2 mt-1 text-green-500 shrink-0">✓</div>
+                  <p className="text-gray-700">{point}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Areas to Improve */}
+        {results.areasToImprove && results.areasToImprove.errors.length > 0 && (
+          <Card className="p-6 shadow-sm">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">مجالات التحسين</h3>
+            <div className="space-y-4">
+              {results.areasToImprove.errors.map((error, index) => (
+                <div key={index} className="border-r-4 border-yellow-500 pr-4">
+                  <p className="font-medium text-red-600 mb-1">{error.mistake}</p>
+                  <p className="text-green-600">{error.correction}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Improvement Tips */}
+        {results.improvementTips && results.improvementTips.length > 0 && (
+          <Card className="p-6 shadow-sm">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">نصائح للتحسين</h3>
+            <div className="space-y-2">
+              {results.improvementTips.map((tip, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="ml-2 mt-1 text-blue-500 shrink-0">●</div>
+                  <p className="text-gray-700">{tip}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="text-center">
           <Link
             href="/mock-test"
             className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Take Another Test
+            اختبار آخر
           </Link>
         </div>
       </div>

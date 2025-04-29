@@ -12,7 +12,7 @@ export const baseColumns = <T extends BaseEntity>(): ColumnDef<T>[] => [
     accessorKey: "name",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Name
+        الاسم
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),

@@ -44,7 +44,6 @@ export default async function SignInPage({
         </Card>
       )}
 
-      <h1 className="mb-6 text-2xl font-bold text-center">تسجيل الدخول إلى حسابك</h1>
       <SiginForm />
     </main>
   );

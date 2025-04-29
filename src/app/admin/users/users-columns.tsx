@@ -58,35 +58,35 @@ const UsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="w-8 h-8 p-0">
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">الإجراءات</span>
           <MoreHorizontal className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="rtl:rtl">
-        <DropdownMenuLabel className="select-none">Actions</DropdownMenuLabel>
+      <DropdownMenuContent align="center" className="rtl">
+        <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
         <DropdownMenuItem asChild>
           <Link href={`/dashboard/users/${user.id}`}>
             <Pencil className="mr-0.5 h-4 w-4" />
-            View / Edit
+            عرض / تعديل
           </Link>
         </DropdownMenuItem>
         {status === "PENDING" && (
           <DropdownMenuItem onClick={handleActivate}>
-            <Check className="mr-0.5 h-4 w-4" /> Activate
+            <Check className="mr-0.5 h-4 w-4" /> تفعيل
           </DropdownMenuItem>
         )}
         {status === "ACTIVE" && (
           <DropdownMenuItem onClick={handleSuspend}>
-            <Ban className="mr-0.5 h-4 w-4" /> Suspend
+            <Ban className="mr-0.5 h-4 w-4" /> تعطيل
           </DropdownMenuItem>
         )}
         {isSuspended && (
           <DropdownMenuItem onClick={handleUnsuspend}>
-            <CheckCircle className="mr-0.5 h-4 w-4" /> Unsuspend
+            <CheckCircle className="mr-0.5 h-4 w-4" /> تفعيل
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={handleDelete}>
-          <Trash2 className="mr-0.5 h-4 w-4" /> Delete
+          <Trash2 className="mr-0.5 h-4 w-4" /> حذف
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -98,7 +98,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "email",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Email
+        البريد الإلكتروني
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -107,7 +107,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "phone",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Phone
+        الهاتف
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -116,7 +116,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "role",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Role
+        الدور
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -125,7 +125,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "status",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Status
+        الحالة
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -140,7 +140,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "createdAt",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Created At
+        تاريخ الإنشاء
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -153,7 +153,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "updatedAt",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Updated At
+        تاريخ التحديث
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
@@ -164,7 +164,7 @@ export const userColumns: ColumnDef<Users>[] = [
   },
   {
     accessorKey: "actions",
-    header: "Actions",
+    header: "الإجراءات",
     cell: ({ row }) => <UsersActionsCell user={row.original} />,
   },
 ];

@@ -5,7 +5,7 @@ import { accountFormSchema } from "@/app/schemas/account";
 import { onboardingSchema } from "@/app/schemas/onboarding";
 import { extractS3FileName } from "@/lib/extract-s3-filename";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { users } from "@/server/db/schema";
+import { speakingTests, users } from "@/server/db/schema";
 
 const onboardingModifiedSchema = onboardingSchema
   .omit({ profileImage: true })
@@ -149,4 +149,104 @@ export const usersRouter = createTRPCRouter({
 
     return { success: true, fileName };
   }),
+
+  getUserTestStats: protectedProcedure.query(async ({ ctx }) => {
+    // Get count of tests by type
+    const testCounts = await ctx.db
+      .select({
+        type: speakingTests.type,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id))
+      .groupBy(speakingTests.type);
+
+    // Get average score by test type
+    const averageScores = await ctx.db
+      .select({
+        type: speakingTests.type,
+        average: sql<number>`avg(${speakingTests.band})::numeric(10,1)`,
+      })
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id))
+      .groupBy(speakingTests.type);
+
+    // Get the highest band score
+    const highestScore = await ctx.db
+      .select({
+        highestBand: sql<number>`max(${speakingTests.band})::numeric(10,1)`,
+      })
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id));
+
+    // Get recent improvement trend (last 5 tests)
+    const recentTests = await ctx.db
+      .select({
+        id: speakingTests.id,
+        band: speakingTests.band,
+        createdAt: speakingTests.createdAt,
+      })
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id))
+      .orderBy(sql`${speakingTests.createdAt} desc`)
+      .limit(5);
+
+    // Calculate improvement trend
+    let trend = 0;
+    if (recentTests.length >= 2) {
+      const latestScore = recentTests[0]?.band ?? 0;
+      const earliestScore = recentTests[recentTests.length - 1]?.band ?? 0;
+      trend = Number(latestScore) - Number(earliestScore);
+    }
+
+    // Get total count of all tests
+    const [{ totalCount = 0 } = { totalCount: 0 }] = await ctx.db
+      .select({ totalCount: sql<number>`count(*)::int` })
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id));
+
+    return {
+      testCounts,
+      averageScores,
+      highestScore: highestScore[0]?.highestBand ?? 0,
+      trend,
+      totalCount,
+      recentTests,
+    };
+  }),
+
+  getUserTestHistory: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db
+      .select()
+      .from(speakingTests)
+      .where(eq(speakingTests.userId, ctx.session.user.id))
+      .orderBy(sql`${speakingTests.createdAt} desc`);
+  }),
+
+  getTestById: protectedProcedure
+    .input(z.object({ testId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const test = await ctx.db.query.speakingTests.findFirst({
+          where: (tests, { eq }) =>
+            eq(tests.id, input.testId) && eq(tests.userId, ctx.session.user.id),
+          with: { user: true },
+        });
+
+        if (!test) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Test not found or you don't have access to it",
+          });
+        }
+
+        return test;
+      } catch (error) {
+        console.error("Error fetching test details:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch test details",
+        });
+      }
+    }),
 });

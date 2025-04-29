@@ -33,19 +33,11 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
   const NAV_ITEMS = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
     { href: "/account", icon: IconUser, label: "الحساب" },
-    user.role === UserRole.USER && {
-      href: "/dashboard",
-      icon: IconSettings,
-      label: "لوحة التحكم",
-    },
+    { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
     { href: "/mock-test", icon: IconSpeakerphone, label: "اختبار المحادثة" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
-      ? {
-          href: "/admin",
-          icon: IconPackage,
-          label: "الإدارة",
-        }
+      ? { href: "/admin", icon: IconSettings, label: "الإدارة" }
       : null,
   ].filter(Boolean);
 
@@ -126,6 +118,9 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
           "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/50 outline-blue-300",
           {
             "text-blue-500 border-blue-600 bg-blue-50": pathname === href,
+            "text-red-500 border-red-600 bg-red-50": pathname === href && href === "/admin",
+            "text-red-400 hover:bg-red-200/50 dark:hover:bg-red-900/50 outline-red-300":
+              href === "/admin",
           },
         )}
       >

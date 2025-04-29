@@ -1,0 +1,189 @@
+import { CalendarClock, ChevronRight, LineChart, ListChecks, Trophy } from "lucide-react";
+import Link from "next/link";
+import { AuroraText } from "@/components/magicui/aurora-text";
+import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { formatDate } from "@/lib/format-date";
+import { formatTestType } from "@/lib/format-test-type";
+import { cn } from "@/lib/utils";
+import { api } from "@/trpc/server";
+
+export default async function DashboardPage() {
+  const stats = await api.users.getUserTestStats();
+  const testHistory = await api.users.getUserTestHistory();
+
+  // Get trend indicator (up, down, or neutral)
+  const getTrendIndicator = () => {
+    if (!stats) return null;
+
+    if (stats.trend > 0) {
+      return <span className="text-green-500 mr-1">↑</span>;
+    } else if (stats.trend < 0) {
+      return <span className="text-red-500 mr-1">↓</span>;
+    }
+    return <span className="text-gray-500 mr-1">−</span>;
+  };
+
+  return (
+    <main className="min-h-screen bg-white p-4 md:p-8" dir="rtl">
+      <InteractiveGridPattern
+        className={cn(
+          "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+          "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-50",
+        )}
+        width={70}
+        height={70}
+        squares={[30, 30]}
+        squaresClassName="hover:fill-blue-200"
+      />
+
+      <div className="mx-auto max-w-6xl relative z-10">
+        <div className="mb-8 text-center">
+          <AuroraText className="text-3xl font-bold mb-2">لوحة المعلومات</AuroraText>
+          <p className="text-gray-600">تابع تقدمك في اختبارات المحادثة IELTS</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <ListChecks className="ml-2 h-5 w-5 text-blue-500" />
+                إجمالي الاختبارات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats?.totalCount || 0}</div>
+              <p className="text-sm text-gray-500 mt-1">اختبار محادثة مكتمل</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <Trophy className="ml-2 h-5 w-5 text-yellow-500" />
+                أعلى درجة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats?.highestScore.toString() || "0.0"}</div>
+              <p className="text-sm text-gray-500 mt-1">من أصل 9.0</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <LineChart className="ml-2 h-5 w-5 text-green-500" />
+                معدل التحسن
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center">
+                {getTrendIndicator()}
+                {Math.abs(stats?.trend || 0).toFixed(1)}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">في آخر 5 اختبارات</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {stats?.averageScores && stats.averageScores.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>متوسط الدرجات حسب نوع الاختبار</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {stats.averageScores.map((score, index) => (
+                  <div key={index} className="flex flex-col">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{formatTestType(score.type)}</span>
+                      <span className="text-blue-600 font-bold">
+                        {Number(score.average).toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ width: `${(Number(score.average) / 9) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>سجل الاختبارات</CardTitle>
+            <CardDescription>قائمة بجميع اختبارات المحادثة التي أكملتها</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {testHistory && testHistory.length > 0 ? (
+              <div className="space-y-4">
+                {testHistory.map(test => (
+                  <div key={test.id}>
+                    <Link
+                      href={`/dashboard/${test.id}`}
+                      className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 rounded py-0.5 px-1.5"
+                    >
+                      <section>
+                        <h3 className="font-medium">{test.topic || "اختبار محادثة"}</h3>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <CalendarClock className="ml-1 h-4 w-4" />
+                          {formatDate(test.createdAt.toISOString(), true, true)}
+                          <span className="mx-2">•</span>
+                          <span>{formatTestType(test.type)}</span>
+                        </div>
+                      </section>
+                      <section className="flex items-center">
+                        <div className="ml-4">
+                          <span className="text-2xl font-bold text-blue-600">
+                            {test.band?.toString() ?? "0.0"}
+                          </span>
+                        </div>
+                        <Button variant="ghost" size="icon">
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </section>
+                    </Link>
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-gray-500 mb-4">لم تقم بإجراء أي اختبارات محادثة بعد</p>
+                <Link href="/mock-test" className="w-full">
+                  <Button variant="outline" className="w-full">
+                    ابدأ اختبار محادثة جديد
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+          {testHistory && testHistory.length > 0 && (
+            <CardFooter>
+              <Link href="/mock-test" className="w-full">
+                <Button variant="outline" className="w-full">
+                  ابدأ اختبار محادثة جديد
+                </Button>
+              </Link>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+    </main>
+  );
+}

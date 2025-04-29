@@ -1,11 +1,12 @@
 "use client";
 
-import { IconBrandGoogle, IconLoader, IconMail } from "@tabler/icons-react";
+import { IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
+import { GoogleIcon } from "@/components/custom/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import Divider from "@/components/ui/divider";
@@ -35,22 +36,20 @@ export default function SiginForm() {
   };
 
   return (
-    <Card className="min-w-96 border-gray-300">
+    <Card className="min-w-96 border-gray-300 select-none">
       <CardHeader>
+        <h1 className="mb-6 text-2xl font-bold text-center">تسجيل الدخول إلى حسابك</h1>
         <CardDescription className="text-center">
           تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button
-          onClick={handleGoogleSignIn}
-          className="w-full text-white cursor-pointer bg-blue-500 hover:bg-blue-600"
-        >
-          <IconBrandGoogle className="inline-block w-6 h-6 mx-1" />
+        <Button onClick={handleGoogleSignIn} variant={"outline"} className="w-full cursor-pointer">
+          <GoogleIcon className="inline-block mx-1" />
           المتابعة عن طريق حساب Google
         </Button>
 
-        <Divider className="my-10" />
+        <Divider className="my-5" />
 
         <form action={handleSigninAction} className="space-y-3">
           <div className="items-center w-full grid gap-4">

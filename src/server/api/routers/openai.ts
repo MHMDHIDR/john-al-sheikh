@@ -1,11 +1,12 @@
 import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { z } from "zod";
 import { env } from "@/env";
 import { isActualEnglishSpeech } from "@/lib/check-is-actual-english-speech";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { speakingTests } from "@/server/db/schema";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { speakingTests, users } from "@/server/db/schema";
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
@@ -24,6 +25,25 @@ type IELTSFeedback = {
     }>;
   };
   improvementTips: string[];
+};
+
+type analyzeFullIELTSConversationFeedback = {
+  overall: string;
+  fluencyAndCoherence: string;
+  lexicalResource: string;
+  grammaticalRangeAndAccuracy: string;
+  pronunciation: string;
+  band: IELTSFeedback["band"];
+  feedback: {
+    overall: string;
+    fluencyAndCoherence: string;
+    lexicalResource: string;
+    grammaticalRangeAndAccuracy: string;
+    pronunciation: string;
+  };
+  strengths: IELTSFeedback["strengths"];
+  areasToImprove: IELTSFeedback["areasToImprove"];
+  improvementTips: IELTSFeedback["improvementTips"];
 };
 
 function containsArabicText(text: string): boolean {
@@ -308,7 +328,7 @@ export const openaiRouter = createTRPCRouter({
       }
     }),
 
-  saveSpeakingTest: publicProcedure
+  saveSpeakingTest: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -344,45 +364,168 @@ export const openaiRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if user is authenticated
-      if (!ctx.session) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to save a speaking test",
-        });
-      }
-
       try {
-        // Insert the speaking test into the database
-        const result = await ctx.db
-          .insert(speakingTests)
-          .values({
-            userId: input.userId,
-            type: input.type,
-            transcription: input.transcription,
-            topic: input.topic,
-            band: input.band,
-            feedback: input.feedback,
-          })
-          .returning();
+        return await ctx.db.transaction(async tx => {
+          // Insert the speaking test into the database
+          const [result] = await tx
+            .insert(speakingTests)
+            .values({
+              userId: input.userId,
+              type: input.type,
+              transcription: input.transcription,
+              topic: input.topic,
+              band: input.band,
+              feedback: input.feedback,
+            })
+            .returning();
 
-        if (!result[0]) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to save speaking test: no result returned",
-          });
-        }
+          if (!result) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to save speaking test: no result returned",
+            });
+          }
 
-        return {
-          success: true,
-          id: result[0].id,
-        };
+          // update the user's new band score
+          await tx
+            .update(users)
+            .set({ currentBand: result.band })
+            .where(eq(users.id, input.userId));
+
+          return { success: true, id: result.id };
+        });
       } catch (error) {
         console.error("Failed to save speaking test:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to save speaking test",
         });
+      }
+    }),
+
+  analyzeFullIELTSConversation: publicProcedure
+    .input(
+      z.object({
+        conversation: z.array(
+          z.object({
+            role: z.enum(["examiner", "candidate"]),
+            content: z.string(),
+            timestamp: z.string(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Extract candidate responses and examiner questions
+        const candidateResponses = input.conversation
+          .filter(msg => msg.role === "candidate")
+          .map(msg => msg.content)
+          .join("\n\n");
+
+        // Ensure we have enough content to analyze
+        if (!candidateResponses || candidateResponses.trim().length < 50) {
+          return {
+            success: false,
+            error: "الإجابات غير كافية للتحليل",
+          };
+        }
+
+        // Prepare the full conversation for analysis
+        const conversationText = input.conversation
+          .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
+          .join("\n\n");
+
+        // Create a more detailed analysis request
+        const analysisResponse = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          temperature: 0,
+          max_tokens: 800,
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert IELTS speaking examiner. Analyze the following IELTS speaking test conversation.
+
+              First, understand the structure of the conversation - identify the three IELTS speaking test sections:
+              1. Introduction and general questions
+              2. Individual long turn (usually a topic the candidate must speak about)
+              3. Two-way discussion related to the topic
+
+              Then evaluate the candidate's performance based on the official IELTS criteria:
+              1. Fluency and Coherence (how smoothly they speak, whether they use connectives, ability to speak at length)
+              2. Lexical Resource (vocabulary range and accuracy)
+              3. Grammatical Range and Accuracy (variety of structures and grammatical accuracy)
+              4. Pronunciation (clarity, intonation, accent)
+
+              Provide your feedback in Arabic language in the following JSON format:
+              {
+                "band": number, // Overall band score (1-9, can use decimals like 6.5)
+                "fluencyAndCoherence": number, // Score for this criterion (1-9)
+                "lexicalResource": number, // Score for this criterion (1-9)
+                "grammaticalRangeAndAccuracy": number, // Score for this criterion (1-9)
+                "pronunciation": number, // Score for this criterion (1-9)
+                "feedback": {
+                  "overall": "إجمالي التقييم العام (3-4 جمل)",
+                  "fluencyAndCoherence": "تحليل الطلاقة والتماسك (جملة أو جملتين)",
+                  "lexicalResource": "تحليل الثروة اللغوية (جملة أو جملتين)",
+                  "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملة أو جملتين)",
+                  "pronunciation": "تحليل النطق (جملة أو جملتين)"
+                },
+                "strengths": {
+                  "summary": "ملخص نقاط القوة باللغة العربية",
+                  "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3"]
+                },
+                "areasToImprove": {
+                  "errors": [
+                    {
+                      "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
+                      "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
+                    },
+                    {
+                      "mistake": "مثال آخر على خطأ أو مشكلة",
+                      "correction": "كيفية تحسين هذه النقطة"
+                    }
+                  ]
+                },
+                "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين"]
+              }
+
+              Be fair but critical in your assessment. The feedback should be helpful and specific.
+              Make sure to include at least 2-3 specific examples of errors with corrections, and 3-4 improvement tips.
+              Include quotes from the candidate's responses to illustrate the errors.
+              The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`,
+            },
+            {
+              role: "user",
+              content: `IELTS Speaking Test Conversation:\n\n${conversationText}\n\nPlease analyze this IELTS speaking test based on the criteria.`,
+            },
+          ],
+        });
+
+        const analysisText = analysisResponse.choices[0]?.message.content ?? "";
+
+        try {
+          // Parse the JSON response
+          const feedback = JSON.parse(analysisText.trim()) as analyzeFullIELTSConversationFeedback;
+
+          return {
+            success: true,
+            feedback,
+          };
+        } catch (parseError) {
+          console.error("Failed to parse JSON response:", parseError);
+          return {
+            success: false,
+            error: "فشل في تحليل استجابة النموذج",
+            rawAnalysis: analysisText,
+          };
+        }
+      } catch (error) {
+        console.error("Analysis error:", error);
+        return {
+          success: false,
+          error: "حدث خطأ أثناء تحليل المحادثة",
+        };
       }
     }),
 });
