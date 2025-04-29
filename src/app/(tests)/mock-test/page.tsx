@@ -31,7 +31,7 @@ export default function MockTestPage() {
         اختبار المحادثة
       </AuroraText>
 
-      <div className="relative w-full max-w-4xl">
+      <div className="relative w-full max-w-5xl mx-auto">
         <InteractiveGridPattern
           className={cn(
             "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
