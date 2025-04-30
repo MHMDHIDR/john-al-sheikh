@@ -9,31 +9,72 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
+import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
 import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
-import type { Session } from "next-auth";
+import type { Users } from "@/server/db/schema";
 
-const IELTS_ASSISTANT_CONFIG = {
-  name: "IELTS Examiner",
-  firstMessage:
-    "Hey there, I'm John Al-Sheikh, the IELTS examiner, can you please introduce yourself?",
-  model: {
-    provider: "openai",
-    model: "gpt-3.5-turbo",
-    temperature: 0.4,
-    messages: [
-      {
-        role: "system",
-        content: `
-          Introduce yourself as "John Al-Sheikh", the IELTS examiner, Before starting the test, please remind the candidate that the test will last for 10 minutes, as this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
+export type UserProfile = {
+  id: Users["id"];
+  name: Users["name"];
+  age: Users["age"];
+  gender: Users["gender"];
+  hobbies: Users["hobbies"];
+  nationality: Users["nationality"];
+  goalBand: Users["goalBand"];
+};
+
+/**
+ * IELTS Assistant Configuration
+ * @param {Object} { userName } - The component props
+ * @param {string} props.userName - The user's name
+ * @returns {CreateAssistantDTO} The configuration for the IELTS Assistant
+ */
+function IeltsAssistantConfig({
+  userProfile,
+}: {
+  userProfile: Omit<UserProfile, "id">;
+}): CreateAssistantDTO {
+  const getTimeOfDay = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    if (hours < 12) return "Morning";
+    if (hours < 18) return "Afternoon";
+    return "Evening";
+  };
+
+  return {
+    name: "IELTS Examiner",
+    firstMessage: userProfile
+      ? `Hello ${userProfile.name}, How are you this fine ${getTimeOfDay()}!, I'm John Al-Sheikh the IELTS examiner, by practicing together we will make sure you get to your goal band in the IELTS speaking test! Can you please tell me a bit more about yourself?`
+      : `Hey There, ${getTimeOfDay()}!, I'm John Al-Sheikh the IELTS examiner, can you please introduce yourself?`,
+    model: {
+      provider: "openai",
+      model: "gpt-4o-mini", //gpt-4.1-nano
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content: `
+          Introduce yourself as "John Al-Sheikh", the IELTS examiner. Before starting the test, please remind the candidate, this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
 
           First and foremost, ask the candidate to introduce himself/herself, you MUST wait for the candidate to respond first.
 
           After the candidate has introduced himself/herself, begin with section 1 of the test.
+
+          Here is more information about the candidate:
+          - Name: ${userProfile.name}
+          - Age: ${userProfile.age}
+          - Gender: ${userProfile.gender}
+          - Hobbies: ${userProfile.hobbies?.flatMap(hobby => hobby).join(", ")}
+          - Nationality: ${countryNames.find(country => country.code === userProfile.nationality)?.label}
+
+
           Section 1: Introduction and General Questions (2-3 minutes)
           - DO NOT proceed to Section 1 until the candidate has introduced himself/herself.
-          - Ask the candidate about familiar topics like their home, family, work, studies, or interests.
+          - Ask the candidate about their nationality country.
+          - Ask the candidate about their hobbies, familiar topics like their home, family, work, studies, or interests.
           - Ask ONE follow-up question based on their response.
 
           Section 2: Individual Long Turn (2-3 minutes)
@@ -61,19 +102,13 @@ const IELTS_ASSISTANT_CONFIG = {
 
           CRITICAL Notice: You must STRICTLY stay within the scope of the IELTS speaking test. If the candidate attempts to discuss any unrelated topics or asks you about anything outside the test context, respond with: "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test." Do not deviate from your role as an IELTS examiner under any circumstances.
         `,
-      },
-    ],
-  },
-  voice: {
-    provider: "11labs",
-    voiceId: "mark",
-  },
-  transcriber: {
-    provider: "deepgram",
-    model: "nova-2",
-    language: "en-US",
-  },
-} as CreateAssistantDTO;
+        },
+      ],
+    },
+    voice: { provider: "11labs", voiceId: "steve" },
+    transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
+  };
+}
 
 // Words or phrases that indicate the test is complete
 const TEST_CONCLUSION_PHRASES = [
@@ -86,7 +121,7 @@ const TEST_CONCLUSION_PHRASES = [
   "that concludes",
 ];
 
-export default function IELTSSpeakingRecorder({ userId }: { userId: Session["user"]["id"] }) {
+export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
   const [hasPermission, setHasPermission] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -96,6 +131,54 @@ export default function IELTSSpeakingRecorder({ userId }: { userId: Session["use
 
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
+
+  const { callStatus, isMuted, startSession, setVolume } = useVapiConversation({
+    onConnect: () => {
+      console.info("Connected to IELTS Assistant Agent");
+    },
+    onDisconnect: () => {
+      console.info("Disconnected from IELTS Assistant Agent");
+      // We don't need to call processTestResults here as the useEffect will handle it
+      // This was causing duplicate calls and potential infinite loops
+    },
+    onMessage: message => {
+      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
+      const timestamp = new Date().toLocaleTimeString();
+      const messageContent = { role, content: message.content, timestamp };
+      addMessage(messageContent);
+
+      // Check if this message indicates test completion
+      if (role === "examiner" && isTestConclusionMessage(message.content)) {
+        setIsTestCompleted(true);
+        // Add a small delay to let the message be processed
+        setTimeout(() => {
+          // You could use vapi.send() here if needed
+          // Or use vapi.stop() to end the call after the test is concluded
+          vapi.stop();
+        }, 5000);
+      }
+    },
+    onError: error => {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "errorMsg" in error
+            ? (error as { errorMsg: string }).errorMsg
+            : JSON.stringify(error);
+      setErrorMessage(
+        typeof error === "object" && error !== null && "errorMsg" in error
+          ? (error as { errorMsg: string }).errorMsg
+          : errorMsg,
+      );
+      console.error("Error:", errorMsg);
+    },
+    onSpeechStart: () => {
+      console.log("Speech started");
+    },
+    onSpeechEnd: () => {
+      console.log("Speech ended");
+    },
+  });
 
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
@@ -161,7 +244,7 @@ export default function IELTSSpeakingRecorder({ userId }: { userId: Session["use
 
           // Save to database
           await saveSpeakingTest.mutateAsync({
-            userId,
+            userId: user.id,
             type: "MOCK",
             transcription: {
               messages: transformedMessages,
@@ -204,7 +287,7 @@ export default function IELTSSpeakingRecorder({ userId }: { userId: Session["use
     saveSpeakingTest,
     clearTest,
     router,
-    userId,
+    user.id,
     isProcessingResults,
   ]);
 
@@ -214,54 +297,6 @@ export default function IELTSSpeakingRecorder({ userId }: { userId: Session["use
       void processTestResults();
     }
   }, [isTestCompleted, isProcessingResults, processTestResults]);
-
-  const { callStatus, isMuted, startSession, setVolume } = useVapiConversation({
-    onConnect: () => {
-      console.info("Connected to IELTS Assistant Agent");
-    },
-    onDisconnect: () => {
-      console.info("Disconnected from IELTS Assistant Agent");
-      // We don't need to call processTestResults here as the useEffect will handle it
-      // This was causing duplicate calls and potential infinite loops
-    },
-    onMessage: message => {
-      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
-      const timestamp = new Date().toLocaleTimeString();
-      const messageContent = { role, content: message.content, timestamp };
-      addMessage(messageContent);
-
-      // Check if this message indicates test completion
-      if (role === "examiner" && isTestConclusionMessage(message.content)) {
-        setIsTestCompleted(true);
-        // Add a small delay to let the message be processed
-        setTimeout(() => {
-          // You could use vapi.send() here if needed
-          // Or use vapi.stop() to end the call after the test is concluded
-          vapi.stop();
-        }, 5000);
-      }
-    },
-    onError: error => {
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "errorMsg" in error
-            ? (error as { errorMsg: string }).errorMsg
-            : JSON.stringify(error);
-      setErrorMessage(
-        typeof error === "object" && error !== null && "errorMsg" in error
-          ? (error as { errorMsg: string }).errorMsg
-          : errorMsg,
-      );
-      console.error("Error:", errorMsg);
-    },
-    onSpeechStart: () => {
-      console.log("Speech started");
-    },
-    onSpeechEnd: () => {
-      console.log("Speech ended");
-    },
-  });
 
   const requestMicPermission = async () => {
     try {
@@ -296,7 +331,28 @@ export default function IELTSSpeakingRecorder({ userId }: { userId: Session["use
     try {
       setErrorMessage("");
       setIsTestCompleted(false);
-      await startSession(IELTS_ASSISTANT_CONFIG);
+      await startSession(
+        IeltsAssistantConfig({
+          userProfile: {
+            name: user.name,
+            age: user.age,
+            gender: user.gender,
+            hobbies: user.hobbies,
+            nationality: user.nationality,
+            goalBand: user.goalBand,
+          },
+        }),
+        {
+          silenceTimeoutSeconds: 75, // 1.25 minutes,
+          maxDurationSeconds: 600, // 10 minutes
+          messagePlan: {
+            idleMessages: ["Are you still there?"],
+            idleTimeoutSeconds: 60,
+            silenceTimeoutMessage: "As there is no response, I am ending the call now.",
+            idleMessageResetCountOnUserSpeechEnabled: true,
+          },
+        },
+      );
     } catch (error) {
       setErrorMessage(typeof error === "string" ? error : (error as Error).message);
       console.error("Error starting conversation:", error);

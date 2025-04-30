@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
-import type { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
+import type { AssistantOverrides, CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 
-export type { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
+export type { CreateAssistantDTO, AssistantOverrides } from "@vapi-ai/web/dist/api";
 
 export type VapiError = {
   errorMsg: string;
@@ -105,15 +105,18 @@ export function useVapiConversation({
     };
   }, [onConnect, onDisconnect, onMessage, onError, onSpeechStart, onSpeechEnd]);
 
-  const startSession = useCallback(async (config: CreateAssistantDTO) => {
-    try {
-      setCallStatus(CallStatus.CONNECTING);
-      await vapi.start(config);
-    } catch (error) {
-      setCallStatus(CallStatus.INACTIVE);
-      throw error;
-    }
-  }, []);
+  const startSession = useCallback(
+    async (config: CreateAssistantDTO, assistantOverrides: AssistantOverrides) => {
+      try {
+        setCallStatus(CallStatus.CONNECTING);
+        await vapi.start(config, assistantOverrides);
+      } catch (error) {
+        setCallStatus(CallStatus.INACTIVE);
+        throw error;
+      }
+    },
+    [],
+  );
 
   const endSession = useCallback(() => {
     vapi.stop();

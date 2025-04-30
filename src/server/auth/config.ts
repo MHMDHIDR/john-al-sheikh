@@ -17,6 +17,12 @@ declare module "next-auth" {
       phone: string;
       theme: themeEnumType;
       profileCompleted: boolean;
+      displayName: string;
+      nationality: string;
+      goalBand: number;
+      hobbies: string[];
+      gender: string;
+      age: number;
     } & DefaultSession["user"];
   }
   interface User extends AdapterUser {
@@ -177,6 +183,11 @@ export const authConfig = {
           phone: userData?.phone ?? "",
           theme: userData?.theme ?? "light",
           blurImageDataURL: blurImage,
+          nationality: userData?.nationality ?? "",
+          goalBand: userData?.goalBand ?? 0,
+          hobbies: userData?.hobbies ?? [],
+          gender: userData?.gender ?? "male",
+          age: userData?.age ?? 0,
         },
       };
     },
