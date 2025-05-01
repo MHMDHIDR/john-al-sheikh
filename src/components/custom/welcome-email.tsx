@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -33,7 +34,13 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
         <Container style={container}>
           <Section style={headerSection}>
             <Heading as="h1" style={logo}>
-              <img src="/logo.svg" alt="Logo" style={SVGLogo} />
+              <Img
+                src={"/logo.png"}
+                width="40"
+                height="40"
+                alt={env.NEXT_PUBLIC_APP_NAME}
+                className="rounded-full"
+              />
               {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
           </Section>
