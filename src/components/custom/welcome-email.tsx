@@ -129,6 +129,9 @@ const SVGLogo: CSSProperties = {
 };
 
 const logo: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   fontSize: "24px",
   color: "#333333",
   fontWeight: "bold",
