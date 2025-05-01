@@ -249,7 +249,7 @@ export const creditTransactions = createTable(
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 
 // Newsletter subscribers schema
-export const subscribedEmails = createTable("subscribed_email", {
+export const subscribedEmails = createTable("subscribed_emails", {
   id: varchar("id", { length: 255 })
     .notNull()
     .primaryKey()

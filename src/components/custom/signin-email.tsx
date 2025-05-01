@@ -14,21 +14,21 @@ import {
 import { env } from "@/env";
 import type { CSSProperties } from "react";
 
-export type WelcomeEmailProps = {
-  name: string;
-  ieltsGoal: string;
-  signupUrl: string;
+export type SignInEmailProps = {
+  url: string;
+  host: string;
 };
 
-export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmailProps) {
+export function SignInEmailTemplate({ url, host }: SignInEmailProps) {
   const year = new Date().getFullYear();
+  const escapedHost = host.replace(/\./g, "&#8203;.");
 
   return (
     <Html dir="rtl" lang="ar">
       <Head>
-        <title>مرحباً بك في منصة {env.NEXT_PUBLIC_APP_NAME} للايلتس</title>
+        <title>تسجيل الدخول إلى {escapedHost}</title>
       </Head>
-      <Preview>نرحب بك في رحلتك نحو النجاح في اختبار الايلتس!</Preview>
+      <Preview>تسجيل الدخول إلى {escapedHost}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
@@ -47,35 +47,20 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
 
           <Section style={contentSection}>
             <Heading as="h2" style={greeting}>
-              مرحباً {name}،
+              تسجيل الدخول إلى {escapedHost}
             </Heading>
 
-            <Text style={paragraph}>
-              شكراً على اشتراكك في النشرة البريدية الخاصة بتعليم الايلتس. يسعدنا انضمامك إلى
-              مجتمعنا!
-            </Text>
-
-            <Text style={paragraph}>
-              هدفك هو الوصول إلى درجة {ieltsGoal} في الايلتس، ونحن هنا لمساعدتك على تحقيق ذلك خطوة
-              بخطوة.
-            </Text>
-
-            <Text style={paragraph}>
-              سنرسل لك نصائح وإرشادات منتظمة، إضافة إلى موارد مفيدة ستساعدك في رحلتك التعليمية.
-            </Text>
+            <Text style={paragraph}>اضغط على الزر أدناه لتسجيل الدخول إلى حسابك.</Text>
 
             <Section style={ctaContainer}>
-              <Button href={signupUrl} style={ctaButton}>
-                إنشاء حساب الآن
+              <Button href={url} style={ctaButton}>
+                تسجيل الدخول
               </Button>
             </Section>
 
             <Text style={paragraph}>
-              قم بإنشاء حساب للوصول إلى مزيد من الميزات والموارد المخصصة لتعلم الايلتس وتحقيق درجة
-              أعلى.
+              إذا لم تطلب تسجيل الدخول، يمكنك تجاهل هذا البريد الإلكتروني بأمان.
             </Text>
-
-            <Text style={paragraph}>نتطلع إلى مساعدتك في تحقيق أهدافك التعليمية!</Text>
           </Section>
 
           <Hr style={divider} />
@@ -116,11 +101,6 @@ const headerSection: CSSProperties = {
   margin: "20px 0",
   padding: "20px 0",
   borderBottom: "1px solid #eeeeee",
-};
-
-const SVGLogo: CSSProperties = {
-  width: "40px",
-  height: "40px",
 };
 
 const logo: CSSProperties = {

@@ -15,6 +15,13 @@
       "when": 1746125814521,
       "tag": "0001_new_retro_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1746136645879,
+      "tag": "0002_quiet_darkhawk",
+      "breakpoints": true
     }
   ]
 }

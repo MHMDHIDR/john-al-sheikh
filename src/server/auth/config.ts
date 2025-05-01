@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
+import { Resend as ResendEmail } from "resend";
 import { env } from "@/env";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
@@ -46,10 +47,39 @@ const getFullImageUrl = (path: string) => {
   return `${env.NEXT_PUBLIC_APP_URL}${basePath}`;
 };
 
+const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
+
 export const authConfig = {
   providers: [
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
-    Resend({ name: "Email", from: env.ADMIN_EMAIL }),
+    Resend({
+      name: "Email",
+      from: env.ADMIN_EMAIL,
+      sendVerificationRequest: async params => {
+        const { identifier: email, url } = params;
+        const { host } = new URL(url);
+
+        try {
+          const { SignInEmailTemplate } = await import("@/components/custom/signin-email");
+
+          // Send the email using Resend
+          const result = await resendEmail.emails.send({
+            from: env.ADMIN_EMAIL,
+            to: email,
+            subject: `تسجيل الدخول إلى منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
+            react: SignInEmailTemplate({ url, host }),
+          });
+
+          if (result.error) {
+            console.error("Resend error:", result.error);
+            throw new Error(`Error sending verification email: ${JSON.stringify(result.error)}`);
+          }
+        } catch (error) {
+          console.error("Error sending verification email:", error);
+          throw error;
+        }
+      },
+    }),
   ],
   pages: { signIn: "/signin", error: "/signin" },
   adapter: DrizzleAdapter(db, {
