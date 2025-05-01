@@ -8,7 +8,13 @@ import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/components/custom/ielts-speaking-recorder";
 
-export default function MockTestUI({ user }: { user: UserProfile }) {
+export default function MockTestUI({
+  user,
+  isFreeTrialEnded,
+}: {
+  user: UserProfile;
+  isFreeTrialEnded: boolean;
+}) {
   const { messages } = useMockTestStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +77,7 @@ export default function MockTestUI({ user }: { user: UserProfile }) {
 
       <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 py-2 backdrop-blur-md flex flex-col">
         <div className="flex justify-between items-center select-none px-4">
-          <IELTSSpeakingRecorder user={user} />
+          <IELTSSpeakingRecorder user={user} isFreeTrialEnded={isFreeTrialEnded} />
         </div>
       </div>
     </main>

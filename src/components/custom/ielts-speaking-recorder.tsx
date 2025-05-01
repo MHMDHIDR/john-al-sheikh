@@ -121,7 +121,13 @@ const TEST_CONCLUSION_PHRASES = [
   "that concludes",
 ];
 
-export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
+export default function IELTSSpeakingRecorder({
+  user,
+  isFreeTrialEnded,
+}: {
+  user: UserProfile;
+  isFreeTrialEnded: boolean;
+}) {
   const [hasPermission, setHasPermission] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -262,7 +268,7 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
           console.log("Speaking test results saved to database");
 
           // Deduct credits for the completed test
-          if (savedTest?.id) {
+          if (savedTest?.id && isFreeTrialEnded) {
             try {
               await useCreditsForTest.mutateAsync({
                 speakingTestId: savedTest.id,

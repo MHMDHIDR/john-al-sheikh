@@ -77,7 +77,7 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle>رصيدك</CardTitle>
@@ -87,7 +87,7 @@ export default async function DashboardPage({
                 {credits} <strong>{creditsLabel({ credits })}</strong>
               </div>
               <Link href="/buy-credits">
-                <Button variant="outline" className="w-full">
+                <Button variant={"pressable"} className="w-full font-black text-lg">
                   شراء رصيد
                 </Button>
               </Link>
