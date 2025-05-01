@@ -14,21 +14,15 @@ import {
 import { env } from "@/env";
 import type { CSSProperties } from "react";
 
-export type SignInEmailProps = {
-  url: string;
-  host: string;
-};
-
-export function SignInEmailTemplate({ url, host }: SignInEmailProps) {
+export function SignInEmailTemplate({ url }: { url: string }) {
   const year = new Date().getFullYear();
-  const escapedHost = host.replace(/\./g, "&#8203;.");
 
   return (
     <Html dir="rtl" lang="ar">
       <Head>
-        <title>تسجيل الدخول إلى {escapedHost}</title>
+        <title>تسجيل الدخول إلى {env.NEXT_PUBLIC_APP_NAME}</title>
       </Head>
-      <Preview>تسجيل الدخول إلى {escapedHost}</Preview>
+      <Preview>تسجيل الدخول إلى {env.NEXT_PUBLIC_APP_NAME}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
@@ -47,7 +41,7 @@ export function SignInEmailTemplate({ url, host }: SignInEmailProps) {
 
           <Section style={contentSection}>
             <Heading as="h2" style={greeting}>
-              تسجيل الدخول إلى {escapedHost}
+              تسجيل الدخول إلى {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
 
             <Text style={paragraph}>اضغط على الزر أدناه لتسجيل الدخول إلى حسابك.</Text>

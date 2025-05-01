@@ -118,11 +118,6 @@ const headerSection: CSSProperties = {
   borderBottom: "1px solid #eeeeee",
 };
 
-const SVGLogo: CSSProperties = {
-  width: "40px",
-  height: "40px",
-};
-
 const logo: CSSProperties = {
   display: "flex",
   alignItems: "center",

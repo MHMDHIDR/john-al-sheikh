@@ -67,7 +67,7 @@ export const authConfig = {
             from: env.ADMIN_EMAIL,
             to: email,
             subject: `تسجيل الدخول إلى منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
-            react: SignInEmailTemplate({ url, host }),
+            react: SignInEmailTemplate({ url }),
           });
 
           if (result.error) {
