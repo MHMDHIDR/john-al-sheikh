@@ -35,7 +35,7 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
           <Section style={headerSection}>
             <Heading as="h1" style={logo}>
               <Img
-                src={"/logo.png"}
+                src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
                 width="40"
                 height="40"
                 alt={env.NEXT_PUBLIC_APP_NAME}
