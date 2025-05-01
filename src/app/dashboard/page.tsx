@@ -12,13 +12,32 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { creditsLabel } from "@/lib/credits-label";
 import { formatDate } from "@/lib/format-date";
 import { formatTestType } from "@/lib/format-test-type";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ payment_success?: string; session_id?: string }>;
+}) {
+  const { payment_success, session_id } = await searchParams;
+
+  // If returning from successful payment, verify the session
+  if (payment_success === "true" && session_id) {
+    try {
+      console.log("Verifying Stripe session on dashboard:", session_id);
+      await api.payments.verifySession({ sessionId: session_id });
+      console.log("Session verified successfully on dashboard");
+    } catch (error) {
+      console.error("Failed to verify payment session on dashboard:", error);
+    }
+  }
+
   const stats = await api.users.getUserTestStats();
+  const credits = await api.users.getUserCredits();
   const testHistory = await api.users.getUserTestHistory();
 
   // Get trend indicator (up, down, or neutral)
@@ -52,7 +71,29 @@ export default async function DashboardPage() {
           <p className="text-gray-600">تابع تقدمك في اختبارات المحادثة IELTS</p>
         </div>
 
+        {payment_success === "true" && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center text-green-800">
+            تم إضافة الرصيد بنجاح إلى حسابك
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>رصيدك</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {credits} <strong>{creditsLabel({ credits })}</strong>
+              </div>
+              <Link href="/buy-credits">
+                <Button variant="outline" className="w-full">
+                  شراء رصيد
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
@@ -61,7 +102,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats?.totalCount || 0}</div>
+              <div className="text-3xl font-bold">{stats.totalCount || 0}</div>
               <p className="text-sm text-gray-500 mt-1">اختبار محادثة مكتمل</p>
             </CardContent>
           </Card>
@@ -74,7 +115,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats?.highestScore.toString() || "0.0"}</div>
+              <div className="text-3xl font-bold">{stats.highestScore.toString() || "0.0"}</div>
               <p className="text-sm text-gray-500 mt-1">من أصل 9.0</p>
             </CardContent>
           </Card>
@@ -89,14 +130,14 @@ export default async function DashboardPage() {
             <CardContent>
               <div className="text-3xl font-bold flex items-center">
                 {getTrendIndicator()}
-                {Math.abs(stats?.trend || 0).toFixed(1)}
+                {Math.abs(stats.trend || 0).toFixed(1)}
               </div>
               <p className="text-sm text-gray-500 mt-1">في آخر 5 اختبارات</p>
             </CardContent>
           </Card>
         </div>
 
-        {stats?.averageScores && stats.averageScores.length > 0 && (
+        {stats.averageScores && stats.averageScores.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>متوسط الدرجات حسب نوع الاختبار</CardTitle>

@@ -182,6 +182,7 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
 
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
+  const useCreditsForTest = api.payments.useCreditsForTest.useMutation();
 
   // Check if the message contains any test conclusion phrases
   const isTestConclusionMessage = useCallback((content: string) => {
@@ -243,7 +244,7 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
           }));
 
           // Save to database
-          await saveSpeakingTest.mutateAsync({
+          const savedTest = await saveSpeakingTest.mutateAsync({
             userId: user.id,
             type: "MOCK",
             transcription: {
@@ -259,6 +260,20 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
           });
 
           console.log("Speaking test results saved to database");
+
+          // Deduct credits for the completed test
+          if (savedTest?.id) {
+            try {
+              await useCreditsForTest.mutateAsync({
+                speakingTestId: savedTest.id,
+                creditCost: 1, // Default cost is 1 credit per test
+              });
+              console.log("Credits deducted successfully");
+            } catch (creditError) {
+              console.error("Error deducting credits:", creditError);
+              // Continue anyway to show results to user
+            }
+          }
         } catch (dbError) {
           console.error("Error saving to database:", dbError);
           // Continue anyway to show results to user
@@ -285,6 +300,7 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
     messages,
     analyzeFullIELTSConversation,
     saveSpeakingTest,
+    useCreditsForTest,
     clearTest,
     router,
     user.id,
@@ -350,6 +366,9 @@ export default function IELTSSpeakingRecorder({ user }: { user: UserProfile }) {
             idleTimeoutSeconds: 60,
             silenceTimeoutMessage: "As there is no response, I am ending the call now.",
             idleMessageResetCountOnUserSpeechEnabled: true,
+          },
+          startSpeakingPlan: {
+            waitSeconds: 3,
           },
         },
       );
