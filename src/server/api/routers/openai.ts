@@ -450,7 +450,7 @@ export const openaiRouter = createTRPCRouter({
         const analysisPromise = openai.chat.completions.create({
           model: "gpt-4o-mini",
           temperature: 0,
-          max_tokens: 800, // Reduced from 800 it was 500
+          max_tokens: 500, // Reduced from 800 it was 500
           response_format: { type: "json_object" }, // Force JSON format for faster parsing
           messages: [
             {
