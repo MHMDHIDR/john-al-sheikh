@@ -134,6 +134,7 @@ export const paymentsRouter = createTRPCRouter({
             userId,
             type: "PURCHASE",
             amount: creditsToAdd,
+            creditCost: creditsToAdd,
             creditsAfter: newCreditBalance,
             stripePaymentId: sessionId,
             packageName,
