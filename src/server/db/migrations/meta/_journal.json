@@ -8,6 +8,13 @@
       "when": 1746069300864,
       "tag": "0000_bright_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1746125814521,
+      "tag": "0001_new_retro_girl",
+      "breakpoints": true
     }
   ]
 }

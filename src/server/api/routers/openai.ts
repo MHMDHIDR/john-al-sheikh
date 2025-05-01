@@ -583,9 +583,6 @@ function provideFallbackResponse() {
 
 // New helper function for IELTS conversation analysis fallback
 function provideFallbackIELTSAnalysis(candidateText: string) {
-  // Extract a sample of the candidate's text to estimate a score
-  const textSample = candidateText.slice(0, 200);
-
   // Simple heuristic: estimate based on text length and complexity
   let estimatedBand = 5.5; // Default mid-range score
 

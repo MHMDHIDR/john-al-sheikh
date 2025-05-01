@@ -248,6 +248,20 @@ export const creditTransactions = createTable(
 
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 
+// Newsletter subscribers schema
+export const subscribedEmails = createTable("subscribed_email", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  fullname: varchar("fullname", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  ieltsGoal: decimal("ielts_goal", { precision: 3, scale: 1 }).$type<number>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type SubscribedEmail = typeof subscribedEmails.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),

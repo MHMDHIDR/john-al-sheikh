@@ -4,6 +4,7 @@ import { optimizeImageRouter } from "./routers/optimize-image";
 import { pageContentRouter } from "./routers/page-content.ts";
 import { paymentsRouter } from "./routers/payments";
 import { S3Router } from "./routers/s3";
+import { subscribedEmailsRouter } from "./routers/subscribed-emails";
 import { usersRouter } from "./routers/users";
 
 /**
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   openai: openaiRouter,
   pageContent: pageContentRouter,
   payments: paymentsRouter,
+  subscribedEmails: subscribedEmailsRouter,
 });
 
 // export type definition of API

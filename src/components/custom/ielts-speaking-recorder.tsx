@@ -311,6 +311,7 @@ export default function IELTSSpeakingRecorder({
     router,
     user.id,
     isProcessingResults,
+    isFreeTrialEnded,
   ]);
 
   // Process results when test is completed
