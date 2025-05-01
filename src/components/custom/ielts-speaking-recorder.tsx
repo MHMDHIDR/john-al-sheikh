@@ -292,7 +292,7 @@ export default function IELTSSpeakingRecorder({
         router.push("/speaking-test-results");
       } else {
         // Set error message and prevent further processing attempts
-        setErrorMessage(analysis.error ?? "فشل في تحليل نتائج الاختبار");
+        setErrorMessage("فشل في تحليل نتائج الاختبار");
         setIsTestCompleted(false); // Reset this flag to prevent further attempts
       }
     } catch (error) {
