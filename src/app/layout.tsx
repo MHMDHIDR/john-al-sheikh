@@ -39,6 +39,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <head>
         <meta content="width=device-width, initial-scale=1 maximum-scale=1" name="viewport" />
         <link href="/logo.svg" rel="icon" type="image/svg+xml" />
+        <script
+          defer
+          src="https://analytics.technodevlabs.com/script.js"
+          data-website-id="594e98df-99fc-4109-9dd4-01ce8549432d"
+        ></script>
       </head>
       <body
         className={`font-ibm-arabic antialiased ${geist.className} ${ibmPlexSansArabic.className}`}
