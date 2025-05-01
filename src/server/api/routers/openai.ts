@@ -448,10 +448,10 @@ export const openaiRouter = createTRPCRouter({
 
         // Create a more streamlined analysis request
         const analysisPromise = openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
+          model: "gpt-4o-mini",
           temperature: 0,
-          max_tokens: 700,
-          response_format: { type: "json_object" }, // Force JSON format response
+          max_tokens: 800, // Reduced from 800 it was 500
+          response_format: { type: "json_object" }, // Force JSON format for faster parsing
           messages: [
             {
               role: "system",
@@ -468,16 +468,13 @@ export const openaiRouter = createTRPCRouter({
               3. Grammatical Range and Accuracy (variety of structures and grammatical accuracy)
               4. Pronunciation (clarity, intonation, accent)
 
-              IMPORTANT: You must return VALID JSON. Make sure all strings are properly escaped.
-              The response must be syntactically valid JSON with no unterminated strings.
-
               Provide your feedback in Arabic language in the following JSON format:
               {
-                "band": number, // Overall band score (1-9, can use decimals like 6.5)
-                "fluencyAndCoherence": number, // Score for this criterion (1-9)
-                "lexicalResource": number, // Score for this criterion (1-9)
-                "grammaticalRangeAndAccuracy": number, // Score for this criterion (1-9)
-                "pronunciation": number, // Score for this criterion (1-9)
+                "band": number, // Overall score (1-9, decimals allowed)
+                "fluencyAndCoherence": number,
+                "lexicalResource": number,
+                "grammaticalRangeAndAccuracy": number,
+                "pronunciation": number,
                 "feedback": {
                   "overall": "إجمالي التقييم العام (3-4 جمل)",
                   "fluencyAndCoherence": "تحليل الطلاقة والتماسك (جملة أو جملتين)",
@@ -527,24 +524,8 @@ export const openaiRouter = createTRPCRouter({
         const analysisText = result.choices[0]?.message.content ?? "";
 
         try {
-          // Try to safely parse the JSON response
-          let feedback: analyzeFullIELTSConversationFeedback;
-
-          try {
-            // First try to parse directly
-            feedback = JSON.parse(analysisText.trim()) as analyzeFullIELTSConversationFeedback;
-          } catch (initialParseError) {
-            console.error("Initial parse failed:", initialParseError);
-
-            // Try to fix common JSON issues and parse again
-            const cleanedJSON = cleanJSONString(analysisText);
-            try {
-              feedback = JSON.parse(cleanedJSON) as analyzeFullIELTSConversationFeedback;
-            } catch (secondParseError) {
-              console.error("Second parse also failed:", secondParseError);
-              throw new Error("Could not parse JSON after cleaning");
-            }
-          }
+          // Parse the JSON response
+          const feedback = JSON.parse(analysisText.trim()) as analyzeFullIELTSConversationFeedback;
 
           return {
             success: true,
@@ -552,7 +533,6 @@ export const openaiRouter = createTRPCRouter({
           };
         } catch (parseError) {
           console.error("Failed to parse JSON response:", parseError);
-          console.error("Raw response:", analysisText);
           return provideFallbackIELTSAnalysis(candidateResponses);
         }
       } catch (error) {
@@ -656,30 +636,4 @@ function provideFallbackIELTSAnalysis(candidateText: string) {
       ],
     },
   };
-}
-
-// Helper function to clean problematic JSON strings
-function cleanJSONString(jsonString: string): string {
-  // Remove any non-JSON content before or after the JSON object
-  let cleaned = jsonString.trim();
-
-  // Try to find the start and end of the JSON object
-  const startIdx = cleaned.indexOf("{");
-  const endIdx = cleaned.lastIndexOf("}");
-
-  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-    cleaned = cleaned.substring(startIdx, endIdx + 1);
-  }
-
-  // Fix common issues with JSON strings
-  // Replace unescaped quotes inside strings
-  cleaned = cleaned.replace(/(?<="[^"]*?)(?<!\\)"(?=[^"]*?")/g, '\\"');
-
-  // Fix missing quotes around property names
-  cleaned = cleaned.replace(/(\s*)([a-zA-Z0-9_]+)(\s*):/g, '"$2":');
-
-  // Fix trailing commas in arrays and objects
-  cleaned = cleaned.replace(/,(\s*[\]}])/g, "$1");
-
-  return cleaned;
 }
