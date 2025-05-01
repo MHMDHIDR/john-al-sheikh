@@ -68,7 +68,7 @@ export function SubscriptionForm({ className }: { className?: string }) {
       {isSuccess ? (
         <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center animate-in fade-in duration-300">
           <h3 className="text-green-800 text-lg font-medium mb-2">شكرا لك على الاشتراك!</h3>
-          <p className="text-green-700">سوف نساعدك لتحقيق أهدافك في الايلتس</p>
+          <p className="text-green-700">سوف نساعدك على تحقيق أهدافك في الايلتس</p>
           <p className="text-green-700 mt-2">جاري تحويلك للصفحة الرئيسية...</p>
         </div>
       ) : (

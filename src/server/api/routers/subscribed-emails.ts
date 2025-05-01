@@ -34,11 +34,11 @@ export const subscribedEmailsRouter = createTRPCRouter({
       await resend.emails.send({
         from: env.ADMIN_EMAIL,
         to: input.email,
-        subject: "مرحباً بك في نشرة جون آل-شيخ للايلتس",
+        subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
         react: WelcomeEmailTemplate({
           name: input.fullname,
           ieltsGoal: input.ieltsGoal.toString() ?? "5.0",
-          signupUrl: `${env.NEXT_PUBLIC_APP_URL}/signup`,
+          signupUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
         }),
       });
 

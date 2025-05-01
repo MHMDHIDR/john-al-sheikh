@@ -11,6 +11,8 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { env } from "@/env";
+import { Logo } from "./icons";
 import type { CSSProperties } from "react";
 
 export type WelcomeEmailProps = {
@@ -25,14 +27,15 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
   return (
     <Html dir="rtl" lang="ar">
       <Head>
-        <title>مرحباً بك في نشرة جون آل-شيخ للايلتس</title>
+        <title>مرحباً بك في منصة {env.NEXT_PUBLIC_APP_NAME} للايلتس</title>
       </Head>
       <Preview>نرحب بك في رحلتك نحو النجاح في اختبار الايلتس!</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
             <Heading as="h1" style={logo}>
-              جون آل-شيخ
+              <Logo style={SVGLogo} />
+              {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
           </Section>
 
@@ -72,7 +75,9 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
           <Hr style={divider} />
 
           <Section style={footer}>
-            <Text style={footerText}>© {year} جون آل-شيخ. جميع الحقوق محفوظة.</Text>
+            <Text style={footerText}>
+              © {year} {env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
+            </Text>
             <Text style={footerText}>
               <Link href="#" style={footerLink}>
                 إلغاء الاشتراك
@@ -110,6 +115,11 @@ const headerSection: CSSProperties = {
   margin: "20px 0",
   padding: "20px 0",
   borderBottom: "1px solid #eeeeee",
+};
+
+const SVGLogo: CSSProperties = {
+  width: "40px",
+  height: "40px",
 };
 
 const logo: CSSProperties = {
