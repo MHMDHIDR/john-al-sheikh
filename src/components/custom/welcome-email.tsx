@@ -12,7 +12,6 @@ import {
   Text,
 } from "@react-email/components";
 import { env } from "@/env";
-import { Logo } from "./icons";
 import type { CSSProperties } from "react";
 
 export type WelcomeEmailProps = {
@@ -34,7 +33,7 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
         <Container style={container}>
           <Section style={headerSection}>
             <Heading as="h1" style={logo}>
-              <Logo style={SVGLogo} />
+              <img src="/logo.svg" alt="Logo" style={SVGLogo} />
               {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
           </Section>

@@ -1,16 +1,10 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import type { CSSProperties, JSX } from "react";
+import type { JSX } from "react";
 
 const ICON_SIZE_CLASS = "size-5";
 
-export function Logo({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: CSSProperties;
-}): JSX.Element {
+export function Logo({ className }: { className?: string }): JSX.Element {
   return (
     <Image
       src="/logo.svg"
@@ -18,7 +12,6 @@ export function Logo({
       width={50}
       height={50}
       className={cn(`rounded-md ${ICON_SIZE_CLASS}`, className)}
-      style={style}
       priority
     />
   );
