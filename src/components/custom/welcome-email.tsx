@@ -43,6 +43,7 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
               />
               {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
+            <small style={smallText}>منصتك لتعلم وممارسة الايلتس</small>
           </Section>
 
           <Section style={contentSection}>
@@ -83,11 +84,6 @@ export function WelcomeEmailTemplate({ name, ieltsGoal, signupUrl }: WelcomeEmai
           <Section style={footer}>
             <Text style={footerText}>
               © {year} {env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
-            </Text>
-            <Text style={footerText}>
-              <Link href="#" style={footerLink}>
-                إلغاء الاشتراك
-              </Link>
             </Text>
           </Section>
         </Container>
@@ -132,6 +128,7 @@ const logo: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  gap: "10px",
   fontSize: "24px",
   color: "#333333",
   fontWeight: "bold",
@@ -185,7 +182,7 @@ const footerText: CSSProperties = {
   margin: "6px 0",
 };
 
-const footerLink: CSSProperties = {
+const smallText: CSSProperties = {
+  fontSize: "12px",
   color: "#999999",
-  textDecoration: "underline",
 };
