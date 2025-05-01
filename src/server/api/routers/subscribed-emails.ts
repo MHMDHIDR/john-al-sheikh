@@ -32,7 +32,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
       // Send welcome email
       const resend = new Resend(env.AUTH_RESEND_KEY);
       await resend.emails.send({
-        from: "John Al-Sheikh <no-reply@johnalsheikh.com>",
+        from: env.ADMIN_EMAIL,
         to: input.email,
         subject: "مرحباً بك في نشرة جون آل-شيخ للايلتس",
         react: WelcomeEmailTemplate({
