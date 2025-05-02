@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   const user = session?.user;
+  const theme = user?.theme ?? "light";
 
   return (
     <html
@@ -58,7 +59,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Nav user={user} key={user?.image} isHidden />
             <ThemeProvider
               attribute="class"
-              defaultTheme={session?.user.theme ?? "light"}
+              defaultTheme={theme}
               disableTransitionOnChange
               enableSystem
             >
