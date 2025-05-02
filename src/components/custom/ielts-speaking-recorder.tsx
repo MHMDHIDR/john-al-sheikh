@@ -5,6 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
@@ -12,6 +21,7 @@ import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
 import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
+import { Timer } from "./timer";
 import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
 import type { Users } from "@/server/db/schema";
 
@@ -79,7 +89,7 @@ function IeltsAssistantConfig({
 
           Section 2: Individual Long Turn (2-3 minutes)
           - Give the candidate a topic title.
-          - Allow them ONE minute to prepare.
+          - Allow them ONE minute to prepare, by verbally saying "You have one minute to prepare".
           - DO NOT give the candidate any other instructions or commands on when to start speaking.
           - Let them speak for up to TWO minutes without interruption.
           - The topic should be general enough for anyone to discuss (e.g., "Describe a skill you would like to learn", "Describe a time you were late for work", "A hobby you enjoy doing at free time", "Describe a time you were in a traffic jam").
@@ -106,7 +116,11 @@ function IeltsAssistantConfig({
       ],
     },
     voice: { provider: "11labs", voiceId: "steve" },
-    transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
+    transcriber: {
+      provider: "deepgram",
+      model: "nova-2",
+      language: "en-US",
+    },
   };
 }
 
@@ -121,6 +135,13 @@ const TEST_CONCLUSION_PHRASES = [
   "that concludes",
 ];
 
+const TEST_ONE_MINUTE_TO_PREPARE = [
+  "you have one minute to prepare",
+  "one minute to prepare",
+  "1 minute",
+  "1 minute to prepare",
+];
+
 export default function IELTSSpeakingRecorder({
   user,
   isFreeTrialEnded,
@@ -132,6 +153,7 @@ export default function IELTSSpeakingRecorder({
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
+  const [isOneMinuteToPrepare, setIsOneMinuteToPrepare] = useState(false);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
 
@@ -163,6 +185,18 @@ export default function IELTSSpeakingRecorder({
           vapi.stop();
         }, 5000);
       }
+
+      if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
+        const ONE_MINUTE_IN_MS = 60000;
+        // Mute the Mic immediately
+        setVolume(0);
+
+        // Wait for 3 seconds before showing the one minute to prepare dialog
+        setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
+
+        // Mute the call after {ONE_MINUTE_IN_MS} full minute
+        setTimeout(() => vapi.setMuted(true), ONE_MINUTE_IN_MS);
+      }
     },
     onError: error => {
       const errorMsg =
@@ -178,12 +212,6 @@ export default function IELTSSpeakingRecorder({
       );
       console.error("Error:", errorMsg);
     },
-    onSpeechStart: () => {
-      console.log("Speech started");
-    },
-    onSpeechEnd: () => {
-      console.log("Speech ended");
-    },
   });
 
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
@@ -194,6 +222,11 @@ export default function IELTSSpeakingRecorder({
   const isTestConclusionMessage = useCallback((content: string) => {
     const lowerContent = content.toLowerCase();
     return TEST_CONCLUSION_PHRASES.some(phrase => lowerContent.includes(phrase));
+  }, []);
+
+  const isOneMinuteToPrepareMessage = useCallback((content: string) => {
+    const lowerContent = content.toLowerCase();
+    return TEST_ONE_MINUTE_TO_PREPARE.some(phrase => lowerContent.includes(phrase));
   }, []);
 
   // Process the test results
@@ -227,19 +260,6 @@ export default function IELTSSpeakingRecorder({
       });
 
       if (analysis.success && analysis.feedback) {
-        // Create results object from the new structured feedback
-        const results = {
-          overallBand: analysis.feedback.band,
-          fluencyAndCoherence: analysis.feedback.fluencyAndCoherence,
-          lexicalResource: analysis.feedback.lexicalResource,
-          grammaticalRangeAndAccuracy: analysis.feedback.grammaticalRangeAndAccuracy,
-          pronunciation: analysis.feedback.pronunciation,
-          feedback: analysis.feedback.feedback,
-        };
-
-        // Save results to session storage
-        sessionStorage.setItem("ieltsResult", JSON.stringify(results));
-
         // Save results to the database
         try {
           // Convert messages format for database
@@ -265,16 +285,27 @@ export default function IELTSSpeakingRecorder({
             },
           });
 
-          console.log("Speaking test results saved to database");
-
           // Deduct credits for the completed test
           if (savedTest?.id && isFreeTrialEnded) {
+            // Create results object from the new structured feedback
+            const results = {
+              testId: savedTest?.id,
+              overallBand: analysis.feedback.band,
+              fluencyAndCoherence: analysis.feedback.fluencyAndCoherence,
+              lexicalResource: analysis.feedback.lexicalResource,
+              grammaticalRangeAndAccuracy: analysis.feedback.grammaticalRangeAndAccuracy,
+              pronunciation: analysis.feedback.pronunciation,
+              feedback: analysis.feedback.feedback,
+            };
+
+            // Save results to session storage
+            sessionStorage.setItem("ieltsResult", JSON.stringify(results));
+
             try {
               await useCreditsForTest.mutateAsync({
                 speakingTestId: savedTest.id,
                 creditCost: 1, // Default cost is 1 credit per test
               });
-              console.log("Credits deducted successfully");
             } catch (creditError) {
               console.error("Error deducting credits:", creditError);
               // Continue anyway to show results to user
@@ -366,7 +397,7 @@ export default function IELTSSpeakingRecorder({
           },
         }),
         {
-          silenceTimeoutSeconds: 75, // 1.25 minutes,
+          silenceTimeoutSeconds: 85, // 1.25 minutes,
           maxDurationSeconds: 600, // 10 minutes
           messagePlan: {
             idleMessages: ["Are you still there?"],
@@ -377,6 +408,7 @@ export default function IELTSSpeakingRecorder({
           startSpeakingPlan: {
             waitSeconds: 3,
           },
+          backgroundDenoisingEnabled: true,
         },
       );
     } catch (error) {
@@ -385,85 +417,109 @@ export default function IELTSSpeakingRecorder({
     }
   };
 
-  // const handleEndConversation = async () => {
-  //   try {
-  //     endSession();
-  //   } catch (error) {
-  //     setErrorMessage("فشل الانتهاء من المحادثة");
-  //     console.error("Error ending conversation:", error);
-  //   }
-  // };
-
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     try {
       setVolume(isMuted ? 1 : 0);
     } catch (error) {
       console.error("Error changing volume:", error);
     }
-  };
+  }, [isMuted, setVolume]);
 
   const isConnected = callStatus === CallStatus.ACTIVE;
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      {errorMessage && (
-        <CardHeader className="py-0 text-center">
-          <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
-        </CardHeader>
+    <>
+      {isOneMinuteToPrepare && (
+        <AlertDialog open={isOneMinuteToPrepare} onOpenChange={setIsOneMinuteToPrepare}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>دقيقة واحدة للتحضير</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div key="one-minute-preparation-dialog">
+                  <p className="text-sm text-green-600 font-bold">
+                    لديك دقيقة واحدة للتحضير الرجاء ترك هذه النافذة مفتوحة حتى ينتهي الوقت وكتابة
+                    ملاحظاتك عن الموضوع
+                  </p>
+                  <Timer
+                    isRunning={true}
+                    onTimeUp={() => {
+                      toggleMute();
+                      vapi.setMuted(false);
+                      setIsOneMinuteToPrepare(false);
+                    }}
+                    totalSeconds={59}
+                    mode="preparation"
+                  />
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isOneMinuteToPrepare}>إلغاء</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
-      <CardContent className="p-0">
-        <div className="flex justify-center items-center gap-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMute}
-            disabled={!isConnected}
-            title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
-          >
-            {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-5" />}
-          </Button>
 
-          {!isConnected && (
+      <Card className="w-full max-w-md mx-auto">
+        {errorMessage && (
+          <CardHeader className="py-0 text-center">
+            <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className="p-0">
+          <div className="flex justify-center items-center gap-x-1">
             <Button
-              onClick={handleStartConversation}
-              disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
-              className="w-full cursor-pointer"
+              variant="ghost"
+              size="icon"
+              onClick={toggleMute}
+              disabled={!isConnected}
+              title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
             >
-              <Mic className="mx-2 size-5" />
-              {callStatus === CallStatus.CONNECTING
-                ? "جاري بدأ الاختبار..."
-                : isProcessingResults
-                  ? "جاري معالجة النتائج..."
-                  : "بدأ الاختبار"}
+              {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-5" />}
             </Button>
-          )}
-        </div>
 
-        <ConfirmationDialog
-          open={showPermissionDialog}
-          onOpenChange={setShowPermissionDialog}
-          title="الميكروفون مطلوب"
-          description={
-            <div className="flex flex-col text-right">
-              <p>
-                <strong>يرجى السماح بوصول الميكروفون لاستخدام المحادثة بالصوت</strong>
-              </p>
-              <Link
-                href="https://support.google.com/chrome/answer/2693767?hl=en-GB"
-                target="_blank"
+            {!isConnected && (
+              <Button
+                onClick={handleStartConversation}
+                disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
+                className="w-full cursor-pointer"
               >
-                <Button variant="link" className="px-0">
-                  <ExternalLink className="size-4" />
-                  كيف أسمح بوصول الميكروفون للمحادثة بالصوت؟
-                </Button>
-              </Link>
-            </div>
-          }
-          buttonText="السماح بوصول الميكروفون"
-          buttonClass="bg-yellow-600 hover:bg-yellow-700"
-          onConfirm={requestMicPermission}
-        />
-      </CardContent>
-    </Card>
+                <Mic className="mx-2 size-5" />
+                {callStatus === CallStatus.CONNECTING
+                  ? "جاري بدأ الاختبار..."
+                  : isProcessingResults
+                    ? "جاري معالجة النتائج..."
+                    : "بدأ الاختبار"}
+              </Button>
+            )}
+          </div>
+
+          <ConfirmationDialog
+            open={showPermissionDialog}
+            onOpenChange={setShowPermissionDialog}
+            title="الميكروفون مطلوب"
+            description={
+              <div className="flex flex-col text-right">
+                <p>
+                  <strong>يرجى السماح بوصول الميكروفون لاستخدام المحادثة بالصوت</strong>
+                </p>
+                <Link
+                  href="https://support.google.com/chrome/answer/2693767?hl=en-GB"
+                  target="_blank"
+                >
+                  <Button variant="link" className="px-0">
+                    <ExternalLink className="size-4" />
+                    كيف أسمح بوصول الميكروفون للمحادثة بالصوت؟
+                  </Button>
+                </Link>
+              </div>
+            }
+            buttonText="السماح بوصول الميكروفون"
+            buttonClass="bg-yellow-600 hover:bg-yellow-700"
+            onConfirm={requestMicPermission}
+          />
+        </CardContent>
+      </Card>
+    </>
   );
 }

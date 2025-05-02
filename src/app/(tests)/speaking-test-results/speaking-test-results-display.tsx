@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { JohnAlSheikhLoadingPage } from "@/components/custom/loading";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 type Results = {
+  testId: string;
   fluencyAndCoherence: number;
   lexicalResource: number;
   grammaticalRangeAndAccuracy: number;
@@ -127,9 +129,13 @@ export default function SpeakingTestResults() {
 
         <div className="grid gap-6 md:grid-cols-1">
           {/* Overall Feedback */}
-          <Card className="p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-gray-900">التقييم العام</h3>
+          <Card className="p-6 shadow-sm space-y-2">
+            <h3 className="text-xl font-semibold text-gray-900">التقييم العام</h3>
             <p className="text-gray-700">{results.feedback.overall}</p>
+
+            <Link href={`/dashboard/${results.testId}`}>
+              <Button variant="active">عرض النتيجة الكاملة</Button>
+            </Link>
           </Card>
         </div>
 

@@ -57,7 +57,6 @@ export const authConfig = {
       from: env.ADMIN_EMAIL,
       sendVerificationRequest: async params => {
         const { identifier: email, url } = params;
-        const { host } = new URL(url);
 
         try {
           const { SignInEmailTemplate } = await import("@/components/custom/signin-email");
