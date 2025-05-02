@@ -55,6 +55,7 @@ export function FeedbackButton() {
       setIsOpen(false);
     },
     onError: error => {
+      alert(JSON.stringify(error));
       toast.error(
         error.message || "عفواً حدث خطأ عند محاولة إرسال الرسالة. يرجى المحاولة مرة أخرى.",
       );
