@@ -44,6 +44,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           src="https://analytics.technodevlabs.com/script.js"
           data-website-id="594e98df-99fc-4109-9dd4-01ce8549432d"
         ></script>
+        <meta
+          name="google-site-verification"
+          content="_SYX43HbHAkel1WpBxNdoV7s0oCdllx1RHczIjBaMdc"
+        />
       </head>
       <body
         className={`font-ibm-arabic antialiased ${geist.className} ${ibmPlexSansArabic.className}`}
