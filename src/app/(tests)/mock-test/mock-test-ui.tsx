@@ -28,7 +28,7 @@ export default function MockTestUI({
     <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip">
       <AuroraText
         className={
-          "m-2 sticky mt-0 top-12 md:top-13 py-1.5 mx-0 shadow min-w-full text-center z-20 text-xl font-bold bg-white/50 backdrop-blur-md text-gray-900 select-none"
+          "m-2 sticky mt-0 top-12 md:top-13 py-1.5 mx-0 shadow min-w-full text-center z-20 text-xl font-bold bg-white/50 dark:bg-black/50 backdrop-blur-md text-gray-900 select-none"
         }
       >
         اختبار المحادثة
@@ -75,7 +75,7 @@ export default function MockTestUI({
         </div>
       </div>
 
-      <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 py-2 backdrop-blur-md flex flex-col">
+      <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 dark:bg-black/50 py-2 backdrop-blur-md flex flex-col">
         <div className="flex justify-between items-center select-none px-4">
           <IELTSSpeakingRecorder user={user} isFreeTrialEnded={isFreeTrialEnded} />
         </div>

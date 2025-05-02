@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SpeakTest } from "@/components/custom/quick-speaking-test";
+import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import type { Metadata } from "next";
@@ -17,5 +17,5 @@ export default async function Home() {
     redirect("/onboarding");
   }
 
-  return <SpeakTest />;
+  return <QuickSpeakingTest />;
 }

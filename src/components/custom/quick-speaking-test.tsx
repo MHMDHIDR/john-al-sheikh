@@ -29,7 +29,7 @@ const prompts = [
 const INITIAL_CHECK_DELAY = 3000; // Check for English at 3 seconds
 const FINAL_CHECK_DELAY = 10000; // Final check at 10 seconds
 
-export function SpeakTest() {
+export function QuickSpeakingTest() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
@@ -284,7 +284,7 @@ export function SpeakTest() {
   }, []);
 
   return (
-    <main className="relative select-none flex min-h-screen flex-col items-center justify-center bg-white p-4 overflow-hidden">
+    <main className="relative select-none flex min-h-screen flex-col items-center justify-center  p-4 overflow-hidden">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -298,16 +298,16 @@ export function SpeakTest() {
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
-          <h1 className="mb-5 text-2xl font-bold text-gray-900">
+          <h1 className="mb-5 text-2xl font-bold">
             اختبار التحدث السريع
-            <span className="text-black mx-2">IELTS</span>
+            <span className="mx-2">IELTS</span>
           </h1>
-          <p className="mb-2 font-black text-3xl text-blue-600">
+          <p className="mb-2 font-black text-3xl text-blue-600 dark:text-blue-400">
             <AuroraText className="mx-2">
               <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
             </AuroraText>
           </p>
-          <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
+          <p className="mb-8">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
 
           {isRecording && (
             <div className="my-6 flex flex-col items-center">
@@ -323,7 +323,7 @@ export function SpeakTest() {
           {isProcessing && (
             <div className="my-8 flex flex-col items-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-t-primary"></div>
-              <p className="mt-2 font-medium text-gray-600">جاري تحليل إجابتك...</p>
+              <p className="mt-2 font-medium">جاري تحليل إجابتك...</p>
             </div>
           )}
 
@@ -340,15 +340,15 @@ export function SpeakTest() {
           </div>
 
           {!isRecording && !isProcessing && (
-            <label className="block text-gray-500 cursor-pointer" htmlFor="recording-button">
+            <label className="block cursor-pointer" htmlFor="recording-button">
               إضغط لبدأ المحادثة
             </label>
           )}
         </div>
 
         <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
-          <h2 className="mb-2 text-lg font-medium text-gray-900 drop-shadow-sm">التعليمات:</h2>
-          <ul className="list-disc space-y-2 text-gray-700 drop-shadow-sm">
+          <h2 className="mb-2 text-lg font-medium drop-shadow-sm">التعليمات:</h2>
+          <ul className="list-disc space-y-2 drop-shadow-sm">
             <li>تحدث بوضوح في الميكروفون</li>
             <li>حاول استخدام مجموعة متنوعة من المفردات والتراكيب النحوية</li>
             <li>قم بهيكلة إجابتك مع مقدمة وصلب الموضوع وخاتمة</li>

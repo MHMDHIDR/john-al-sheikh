@@ -53,7 +53,7 @@ export default async function DashboardPage({
   };
 
   return (
-    <main className="min-h-screen bg-white p-4 md:p-8" dir="rtl">
+    <main className="min-h-screen p-4 md:p-8" dir="rtl">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -177,7 +177,7 @@ export default async function DashboardPage({
                   <div key={test.id}>
                     <Link
                       href={`/dashboard/${test.id}`}
-                      className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 rounded py-0.5 px-1.5"
+                      className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
                     >
                       <section>
                         <h3 className="font-medium">{test.topic || "اختبار محادثة"}</h3>

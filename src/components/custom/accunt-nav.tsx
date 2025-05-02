@@ -52,7 +52,7 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
           <span className="pl-2 pr-1 select-none">{truncateUsername(user.name)}</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side={"right"} className="flex flex-col bg-white">
+      <SheetContent side={"right"} className="flex flex-col">
         <SheetHeader className="flex-col flex-1 gap-2">
           <div className="flex items-center gap-x-2">
             <SheetTitle>
@@ -115,10 +115,10 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
       <Link
         href={href}
         className={clsx(
-          "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/50 outline-blue-300",
+          "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/70 outline-blue-300",
           {
-            "text-blue-500 border-blue-600 bg-blue-50": pathname === href,
-            "text-red-500 border-red-600 bg-red-50": pathname === href && href === "/admin",
+            "text-blue-500 border-blue-600 bg-blue-50 dark:bg-blue-900/50": pathname === href,
+            "text-red-500 border-red-600 bg-red-50 ": pathname === href && href === "/admin",
             "text-red-400 hover:bg-red-200/50 dark:hover:bg-red-900/50 outline-red-300":
               href === "/admin",
           },

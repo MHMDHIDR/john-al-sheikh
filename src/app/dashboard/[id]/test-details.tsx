@@ -42,7 +42,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
   }, [activeTab, searchParams, handleTabChange]);
 
   return (
-    <main className="min-h-screen bg-white p-4 md:p-8" dir="rtl">
+    <main className="min-h-screen p-4 md:p-8" dir="rtl">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -57,7 +57,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
       <div className="mx-auto max-w-4xl relative z-10">
         <div className="mb-4">
           <Link href="/dashboard">
-            <Button className="w-full mb-4">
+            <Button className="w-full mb-4 dark:bg-slate-600 dark:text-accent-foreground dark:hover:bg-slate-700">
               <ExternalLink className="size-4 mr-2" />
               العودة إلى لوحة المعلومات
             </Button>
@@ -126,7 +126,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                               {details.feedback.strengths.points.map((point, index) => (
                                 <div key={index} className="flex items-start">
                                   <div className="ml-2 mt-1 text-green-500 shrink-0">✓</div>
-                                  <p className="text-gray-700">{point}</p>
+                                  <p>{point}</p>
                                 </div>
                               ))}
                             </div>
@@ -156,7 +156,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                               {details.feedback.improvementTips.map((tip, index) => (
                                 <div key={index} className="flex items-center">
                                   <div className="ml-2 mt-1 text-blue-500 shrink-0">●</div>
-                                  <p className="text-gray-700">{tip}</p>
+                                  <p>{tip}</p>
                                 </div>
                               ))}
                             </div>
@@ -166,7 +166,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                   </>
                 ) : (
                   <div className="text-center py-10">
-                    <p className="text-gray-500">لا تتوفر نتائج تفصيلية لهذا الاختبار</p>
+                    <p>لا تتوفر نتائج تفصيلية لهذا الاختبار</p>
                   </div>
                 )}
               </CardContent>
@@ -177,14 +177,16 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
             <Card>
               <CardHeader>
                 <CardTitle>التعليقات والملاحظات</CardTitle>
-                <CardDescription>تحليل مفصل لأدائك في الاختبار</CardDescription>
+                <CardDescription className="text-primary">
+                  تحليل مفصل لأدائك في الاختبار
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {details.feedback ? (
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">ملخص نقاط القوة</h3>
-                      <ul className="text-gray-700">
+                      <ul>
                         {details.feedback.strengths.summary &&
                           details.feedback.strengths.points.map((line, index) => (
                             <li key={index}>{line}</li>
@@ -201,18 +203,18 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                         <div className="space-y-6">
                           {details.feedback.areasToImprove.errors.map((error, index) => (
                             <div key={index}>
-                              <div className="bg-red-50 border-r-4 border-red-500 p-4 mb-2">
-                                <p className="font-medium">{error.mistake}</p>
+                              <div className="bg-red-50 dark:bg-red-100 border-r-4 border-red-500 p-4 mb-2">
+                                <p className="font-medium dark:text-red-700">{error.mistake}</p>
                               </div>
-                              <div className="bg-green-50 border-r-4 border-green-500 p-4">
-                                <p className="font-medium">التصحيح:</p>
-                                <p>{error.correction}</p>
+                              <div className="bg-green-50 dark:bg-green-100 border-r-4 border-green-500 p-4">
+                                <p className="font-medium text-green-700">التصحيح:</p>
+                                <p className="dark:text-green-700">{error.correction}</p>
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-gray-500">لا توجد مجالات محددة للتحسين</p>
+                        <p>لا توجد مجالات محددة للتحسين</p>
                       )}
                     </div>
 
@@ -222,7 +224,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                       <h3 className="text-lg font-semibold mb-2">نصائح للتحسين</h3>
                       {details.feedback.improvementTips &&
                       details.feedback.improvementTips.length > 0 ? (
-                        <div className="bg-blue-50 p-4 rounded-md">
+                        <div className="bg-blue-50 dark:bg-blue-100 dark:text-blue-800 p-4 rounded-md">
                           <ul className="space-y-2 list-disc list-inside">
                             {details.feedback.improvementTips.map((tip, index) => (
                               <li key={index}>{tip}</li>
@@ -230,13 +232,13 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                           </ul>
                         </div>
                       ) : (
-                        <p className="text-gray-500">لا توجد نصائح محددة للتحسين</p>
+                        <p>لا توجد نصائح محددة للتحسين</p>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-10">
-                    <p className="text-gray-500">لا تتوفر تعليقات أو ملاحظات لهذا الاختبار</p>
+                    <p>لا تتوفر تعليقات أو ملاحظات لهذا الاختبار</p>
                   </div>
                 )}
               </CardContent>

@@ -433,8 +433,8 @@ export default function IELTSSpeakingRecorder({
         <AlertDialog open={isOneMinuteToPrepare} onOpenChange={setIsOneMinuteToPrepare}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>دقيقة واحدة للتحضير</AlertDialogTitle>
-              <AlertDialogDescription asChild>
+              <AlertDialogTitle className="text-center">دقيقة واحدة للتحضير</AlertDialogTitle>
+              <AlertDialogDescription asChild className="text-right">
                 <div key="one-minute-preparation-dialog">
                   <p className="text-sm text-green-600 font-bold">
                     لديك دقيقة واحدة للتحضير الرجاء ترك هذه النافذة مفتوحة حتى ينتهي الوقت وكتابة
@@ -454,7 +454,9 @@ export default function IELTSSpeakingRecorder({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isOneMinuteToPrepare}>إلغاء</AlertDialogCancel>
+              <AlertDialogCancel disabled={isOneMinuteToPrepare} className="w-full">
+                إلغاء
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -485,11 +487,13 @@ export default function IELTSSpeakingRecorder({
                 className="w-full cursor-pointer"
               >
                 <Mic className="mx-2 size-5" />
-                {callStatus === CallStatus.CONNECTING
-                  ? "جاري بدأ الاختبار..."
-                  : isProcessingResults
-                    ? "جاري معالجة النتائج..."
-                    : "بدأ الاختبار"}
+                <strong>
+                  {callStatus === CallStatus.CONNECTING
+                    ? "جاري بدأ الاختبار..."
+                    : isProcessingResults
+                      ? "جاري معالجة النتائج..."
+                      : "إبدأ الاختبار"}
+                </strong>
               </Button>
             )}
           </div>
