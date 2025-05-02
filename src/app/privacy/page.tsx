@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 
+export const revalidate = 86400; // 24 hours
+
 export default async function PrivacyPage() {
   const content = await api.pageContent.getLatestContent("PRIVACY");
   if (!content) notFound();

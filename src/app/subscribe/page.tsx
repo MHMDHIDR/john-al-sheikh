@@ -1,7 +1,14 @@
 import { Logo } from "@/components/custom/icons";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { env } from "@/env";
 import { cn } from "@/lib/utils";
 import { SubscriptionForm } from "./subscription-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `الاشتراك معنا في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
+};
 
 export default function SubscribePage() {
   return (
