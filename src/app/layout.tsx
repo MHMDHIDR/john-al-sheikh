@@ -1,4 +1,5 @@
 import { SessionProvider } from "next-auth/react";
+import { FeedbackButton } from "@/components/custom/feedback-button";
 import Nav from "@/components/custom/nav";
 import { auth } from "@/server/auth";
 import { Providers } from "./providers";
@@ -62,6 +63,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               enableSystem
             >
               {children}
+              <FeedbackButton />
             </ThemeProvider>
           </Providers>
         </SessionProvider>
