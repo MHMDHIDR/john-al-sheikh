@@ -67,7 +67,7 @@ export default function SiginForm() {
                 <Input type="email" name="email" id="email" placeholder="البريد الإلكتروني" />
                 <Button
                   className={clsx(
-                    "w-full h-10 cursor-pointer bg-gray-200 text-black hover:bg-gray-300",
+                    "w-full h-10 cursor-pointer bg-gray-200 dark:bg-gray-800 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700",
                     {
                       "pointer-events-none cursor-not-allowed": isPending,
                     },

@@ -22,7 +22,7 @@ export default function Nav({
   const currentUser = session?.user ?? user;
 
   return pathname.includes("/admin") && isHidden ? null : (
-    <header className="w-full border-b border-primary/20 shadow-xs sticky top-0 z-40 bg-white/50 dark:bg-black/50 backdrop-blur-md">
+    <header className="w-full border-b border-primary/20 shadow-xs sticky top-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md">
       <div className="flex items-center justify-between px-2 md:px-1.5 p-1.5 md:py-2 max-w-(--breakpoint-xl) mx-auto">
         <Link href="/" className="flex select-none gap-x-2 text-xl font-bold text-primary">
           <Logo className="mx-auto h-7 w-7 stroke-1 stroke-current" />
@@ -33,7 +33,9 @@ export default function Nav({
             <AccountNav user={currentUser!} />
           ) : (
             <Link href="/signin">
-              <Button className="cursor-pointer">تسجيل الدخول</Button>
+              <Button className="cursor-pointer" variant="default">
+                تسجيل الدخول
+              </Button>
             </Link>
           )}
         </nav>
