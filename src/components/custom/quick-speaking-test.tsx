@@ -324,7 +324,7 @@ export function QuickSpeakingTest() {
   }, [mediaRecorder, isRecording]);
 
   return (
-    <main className="relative select-none flex min-h-screen flex-col items-center justify-center bg-white p-4 overflow-hidden">
+    <main className="relative select-none flex min-h-screen flex-col items-center justify-center  p-4 overflow-hidden">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -338,16 +338,16 @@ export function QuickSpeakingTest() {
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
-          <h1 className="mb-5 text-2xl font-bold text-gray-900">
-            اختبار المحادثة
-            <span className="text-black mx-2">IELTS</span>
+          <h1 className="mb-5 text-2xl font-bold">
+            اختبار التحدث السريع
+            <span className="mx-2">IELTS</span>
           </h1>
-          <p className="mb-2 font-black text-3xl text-blue-600">
+          <p className="mb-2 font-black text-3xl text-blue-600 dark:text-blue-400">
             <AuroraText className="mx-2">
               <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
             </AuroraText>
           </p>
-          <p className="mb-8 text-gray-500">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
+          <p className="mb-8">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
 
           {isRecording && (
             <div className="my-6 flex flex-col items-center">
@@ -386,8 +386,8 @@ export function QuickSpeakingTest() {
         </div>
 
         <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
-          <h3 className="mb-2 text-lg font-medium text-gray-900 drop-shadow-sm">التعليمات:</h3>
-          <ul className="list-disc space-y-2 text-gray-700 drop-shadow-sm">
+          <h2 className="mb-2 text-lg font-medium drop-shadow-sm">التعليمات:</h2>
+          <ul className="list-disc space-y-2 drop-shadow-sm">
             <li>تحدث بوضوح في الميكروفون</li>
             <li>حاول استخدام مجموعة متنوعة من المفردات والتراكيب النحوية</li>
             <li>قم بهيكلة إجابتك مع مقدمة وصلب الموضوع وخاتمة</li>
