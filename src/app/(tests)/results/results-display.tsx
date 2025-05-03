@@ -26,7 +26,7 @@ type IELTSResult = {
   prompt: string;
 };
 
-export function ResultsDisplay({ session }: { session: Session | null }) {
+export function ResultsDisplay({ user }: { user: Session["user"] | undefined }) {
   const [result, setResult] = useState<IELTSResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -130,7 +130,7 @@ export function ResultsDisplay({ session }: { session: Session | null }) {
 
         <div className="mt-8 text-center">
           <Button asChild variant="pressable">
-            <Link href={!session ? "signin?callbackUrl=/mock-test" : "/mock-test"}>
+            <Link href={!user ? "signin?callbackUrl=/mock-test" : "/mock-test"}>
               تقدم لإختبار محادثة تجريبي
             </Link>
           </Button>

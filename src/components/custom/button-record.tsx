@@ -5,15 +5,9 @@ type RecordButtonProps = {
   isRecording: boolean;
   onClick: () => void;
   disabled?: boolean;
-  waves?: boolean;
 };
 
-export function ButtonRecord({
-  isRecording,
-  onClick,
-  disabled = false,
-  waves = true,
-}: RecordButtonProps) {
+export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordButtonProps) {
   const waveContainerRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -168,7 +162,7 @@ export function ButtonRecord({
 
   useEffect(() => {
     // Setup audio analyzer when recording starts
-    if (isRecording && waves) {
+    if (isRecording) {
       void setupAudioAnalyzer();
     } else {
       // Clean up when recording stops
@@ -178,31 +172,35 @@ export function ButtonRecord({
     return () => {
       cleanupAudioAnalyzer();
     };
-  }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer, waves]);
+  }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer]);
 
   return (
-    <div className="flex relative flex-col items-center">
+    <div className="flex flex-col items-center">
       <button
         id="recording-button"
         className={`relative flex h-16 w-16 cursor-pointer items-center justify-center rounded-full transition-all ${
           isRecording ? "bg-white shadow-lg" : "bg-blue-500 hover:bg-blue-600"
-        } ${disabled ? "cursor-not-allowed pointer-events-none opacity-50" : ""}`}
+        } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
         onClick={onClick}
         disabled={disabled}
       >
         {isRecording ? (
-          <div className="relative">
-            <Square className="size-4 text-red-700" />
-            <div className="absolute top-0 left-0 size-4 animate-ping rounded-full bg-red-600"></div>
-          </div>
+          <Square className="h-6 w-6 text-red-600" />
         ) : (
           <Mic className="h-6 w-6 text-white" />
         )}
+
+        {isRecording && (
+          <div className="absolute -top-0.5 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-full">
+            <div className="h-4 w-4 animate-ping rounded-full bg-red-600 opacity-75"></div>
+            <div className="absolute top-0 left-0 h-4 w-4 rounded-full bg-red-600"></div>
+          </div>
+        )}
       </button>
 
-      {isRecording && waves && (
+      {isRecording && (
         <div
-          className="-mt-8 flex h-32 w-88 items-center justify-center absolute -z-10"
+          className="mt-8 flex h-32 w-80 items-center justify-center rounded-lg bg-white/90 p-4 shadow-lg"
           ref={waveContainerRef}
         />
       )}

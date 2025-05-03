@@ -13,9 +13,5 @@ export default async function ResultsPage() {
   const session = await auth();
   const user = session?.user;
 
-  if (!user) {
-    redirect("/signin?callbackUrl=/results");
-  }
-
-  return <ResultsDisplay session={session} />;
+  return <ResultsDisplay user={user} />;
 }

@@ -36,7 +36,7 @@ export default async function SignInPage({
             </CardTitle>
             <CardContent className="p-0">
               <p className="text-sm text-red-600 dark:text-red-300">
-                يجب عليك تسجيل الدخول للوصول إلى{" "}
+                يجب عليك إنشاء حساب أو تسجيل الدخول للوصول إلى{" "}
                 <strong>{translateSring(callbackUrlPageName)}</strong>
               </p>
             </CardContent>
