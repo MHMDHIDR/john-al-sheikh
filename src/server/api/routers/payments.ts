@@ -68,11 +68,8 @@ export const paymentsRouter = createTRPCRouter({
       const { session } = ctx;
       const userId = session.user.id;
 
-      console.log(`Starting verification for session ${sessionId} for user ${userId}`);
-
       // Retrieve the checkout session from Stripe
       const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-      console.log(`Retrieved Stripe session, payment status: ${checkoutSession.payment_status}`);
 
       if (!checkoutSession || checkoutSession.payment_status !== "paid") {
         console.error(`Session ${sessionId} payment status is not paid`);
@@ -84,7 +81,6 @@ export const paymentsRouter = createTRPCRouter({
 
       // Validate that the metadata has expected values
       const metadataUserId = checkoutSession.metadata?.userId;
-      console.log(`Metadata userId: ${metadataUserId}, authenticated userId: ${userId}`);
 
       if (!metadataUserId) {
         console.error("Session is missing userId in metadata");
@@ -100,7 +96,6 @@ export const paymentsRouter = createTRPCRouter({
       });
 
       if (existingTransaction) {
-        console.log(`Session ${sessionId} already processed, transaction exists`);
         return { success: true, alreadyProcessed: true };
       }
 
@@ -118,16 +113,11 @@ export const paymentsRouter = createTRPCRouter({
       const packageName = checkoutSession.metadata?.packageName ?? "Credit Package";
       const newCreditBalance = user.credits + creditsToAdd;
 
-      console.log(
-        `Processing payment: adding ${creditsToAdd} credits, new balance will be ${newCreditBalance}`,
-      );
-
       try {
         // Begin transaction to update user credits and create transaction record
         await db.transaction(async tx => {
           // Update user credits
           await tx.update(users).set({ credits: newCreditBalance }).where(eq(users.id, userId));
-          console.log(`Updated credits for user ${userId}`);
 
           // Create transaction record
           await tx.insert(creditTransactions).values({
@@ -153,10 +143,8 @@ export const paymentsRouter = createTRPCRouter({
                     : null,
             },
           });
-          console.log(`Created transaction record for session ${sessionId}`);
         });
 
-        console.log(`Transaction completed successfully for session ${sessionId}`);
         return { success: true, creditsAdded: creditsToAdd };
       } catch (error) {
         console.error(

@@ -121,11 +121,6 @@ export function QuickSpeakingTest() {
           const timeSinceLastAudio = Date.now() - lastAudioTimestampRef.current;
           if (hasAudioBeenDetectedRef.current && timeSinceLastAudio > MAX_SILENCE_DURATION) {
             // Stop recording after silence duration reached
-            console.log(
-              "Stopping recording due to silence for",
-              (timeSinceLastAudio / 1000).toFixed(1),
-              "seconds",
-            );
             success("توقف التسجيل بسبب الصمت لفترة طويلة");
             stopRecording();
             return;
@@ -165,8 +160,6 @@ export function QuickSpeakingTest() {
             // Clear all timers
             clearAllTimers();
 
-            console.log("Chunks collected:", chunks.length);
-
             // Check both local chunks and state
             if (chunks.length === 0) {
               error("لم يتم تسجيل أي صوت");
@@ -186,8 +179,6 @@ export function QuickSpeakingTest() {
                 setIsProcessing(false);
                 return;
               }
-
-              console.log("Audio size:", audioBlob.size, "bytes");
 
               // Convert blob to base64
               const reader = new FileReader();
@@ -227,8 +218,6 @@ export function QuickSpeakingTest() {
                   // Get the current prompt for analysis - ensure it's always a string
                   const defaultPrompt = "تحدث عن أي موضوع تختاره"; // Fallback prompt
                   const promptForAnalysis = currentPrompt ?? prompts[0] ?? defaultPrompt;
-
-                  console.log("Transcription==>", transcribedText);
 
                   // Analyze transcription using tRPC endpoint
                   const analysisResult = await analyzeIELTSSpeakingMutation.mutateAsync({

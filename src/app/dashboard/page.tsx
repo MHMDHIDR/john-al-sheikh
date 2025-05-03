@@ -28,9 +28,7 @@ export default async function DashboardPage({
   // If returning from successful payment, verify the session
   if (payment_success === "true" && session_id) {
     try {
-      console.log("Verifying Stripe session on dashboard:", session_id);
       await api.payments.verifySession({ sessionId: session_id });
-      console.log("Session verified successfully on dashboard");
     } catch (error) {
       console.error("Failed to verify payment session on dashboard:", error);
     }

@@ -8,8 +8,6 @@ import type { NextRequest } from "next/server";
 import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
-  console.log("Stripe webhook received");
-
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
@@ -25,7 +23,6 @@ export async function POST(req: NextRequest) {
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET);
-    console.log(`Webhook event type: ${event.type}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Webhook signature verification failed: ${errorMessage}`);
@@ -34,17 +31,12 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    console.log(
-      `Processing checkout session: ${session.id}, payment_status: ${session.payment_status}`,
-    );
 
     try {
       // Extract metadata
       const userId = session.metadata?.userId;
       const creditsToAdd = Number(session.metadata?.credits ?? 0);
       const packageName = session.metadata?.packageName ?? "Credit Package";
-
-      console.log(`Metadata: userId=${userId}, credits=${creditsToAdd}, package=${packageName}`);
 
       if (!userId || !creditsToAdd) {
         console.error("Missing required metadata in Stripe session", session.metadata);
@@ -57,7 +49,6 @@ export async function POST(req: NextRequest) {
       });
 
       if (existingTransaction) {
-        console.log(`Payment already processed: ${session.id}`);
         return NextResponse.json({ success: true, alreadyProcessed: true });
       }
 
@@ -71,16 +62,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
       }
 
-      console.log(`Current credits for user ${userId}: ${user.credits}`);
       const newCreditBalance = user.credits + creditsToAdd;
-      console.log(`New credit balance will be: ${newCreditBalance}`);
 
       try {
         // Begin transaction to update user credits and create transaction record
         await db.transaction(async tx => {
           // Update user credits
           await tx.update(users).set({ credits: newCreditBalance }).where(eq(users.id, userId));
-          console.log(`Updated user credits to ${newCreditBalance}`);
 
           // Create transaction record
           await tx.insert(creditTransactions).values({
@@ -105,12 +93,8 @@ export async function POST(req: NextRequest) {
                     : null,
             },
           });
-          console.log(`Created transaction record for session ${session.id}`);
         });
 
-        console.log(
-          `Successfully processed payment for user ${userId}: ${creditsToAdd} credits added`,
-        );
         return NextResponse.json({ success: true });
       } catch (dbError) {
         console.error(`Database transaction error:`, dbError);
@@ -129,6 +113,5 @@ export async function POST(req: NextRequest) {
   }
 
   // Handle other event types as needed
-  console.log(`Webhook event processed successfully: ${event.type}`);
   return NextResponse.json({ received: true });
 }

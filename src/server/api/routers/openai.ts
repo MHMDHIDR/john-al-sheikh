@@ -68,8 +68,6 @@ export const openaiRouter = createTRPCRouter({
         // Convert base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
 
-        console.log("Sending audio to OpenAI, size:", buffer.length, "bytes");
-
         // Create a unique filename for the audio
         const filename = `audio-${Date.now()}.webm`;
 
@@ -109,12 +107,48 @@ export const openaiRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       try {
-        // Use a timeout to ensure we don't exceed Vercel's limits
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error("Request timeout - operation took too long"));
-          }, 8000); // Set timeout to 8 seconds to stay under Vercel's 10s limit
+        // First, validate the content is English and relevant to the prompt
+        const validationResponse = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          temperature: 0,
+          messages: [
+            {
+              role: "system",
+              content: `You are a content validator for IELTS speaking responses.
+               Given a prompt and a response, determine if:
+               1. The response is in English
+               2. The response is relevant to the prompt
+               3. The response contains meaningful content (not just filler words or incomplete thoughts)
+
+               Return a JSON response in this format:
+               {
+                 "isValid": boolean,
+                 "reason": "explanation if invalid"
+               }`,
+            },
+            {
+              role: "user",
+              content: `Prompt: "${input.prompt}"
+               Response: "${input.transcription}"`,
+            },
+          ],
         });
+
+        const validationResult = JSON.parse(
+          validationResponse.choices[0]?.message.content ?? "{}",
+        ) as {
+          isValid: boolean;
+          reason: string;
+        };
+
+        if (!validationResult.isValid) {
+          console.error("Invalid content:", validationResult.reason);
+          // throw new TRPCError({   code: "BAD_REQUEST", message: validationResult.reason });
+          return {
+            success: false,
+            error: "المحتوى غير مرتبط بموضوع المحادثة أو غير مكتمل",
+          };
+        }
 
         // Create the OpenAI request
         const openaiPromise = openai.chat.completions.create({
@@ -138,21 +172,29 @@ export const openaiRouter = createTRPCRouter({
               Provide a detailed assessment and feedback in Arabic language.
               Return your feedback in the following JSON format with no additional text:
               {
-                "band": "A number from 1 to 9 (like 6.5) representing the overall speaking score",
+                "band": "Give a number from 1 to 9 (like 4.5) representing the overall speaking score, always give a lower band score than the actual score",
+                "overallSummary": "A comprehensive analysis (3-4 sentences) explaining why the candidate received this band score, highlighting their overall performance across all criteria",
                 "strengthPoints": [
-                  "Strength point 1 related to a specific IELTS criterion",
-                  "Strength point 2 related to another criterion"
+                  "Specific strength point 1 related to a criterion",
+                  "Specific strength point 2 related to another criterion"
                 ],
                 "improvementArea": [
-                  {"mistake": "Description of specific language error", "correction": "Suggested correction"},
-                  {"mistake": "Description of another error", "correction": "Its correction"}
+                  {
+                    "originalText": "The exact problematic phrase/sentence from the transcript",
+                    "mistake": "Description of what's wrong with this specific usage",
+                    "correction": "Give the same original text in English, but with a better way to express the same idea with proper grammar/vocabulary/pronunciation"
+                  }
                 ],
                 "tips": [
                   "Specific and practical tip 1",
                   "Specific and practical tip 2"
                 ]
-
               }
+
+              Important Notes:
+              1. The overallSummary should be different from strengthPoints, providing a comprehensive analysis
+              2. For improvementArea, always quote the exact problematic text from the transcript
+              3. Corrections should demonstrate how to better express the same idea
 
               The response MUST be in Arabic language for all feedback points. Be concise and specific with actionable feedback. Provide only the JSON response with no additional text.`,
             },
@@ -165,23 +207,26 @@ export const openaiRouter = createTRPCRouter({
 
         try {
           // Race the OpenAI request against the timeout
-          const response = await Promise.race([openaiPromise, timeoutPromise]);
+          const response = await openaiPromise;
           const analysisText = response.choices[0]?.message.content ?? "";
 
           try {
             // Try to parse the JSON response
             const parsed = JSON.parse(analysisText.trim()) as {
               band: string;
+              overallSummary: string;
               strengthPoints: string[];
-              improvementArea: { mistake: string; correction: string }[];
+              improvementArea: { originalText: string; mistake: string; correction: string }[];
               tips: string[];
             };
 
             // Create the feedback object from the parsed JSON
             const feedback: IELTSFeedback = {
-              band: parseFloat(parsed.band) || 6.0,
+              band: parseFloat(parsed.band) || DEFAULT_BAND_SCORE,
               strengths: {
-                summary: parsed.strengthPoints?.[0] ?? "أظهر المتحدث قدرة جيدة على التواصل",
+                summary:
+                  parsed.overallSummary ??
+                  "أظهر المتحدث مستوى جيد من الكفاءة في التحدث باللغة الإنجليزية مع قدرة على التعبير عن الأفكار بشكل واضح",
                 points: Array.isArray(parsed.strengthPoints)
                   ? parsed.strengthPoints
                   : ["أظهر المتحدث قدرة جيدة على التواصل"],
@@ -189,7 +234,10 @@ export const openaiRouter = createTRPCRouter({
               areasToImprove: {
                 errors: Array.isArray(parsed.improvementArea)
                   ? parsed.improvementArea.map(item => ({
-                      mistake: item.mistake ?? "بعض الأخطاء النحوية البسيطة",
+                      mistake:
+                        item.originalText && item.mistake
+                          ? `${item.originalText} - ${item.mistake}`
+                          : "بعض الأخطاء النحوية البسيطة",
                       correction: item.correction ?? "يمكن تحسين الدقة النحوية",
                     }))
                   : [
