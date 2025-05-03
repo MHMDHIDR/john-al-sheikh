@@ -13,6 +13,7 @@ export function Logo({ className }: { className?: string }): JSX.Element {
       height={50}
       className={cn(`rounded-md ${ICON_SIZE_CLASS}`, className)}
       priority
+      draggable={false}
     />
   );
 }

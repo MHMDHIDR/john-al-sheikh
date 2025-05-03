@@ -8,7 +8,7 @@ export interface SwitchProps extends React.ComponentPropsWithoutRef<typeof Switc
   layout?: "dotted" | "grid" | "grid-small";
 }
 
-const Switch = React.forwardRef<React.ElementRef<typeof SwitchPrimitives.Root>, SwitchProps>(
+const Switch = React.forwardRef<React.ComponentRef<typeof SwitchPrimitives.Root>, SwitchProps>(
   ({ className, layout, ...props }, ref) => {
     const isThreeState = layout !== undefined;
 

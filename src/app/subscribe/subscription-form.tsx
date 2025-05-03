@@ -46,17 +46,15 @@ export function SubscriptionForm({ className }: { className?: string }) {
     onSuccess: () => {
       setIsSuccess(true);
       toast.success("تم الاشتراك بنجاح!");
+      form.reset();
 
       // Reset form after showing success message
       setTimeout(() => {
-        form.reset();
         setIsSuccess(false);
         router.replace("/");
-      }, 3000);
+      }, 2500);
     },
-    onError: error => {
-      toast.error(error.message);
-    },
+    onError: error => toast.error(error.message),
   });
 
   function onSubmit(data: FormValues) {
@@ -84,8 +82,8 @@ export function SubscriptionForm({ className }: { className?: string }) {
                     <Input
                       placeholder="ادخل اسمك الكامل"
                       {...field}
-                      className="bg-white/80 backdrop-blur-sm border-gray-200"
-                      // required
+                      className="text-gray-700 border-gray-200"
+                      required
                     />
                   </FormControl>
                   <FormMessage />
@@ -104,8 +102,8 @@ export function SubscriptionForm({ className }: { className?: string }) {
                       placeholder="ادخل بريدك الإلكتروني"
                       type="email"
                       {...field}
-                      className="bg-white/80 backdrop-blur-sm border-gray-200"
-                      // required
+                      className="text-gray-700 border-gray-200"
+                      required
                     />
                   </FormControl>
                   <FormMessage />
@@ -126,16 +124,16 @@ export function SubscriptionForm({ className }: { className?: string }) {
                       }
                     }}
                     value={field.value ? field.value.toString() : "5.0"}
-                    // required
+                    required
                   >
                     <FormControl>
-                      <SelectTrigger className="bg-white/80 backdrop-blur-sm border-gray-200 cursor-pointer rtl">
+                      <SelectTrigger className="cursor-pointer rtl border-gray-200">
                         <SelectValue placeholder="اختر الدرجة المستهدفة">
                           {field.value ? field.value.toString() : "5.0"}
                         </SelectValue>
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent side="top" avoidCollisions={false}>
                       {Array.from({ length: 9 }, (_, i) => 5 + i * 0.5).map(band => (
                         <SelectItem
                           key={band}
