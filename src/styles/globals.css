@@ -45,7 +45,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --animate-aurora: aurora 8s ease-in-out infinite alternate;
-  --animate-feedback-aurora: aurora 7s ease-in-out 10s 1 forwards;
+  --animate-feedback-aurora: aurora 7s linear 10s 1 alternate;
 
   @keyframes aurora {
     0% {

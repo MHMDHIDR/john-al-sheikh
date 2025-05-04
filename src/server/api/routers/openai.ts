@@ -136,19 +136,90 @@ export const openaiRouter = createTRPCRouter({
 
         const validationResult = JSON.parse(
           validationResponse.choices[0]?.message.content ?? "{}",
-        ) as {
-          isValid: boolean;
-          reason: string;
-        };
+        ) as { isValid: boolean; reason: string };
+        const validationReason = validationResult.reason;
 
-        if (!validationResult.isValid) {
-          console.error("Invalid content:", validationResult.reason);
-          // throw new TRPCError({   code: "BAD_REQUEST", message: validationResult.reason });
-          return {
-            success: false,
-            error: "المحتوى غير مرتبط بموضوع المحادثة أو غير مكتمل",
-          };
-        }
+        // if (!validationResult.isValid) {
+        //   console.error("Invalid content:", validationResult.reason);
+        //   // throw new TRPCError({   code: "BAD_REQUEST", message: validationResult.reason });
+        //   return {
+        //     success: false,
+        //     error: "المحتوى غير مرتبط بموضوع المحادثة أو غير مكتمل",
+        //   };
+        // }
+
+        // Create the OpenAI request with a system message that changes based on validation result
+        const systemMessage = !validationResult.isValid
+          ? `You are an expert IELTS examiner evaluating a student's speaking response which failed validation for the following reason: "${validationReason}".
+
+             The response was not valid because either:
+             - It was not in English
+             - It was not relevant to the prompt
+             - It did not contain meaningful content
+
+             As this is an invalid response, you should:
+             1. Give a very low band score (between 2.0-3.0)
+             2. Not provide any strength points
+             3. Clearly explain the issue with the response
+             4. Provide helpful tips for improvement
+
+             Return your feedback in the following JSON format with no additional text:
+             {
+               "band": "Give a number between 2.0 and 3.0 representing the very low speaking score",
+               "overallSummary": "A comprehensive analysis (in Arabic) explaining why the response is invalid and received this low band score",
+               "strengthPoints": [],
+               "improvementArea": [
+                 {
+                   "originalText": "The exact problematic phrase/sentence from the transcript if applicable",
+                   "mistake": "Description of what's wrong with the overall response",
+                   "correction": "Suggest speaking clearly in English and addressing the given topic"
+                 }
+               ],
+               "tips": [
+                 "Speak clearly in English",
+                 "Make sure to address the given topic",
+                 "Provide meaningful content with complete thoughts",
+                 "Practice basic English speaking skills"
+               ]
+             }
+
+             The response MUST be in Arabic language for all feedback points except for any English examples in originalText and correction fields.`
+          : `You are an expert IELTS examiner evaluating a student's speaking response to the topic: "${input.prompt}".
+
+             Analyze the speaking response based on the official IELTS speaking assessment criteria:
+             1. Fluency and Coherence
+             2. Lexical Resource (vocabulary)
+             3. Grammatical Range and Accuracy
+             4. Pronunciation
+
+             Provide a detailed assessment and feedback in Arabic language.
+             Return your feedback in the following JSON format with no additional text:
+             {
+               "band": "Give a number from 1 to 9 (like 4.5) representing the overall speaking score, always give a lower band score than the actual score",
+               "overallSummary": "A comprehensive analysis (3-4 sentences) explaining why the candidate received this band score, highlighting their overall performance across all criteria",
+               "strengthPoints": [
+                 "Specific strength point 1 related to a criterion",
+                 "Specific strength point 2 related to another criterion"
+               ],
+               "improvementArea": [
+                 {
+                   "originalText": "The exact problematic phrase/sentence from the transcript",
+                   "mistake": "Description of what's wrong with this specific usage",
+                   "correction": "Give the same original text in English, but with a better way to express the same idea with proper grammar/vocabulary/pronunciation"
+                 }
+               ],
+               "tips": [
+                 "Specific and practical tip 1",
+                 "Specific and practical tip 2"
+               ]
+             }
+
+             Important Notes:
+             1. The overallSummary should be different from strengthPoints, providing a comprehensive analysis
+             2. For improvementArea, always quote the exact problematic text from the transcript
+             3. Corrections should demonstrate how to better express the same idea
+
+             The response MUST be in Arabic language for all feedback points. Be concise and specific with actionable feedback. Provide only the JSON response with no additional text.`;
 
         // Create the OpenAI request
         const openaiPromise = openai.chat.completions.create({
@@ -161,42 +232,7 @@ export const openaiRouter = createTRPCRouter({
           messages: [
             {
               role: "system",
-              content: `You are an expert IELTS examiner evaluating a student's speaking response to the topic: "${input.prompt}".
-
-              Analyze the speaking response based on the official IELTS speaking assessment criteria:
-              1. Fluency and Coherence
-              2. Lexical Resource (vocabulary)
-              3. Grammatical Range and Accuracy
-              4. Pronunciation
-
-              Provide a detailed assessment and feedback in Arabic language.
-              Return your feedback in the following JSON format with no additional text:
-              {
-                "band": "Give a number from 1 to 9 (like 4.5) representing the overall speaking score, always give a lower band score than the actual score",
-                "overallSummary": "A comprehensive analysis (3-4 sentences) explaining why the candidate received this band score, highlighting their overall performance across all criteria",
-                "strengthPoints": [
-                  "Specific strength point 1 related to a criterion",
-                  "Specific strength point 2 related to another criterion"
-                ],
-                "improvementArea": [
-                  {
-                    "originalText": "The exact problematic phrase/sentence from the transcript",
-                    "mistake": "Description of what's wrong with this specific usage",
-                    "correction": "Give the same original text in English, but with a better way to express the same idea with proper grammar/vocabulary/pronunciation"
-                  }
-                ],
-                "tips": [
-                  "Specific and practical tip 1",
-                  "Specific and practical tip 2"
-                ]
-              }
-
-              Important Notes:
-              1. The overallSummary should be different from strengthPoints, providing a comprehensive analysis
-              2. For improvementArea, always quote the exact problematic text from the transcript
-              3. Corrections should demonstrate how to better express the same idea
-
-              The response MUST be in Arabic language for all feedback points. Be concise and specific with actionable feedback. Provide only the JSON response with no additional text.`,
+              content: systemMessage,
             },
             {
               role: "user",

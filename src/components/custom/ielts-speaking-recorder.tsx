@@ -363,7 +363,7 @@ export default function IELTSSpeakingRecorder({
       stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       console.error("Error accessing microphone:", error);
-      setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون");
+      setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون، يرجى تفعيل الميكروفون");
       setShowPermissionDialog(true);
     }
   };

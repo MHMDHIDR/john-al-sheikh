@@ -34,9 +34,9 @@ export function ConfirmationDialog({
       <AlertDialogContent className="select-none py-2">
         <AlertDialogHeader className="rtl:items-center pb-3">
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription asChild>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex gap-x-3 rtl:flex-row-reverse">
+        <AlertDialogFooter className="flex justify-end flex-row-reverse gap-x-3 items-end">
           <AlertDialogCancel variant={"destructive"}>إلغاء</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className={buttonClass}>
             {buttonText}

@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
+import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { TimerQuickSpeakingTest } from "@/components/custom/timer-quick-speaking-test";
+import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { useToast } from "@/hooks/use-toast";
 import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
-import { AuroraText } from "../magicui/aurora-text";
 
 const prompts = [
   "صِف وقتاً ساعدت فيه شخصاً ما.",
@@ -38,6 +39,7 @@ export function QuickSpeakingTest() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [showQuickTipsDialog, setShowQuickTipsDialog] = useState(false);
   // Commented out as it's currently not used but might be needed in the future
   // const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
@@ -346,12 +348,6 @@ export function QuickSpeakingTest() {
               <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
             </AuroraText>
           </p>
-          <div className="mb-8">
-            <p>يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
-            <p className="text-red-500 text-sm">
-              يجب أن تتحدث في نفس موضوع المحادثة بلغة انجليزية واضحة في الميكروفون
-            </p>
-          </div>
 
           {isRecording && (
             <div className="my-6 flex flex-col items-center">
@@ -373,7 +369,7 @@ export function QuickSpeakingTest() {
           <div className="my-5 flex justify-center">
             <ButtonRecord
               isRecording={isRecording}
-              onClick={handleToggleRecording}
+              onClick={() => setShowQuickTipsDialog(true)}
               disabled={
                 isProcessing ||
                 transcribeAudioMutation.isPending ||
@@ -388,6 +384,25 @@ export function QuickSpeakingTest() {
             </label>
           )}
         </div>
+
+        <ConfirmationDialog
+          open={showQuickTipsDialog}
+          onOpenChange={setShowQuickTipsDialog}
+          title="نصيحة سريعة"
+          description={
+            <ul className="text-right list-decimal">
+              <li className="text-gray-500">
+                يجب أن تتحدث لمدة <strong>{MAX_RECORDING_TIME}</strong> ثانية.{" "}
+              </li>
+              <li className="text-red-400 font-bold text-sm">
+                يجب أن تتحدث في نفس موضوع المحادثة بلغة انجليزية واضحة في الميكروفون.
+              </li>
+            </ul>
+          }
+          buttonText="مـوافق"
+          buttonClass="bg-yellow-600 hover:bg-yellow-700"
+          onConfirm={handleToggleRecording}
+        />
 
         <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
           <h2 className="mb-2 text-lg font-medium drop-shadow-sm">التعليمات:</h2>
