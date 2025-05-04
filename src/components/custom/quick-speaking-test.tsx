@@ -346,7 +346,12 @@ export function QuickSpeakingTest() {
               <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
             </AuroraText>
           </p>
-          <p className="mb-8">يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
+          <div className="mb-8">
+            <p>يجب أن تتحدث لمدة {MAX_RECORDING_TIME} ثانية. </p>
+            <p className="text-red-500 text-sm">
+              يجب أن تتحدث في نفس موضوع المحادثة بلغة انجليزية واضحة في الميكروفون
+            </p>
+          </div>
 
           {isRecording && (
             <div className="my-6 flex flex-col items-center">

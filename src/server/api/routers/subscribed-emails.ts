@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
 import { formSchema } from "@/app/schemas/subscription-from";
 import { WelcomeEmailTemplate } from "@/components/custom/welcome-email";
 import { env } from "@/env";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { subscribedEmails } from "@/server/db/schema";
 
 export const subscribedEmailsRouter = createTRPCRouter({
@@ -52,5 +52,14 @@ export const subscribedEmailsRouter = createTRPCRouter({
         message: "حدث خطأ أثناء عملية الاشتراك",
       });
     }
+  }),
+
+  getSubscribers: protectedProcedure.query(async ({ ctx }) => {
+    const subscribersList = await ctx.db.query.subscribedEmails.findMany();
+    const [{ count = 0 } = { count: 0 }] = await ctx.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(subscribedEmails);
+
+    return { subscribers: subscribersList, count };
   }),
 });

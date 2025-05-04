@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 export type BaseEntity = {
   id: string;
-  name: string;
+  name?: string;
 };
 
 export const baseColumns = <T extends BaseEntity>(): ColumnDef<T>[] => [
