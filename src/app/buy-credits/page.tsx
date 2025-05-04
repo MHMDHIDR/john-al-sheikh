@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { env } from "@/env";
+import { getAdaptivePrice } from "@/lib/adaptive-pricing";
+import { creditPackages } from "@/lib/stripe-client";
 import { auth } from "@/server/auth";
+import { api } from "@/trpc/server";
 import CreditPackages from "./credit-packages";
+import type { CreditPackagePrices } from "@/lib/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -24,6 +28,15 @@ export default async function BuyCreditsPage({
     redirect("/signin?callbackUrl=/buy-credits");
   }
 
+  const userCountry = (await api.payments.getUserCountry()) ?? "GBP";
+
+  const prices: CreditPackagePrices = {};
+
+  for (const [id, packageInfo] of Object.entries(creditPackages)) {
+    const price = await getAdaptivePrice(packageInfo.priceId, userCountry);
+    prices[id] = price;
+  }
+
   return (
     <div className="container max-w-7xl py-10 px-4 mx-auto">
       <div className="mb-8 space-y-6 text-center">
@@ -42,7 +55,7 @@ export default async function BuyCreditsPage({
         </div>
       )}
 
-      <CreditPackages />
+      <CreditPackages prices={prices} />
     </div>
   );
 }

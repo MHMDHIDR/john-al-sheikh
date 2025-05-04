@@ -6,6 +6,19 @@ import { creditPackages, stripe } from "@/lib/stripe";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { creditTransactions, users } from "@/server/db/schema";
+import type { PriceWithCurrency } from "@/lib/types";
+
+type SessionCreateOptions = {
+  line_items: {
+    price: string;
+    quantity: number;
+  }[];
+  mode: "payment";
+  success_url: string;
+  cancel_url: string;
+  client_reference_id: string;
+  customer_email?: string;
+};
 
 export const paymentsRouter = createTRPCRouter({
   /**
@@ -57,6 +70,25 @@ export const paymentsRouter = createTRPCRouter({
 
       return { checkoutUrl: checkoutSession.url };
     }),
+
+  /**
+   * Get the user's country from ipapi.co based on
+   */
+  getUserCountry: protectedProcedure.query(async () => {
+    try {
+      const countryCode = await fetch("https://ipapi.co/country");
+      if (countryCode.ok) {
+        const country = await countryCode.text();
+        return country.trim();
+      }
+    } catch (error) {
+      console.error("Error detecting user country:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to detect user country",
+      });
+    }
+  }),
 
   /**
    * Verify a Stripe checkout session and add credits to the user's account
@@ -248,4 +280,66 @@ export const paymentsRouter = createTRPCRouter({
 
     return transactions;
   }),
+
+  getAdaptivePrice: protectedProcedure
+    .input(z.object({ priceId: z.string(), country: z.string().optional() }))
+    .query(async ({ input, ctx }) => {
+      const { priceId, country } = input;
+
+      try {
+        // Set up options for temporary checkout session
+        const options: SessionCreateOptions = {
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          mode: "payment",
+          success_url: "https://example.com/success",
+          cancel_url: "https://example.com/cancel",
+          client_reference_id: ctx.session.user.id,
+        };
+
+        // If country is provided, emulate request from that country
+        if (country) {
+          options.customer_email = `test+location_${country}@example.com`;
+        }
+
+        // Create a temporary checkout session to get the converted price
+        const checkoutSession = await stripe.checkout.sessions.create(options);
+
+        // Get price details
+        const result: PriceWithCurrency = {
+          id: priceId,
+          unit_amount: 0,
+          currency: "GBP",
+        };
+
+        // Extract pricing information from the checkout session
+        if (checkoutSession.amount_total && checkoutSession.currency) {
+          result.unit_amount = checkoutSession.amount_total;
+          result.currency = checkoutSession.currency.toUpperCase();
+
+          // If currency conversion info is available
+          if (checkoutSession.currency_conversion) {
+            result.converted_amount = checkoutSession.amount_total;
+            result.converted_currency = checkoutSession.currency.toUpperCase();
+            result.exchange_rate = parseFloat(checkoutSession.currency_conversion.fx_rate);
+
+            // Original amount in source currency
+            result.unit_amount = checkoutSession.currency_conversion.amount_total;
+            result.currency = checkoutSession.currency_conversion.source_currency.toUpperCase();
+          }
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Error getting adaptive price:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get price information",
+        });
+      }
+    }),
 });

@@ -26,7 +26,7 @@ export const AuroraText = memo(
       setTheme(currentTheme);
 
       return () => setTheme(undefined);
-    }, []);
+    }, [currentTheme]);
 
     const lightGradient = `linear-gradient(135deg, ${colors.join(", ")}, ${colors[0]})`;
     const darkGradient = `linear-gradient(135deg, ${darkColors.join(", ")}, ${darkColors[0]})`;

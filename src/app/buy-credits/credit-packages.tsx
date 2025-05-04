@@ -2,7 +2,6 @@
 
 import { Check, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,22 +19,20 @@ import { formatPrice } from "@/lib/format-price";
 import { creditPackages } from "@/lib/stripe-client";
 import { api } from "@/trpc/react";
 import type { PackageInfo } from "@/lib/stripe-client";
+import type { CreditPackagePrices, PriceWithCurrency } from "@/lib/types";
 
-export default function CreditPackages() {
-  const [isLoading, setIsLoading] = useState<string | null>(null);
+export default function CreditPackages({ prices }: { prices: CreditPackagePrices }) {
   const router = useRouter();
   const toast = useToast();
 
   const { mutateAsync: createCheckoutSession } = api.payments.createCheckoutSession.useMutation({
     onError: error => {
       toast.error(error.message ?? "Failed to create checkout session");
-      setIsLoading(null);
     },
   });
 
   const handlePurchase = async (packageId: string) => {
     try {
-      setIsLoading(packageId);
       const { checkoutUrl } = await createCheckoutSession({
         packageId: packageId as keyof typeof creditPackages,
       });
@@ -45,7 +42,6 @@ export default function CreditPackages() {
       }
     } catch (error) {
       console.error("Error creating checkout session:", error);
-      setIsLoading(null);
     }
   };
 
@@ -55,7 +51,7 @@ export default function CreditPackages() {
         <PackageCard
           key={id}
           packageInfo={packageInfo}
-          isLoading={isLoading === id}
+          adaptivePrice={prices[id] ?? null}
           onPurchase={() => handlePurchase(id)}
         />
       ))}
@@ -65,12 +61,38 @@ export default function CreditPackages() {
 
 type PackageCardProps = {
   packageInfo: PackageInfo;
+  adaptivePrice: PriceWithCurrency | null;
   onPurchase: () => void;
-  isLoading: boolean;
 };
 
-function PackageCard({ packageInfo, isLoading, onPurchase }: PackageCardProps) {
+function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProps) {
   const { name, description, features, credits, popular } = packageInfo;
+
+  // Format the price display
+  const priceDisplay = () => {
+    if (!adaptivePrice) {
+      // Fallback if adaptive price is not available
+      return formatPrice(credits);
+    }
+
+    // If we have converted currency information, show that
+    if (adaptivePrice.converted_currency && adaptivePrice.converted_amount) {
+      return formatPrice(
+        adaptivePrice.converted_amount / 100, // Convert from cents to base unit
+        adaptivePrice.converted_currency === "JPY" ? 0 : 2, // JPY doesn't use decimals
+        undefined,
+        adaptivePrice.converted_currency,
+      );
+    }
+
+    // Otherwise show the base price
+    return formatPrice(
+      adaptivePrice.unit_amount / 100, // Convert from cents to base unit
+      adaptivePrice.currency === "JPY" ? 0 : 2, // JPY doesn't use decimals
+      undefined,
+      adaptivePrice.currency,
+    );
+  };
 
   return (
     <Card
@@ -90,7 +112,7 @@ function PackageCard({ packageInfo, isLoading, onPurchase }: PackageCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="mb-4 flex items-baseline">
-          <span className="text-3xl font-bold">{formatPrice(credits)}</span>
+          <span className="text-3xl font-bold">{priceDisplay()}</span>
           <span className="mx-1 text-sm text-muted-foreground">مرة واحدة</span>
         </div>
         <div className="space-y-3 text-sm">
@@ -108,7 +130,6 @@ function PackageCard({ packageInfo, isLoading, onPurchase }: PackageCardProps) {
           className="w-full"
           variant={popular ? "default" : "outline"}
           onClick={onPurchase}
-          disabled={isLoading}
         >
           أحصل على <strong>{credits}</strong> {creditsLabel({ credits })}
         </Button>

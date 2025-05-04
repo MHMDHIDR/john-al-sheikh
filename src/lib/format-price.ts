@@ -4,8 +4,6 @@ export function formatPrice(
   locale = "en-GB",
   currency = "GBP",
 ) {
-  const localeLang = navigator.geolocation;
-
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,

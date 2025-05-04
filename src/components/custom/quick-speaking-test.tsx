@@ -10,7 +10,6 @@ import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { AuroraText } from "../magicui/aurora-text";
-import type { Session } from "next-auth";
 
 const prompts = [
   "صِف وقتاً ساعدت فيه شخصاً ما.",

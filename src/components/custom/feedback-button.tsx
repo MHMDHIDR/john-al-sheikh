@@ -58,7 +58,7 @@ export function FeedbackButton() {
         email: user.email ?? "",
       });
     }
-  }, [user]);
+  }, [user, form]);
 
   const feedbackMutation = api.feedback.submit.useMutation({
     onSuccess: () => {
