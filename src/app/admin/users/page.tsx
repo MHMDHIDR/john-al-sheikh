@@ -7,7 +7,7 @@ export default async function Users() {
   const { users, count } = await api.users.getUsers();
 
   return (
-    <div className="container max-w-6xl md:px-3.5 px-2 py-3">
+    <div className="container max-w-6xl md:px-3.5 px-2 py-3 mx-auto">
       <Suspense fallback={<LoadingCard renderedSkeletons={count} />}>
         <UsersTable users={users} />
       </Suspense>
