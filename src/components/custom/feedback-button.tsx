@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { Loader, MessageSquare, Send, X } from "lucide-react";
-import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { feedbackFormSchema, MAX_FILE_SIZE, MAX_MESSAGE_LENGTH } from "@/app/schemas/feedback-form";
 import { FileUpload } from "@/components/custom/file-upload";
@@ -32,6 +33,9 @@ import { api } from "@/trpc/react";
 import type { FeedbackFormValues } from "@/app/schemas/feedback-form";
 
 export function FeedbackButton() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [isOpen, setIsOpen] = useState(false);
   const [files, setFiles] = useState<Array<File>>([]);
 
@@ -40,12 +44,21 @@ export function FeedbackButton() {
   const form = useForm<FeedbackFormValues>({
     resolver: zodResolver(feedbackFormSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: user?.name ?? "",
+      email: user?.email ?? "",
       subject: "",
       message: "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name ?? "",
+        email: user.email ?? "",
+      });
+    }
+  }, [user]);
 
   const feedbackMutation = api.feedback.submit.useMutation({
     onSuccess: () => {
@@ -178,10 +191,10 @@ export function FeedbackButton() {
                       الرسالة{" "}
                       <span
                         className={clsx("text-xs font-black text-muted-foreground", {
-                          "text-red-500": field.value.length >= MAX_MESSAGE_LENGTH / 1.1,
+                          "text-red-500": field.value?.length >= MAX_MESSAGE_LENGTH / 1.1,
                         })}
                       >
-                        {field.value.length} / {MAX_MESSAGE_LENGTH}
+                        {field.value?.length} / {MAX_MESSAGE_LENGTH}
                       </span>
                     </FormLabel>
                     <FormControl>
