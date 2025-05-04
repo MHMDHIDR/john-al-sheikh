@@ -11,6 +11,9 @@ export const translateSring = (string: string) => {
     case "mock-test": {
       return "اختبار المحادثة التجريبي";
     }
+    case "buy-credits": {
+      return "شراء رصيد نقاط";
+    }
     default: {
       return string;
     }

@@ -5,7 +5,7 @@ import CreditPackages from "./credit-packages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `شراء رصيد  | ${env.NEXT_PUBLIC_APP_NAME}`,
+  title: `شراء رصيد نقاط  | ${env.NEXT_PUBLIC_APP_NAME}`,
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 

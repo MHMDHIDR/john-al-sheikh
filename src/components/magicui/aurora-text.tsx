@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { memo } from "react";
+import { memo, useLayoutEffect, useState } from "react";
 
 type AuroraTextProps = {
   children: React.ReactNode;
@@ -19,7 +19,15 @@ export const AuroraText = memo(
     darkColors = ["#FF66A1", "#A46DDF", "#339CFF", "#72d8fc"],
     speed = 1,
   }: AuroraTextProps) => {
-    const { theme } = useTheme();
+    const { theme: currentTheme } = useTheme();
+    const [theme, setTheme] = useState<string | undefined>(undefined);
+
+    useLayoutEffect(() => {
+      setTheme(currentTheme);
+
+      return () => setTheme(undefined);
+    }, []);
+
     const lightGradient = `linear-gradient(135deg, ${colors.join(", ")}, ${colors[0]})`;
     const darkGradient = `linear-gradient(135deg, ${darkColors.join(", ")}, ${darkColors[0]})`;
 

@@ -59,8 +59,8 @@ export const creditPackages: Record<keyof typeof PriceIDs, PackageInfo> = {
     credits: Credits.PRO,
     features: [
       "20 محادثة تدريبية محاكاة IELTS",
-      "تحليل أداء محدادثات متقدم",
-      "إحصائات عميقة لمتابعة الأداء",
+      "تحليل أداء محادثات متقدم",
+      "إحصائات تفصيلية لمتابعة الأداء",
       "الأولوية القصوى في الدعم",
       "وصول مستمر للخدمة",
     ],

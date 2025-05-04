@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { creditsLabel } from "@/lib/credits-label";
+import { formatPrice } from "@/lib/format-price";
 import { creditPackages } from "@/lib/stripe-client";
 import { api } from "@/trpc/react";
 import type { PackageInfo } from "@/lib/stripe-client";
@@ -71,9 +72,6 @@ type PackageCardProps = {
 function PackageCard({ packageInfo, isLoading, onPurchase }: PackageCardProps) {
   const { name, description, features, credits, popular } = packageInfo;
 
-  // Determine price based on credits
-  const price = credits === 5 ? "£5" : credits === 15 ? "£15" : "£20";
-
   return (
     <Card
       className={`relative flex h-full select-none flex-col ${popular ? "border-green-600 shadow-lg" : ""}`}
@@ -92,8 +90,8 @@ function PackageCard({ packageInfo, isLoading, onPurchase }: PackageCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="mb-4 flex items-baseline">
-          <span className="text-3xl font-bold">{price}</span>
-          <span className="mr-1 text-sm text-muted-foreground">مرة واحدة</span>
+          <span className="text-3xl font-bold">{formatPrice(credits)}</span>
+          <span className="mx-1 text-sm text-muted-foreground">مرة واحدة</span>
         </div>
         <div className="space-y-3 text-sm">
           {features.map(feature => (
