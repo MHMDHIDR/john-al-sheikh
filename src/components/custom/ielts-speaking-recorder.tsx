@@ -477,7 +477,17 @@ export default function IELTSSpeakingRecorder({
               disabled={!isConnected}
               title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
             >
-              {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-5" />}
+              {isMuted ? (
+                <>
+                  <span className="text-xs hidden xs:inline-flex">إلغاء كتم الميكروفون</span>
+                  <VolumeX className="size-4" />
+                </>
+              ) : (
+                <>
+                  <span className="text-xs hidden xs:inline-flex">اكتم الميكروفون</span>
+                  <Volume2 className="size-5" />
+                </>
+              )}
             </Button>
 
             {!isConnected && (
