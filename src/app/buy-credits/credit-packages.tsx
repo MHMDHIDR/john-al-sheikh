@@ -90,7 +90,7 @@ function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProp
   return (
     <Card
       className={clsx("relative flex h-full select-none min-w-2xs md:max-w-sm flex-col", {
-        "border border-green-500/50 shadow-md md:-mx-4 z-10": popular,
+        "border border-green-500/50 shadow-md md:-mx-4 z-10 md:order-none order-first": popular,
         "border border-gray-200 lg:mt-5": !popular,
       })}
     >
