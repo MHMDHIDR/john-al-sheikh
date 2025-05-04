@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import CreditPackages from "./credit-packages";
@@ -20,7 +20,9 @@ export default async function BuyCreditsPage({
   const { cancelled } = await searchParams;
   const isCancelled = cancelled === "true";
 
-  if (!user) notFound();
+  if (!user) {
+    redirect("/signin?callbackUrl=/buy-credits");
+  }
 
   return (
     <div className="container max-w-7xl py-10 px-4 mx-auto">
