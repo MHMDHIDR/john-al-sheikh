@@ -55,7 +55,9 @@ export default async function BuyCreditsPage({
         </div>
       )}
 
-      <CreditPackages prices={prices} />
+      <div className="flex items-center">
+        <CreditPackages prices={prices} />
+      </div>
     </div>
   );
 }

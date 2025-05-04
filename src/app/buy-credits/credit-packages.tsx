@@ -1,18 +1,11 @@
 "use client";
 
+import clsx from "clsx";
 import { Check, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AuroraText } from "@/components/magicui/aurora-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { creditsLabel } from "@/lib/credits-label";
 import { formatPrice } from "@/lib/format-price";
@@ -46,7 +39,7 @@ export default function CreditPackages({ prices }: { prices: CreditPackagePrices
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 lg:gap-0 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
       {Object.entries(creditPackages).map(([id, packageInfo]) => (
         <PackageCard
           key={id}
@@ -96,39 +89,51 @@ function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProp
 
   return (
     <Card
-      className={`relative flex h-full select-none flex-col ${popular ? "border-green-600 shadow-lg" : ""}`}
+      className={clsx("relative flex h-full select-none min-w-2xs md:max-w-sm flex-col", {
+        "border border-green-500/50 shadow-md md:-mx-4 z-10": popular,
+        "border border-gray-200 lg:mt-5": !popular,
+      })}
     >
       {popular && (
-        <Badge className="absolute left-4 top-4 font-black" variant={"success"}>
-          الأكثر شعبية
-        </Badge>
-      )}
-      <CardHeader className="flex-none pb-6 pt-6">
-        <CardTitle className="flex items-center text-2xl">
-          {popular && <Star className="ml-2 size-5 text-primary" />}
-          {popular ? <AuroraText className="text-2xl font-black">{name}</AuroraText> : name}
-        </CardTitle>
-        <CardDescription className="pt-1.5">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="mb-4 flex items-baseline">
-          <span className="text-3xl font-bold">{priceDisplay()}</span>
-          <span className="mx-1 text-sm text-muted-foreground">مرة واحدة</span>
+        <div className="absolute left-0 right-0 top-0 flex justify-center">
+          <Badge className="px-4 -mt-2 py-1 text-xs font-medium bg-amber-400/90 hover:bg-amber-400/90 text-amber-950 rounded-b-md border-0">
+            <Star className="size-4 ml-2" />
+            <strong>الأكثر شعبية</strong>
+          </Badge>
         </div>
+      )}
+      <CardHeader className="flex-none pb-1 pt-8 text-center">
+        <CardTitle className="text-xl font-medium">
+          <h2 className="font-bold">{name}</h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow px-6 pb-0 pt-2">
+        <div className="mb-6 flex flex-col items-center">
+          <div className="flex items-baseline justify-center">
+            <span className="text-5xl font-bold">{priceDisplay()}</span>
+            <span className="text-gray-500 dark:text-gray-200 text-base ml-1">مرة واحدة</span>
+          </div>
+          <small className="mt-2 text-xs">{description}</small>
+        </div>
+
         <div className="space-y-3 text-sm">
           {features.map(feature => (
-            <div key={feature} className="flex items-start">
-              <Check className="ml-2 mt-0.5 h-4 w-4 text-primary" />
-              <span>{feature}</span>
+            <div key={feature} className="flex items-center">
+              <div className="flex-shrink-0 rounded-full p-1 text-green-500 bg-green-100/80 h-6 w-6 flex items-center justify-center ml-2">
+                <Check className="h-4 w-4" />
+              </div>
+              <span className="text-gray-600">{feature}</span>
             </div>
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex-none pt-6">
+      <CardFooter className="flex-none pb-6 pt-4">
         <Button
           size="lg"
-          className="w-full"
-          variant={popular ? "default" : "outline"}
+          className={clsx("w-full h-12 rounded-md font-medium", {
+            "font-bold": popular,
+          })}
+          variant={popular ? "pressable" : "outline"}
           onClick={onPurchase}
         >
           أحصل على <strong>{credits}</strong> {creditsLabel({ credits })}
