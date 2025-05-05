@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -469,13 +470,24 @@ export default function IELTSSpeakingRecorder({
           </CardHeader>
         )}
         <CardContent className="p-0">
-          <div className="flex justify-center items-center gap-x-1">
+          <div
+            className={clsx(
+              "flex justify-center items-center ",
+              !isConnected && "gap-0",
+              isConnected && "gap-x-1",
+            )}
+          >
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleMute}
               disabled={!isConnected}
               title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
+              className={clsx(
+                "transition-transform duration-300",
+                !isConnected && "-translate-x-full opacity-0 invisible w-0",
+                isConnected && "opacity-100 translate-x-0 visible w-full",
+              )}
             >
               {isMuted ? (
                 <>
