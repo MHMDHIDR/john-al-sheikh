@@ -27,6 +27,15 @@ export const usersRouter = createTRPCRouter({
     return { users: usersList, count };
   }),
 
+  /** Count unique users who have taken speaking tests */
+  getTotalTestUsers: protectedProcedure.query(async ({ ctx }) => {
+    const [{ count = 0 } = { count: 0 }] = await ctx.db
+      .select({ count: sql<number>`count(distinct ${speakingTests.userId})::int` })
+      .from(speakingTests);
+
+    return { count };
+  }),
+
   update: protectedProcedure.input(accountFormSchema).mutation(async ({ ctx, input }) => {
     // Find user by id or email
     const whereClause = input.id ? eq(users.id, input.id) : eq(users.email, input.email!);

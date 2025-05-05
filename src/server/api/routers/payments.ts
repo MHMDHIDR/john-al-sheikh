@@ -342,4 +342,11 @@ export const paymentsRouter = createTRPCRouter({
         });
       }
     }),
+
+  /**Retrieves the current account balance */
+  getAccountBalance: protectedProcedure.query(async ({ ctx }) => {
+    const balance = await stripe.balance.retrieve();
+
+    return { balance };
+  }),
 });

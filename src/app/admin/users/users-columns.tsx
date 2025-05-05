@@ -26,15 +26,15 @@ const UsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
 
   const updateUserMutation = api.users.update.useMutation({
     onSuccess: async () => {
-      toast.success("User status updated successfully");
+      toast.success("تم تحديث حالة المستخدم بنجاح");
       await utils.users.getUsers.invalidate();
       router.refresh();
     },
     onError: error => {
-      toast.error(`Failed to update user status: ${error.message}`);
+      toast.error(`فشل تحديث حالة المستخدم: ${error.message}`);
     },
     onMutate: () => {
-      toast.loading("Updating User...");
+      toast.loading("يتم تحديث حالة المستخدم...");
     },
   });
 
@@ -116,7 +116,7 @@ export const userColumns: ColumnDef<Users>[] = [
     accessorKey: "role",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        الدور
+        صلاحية المستخدم
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),

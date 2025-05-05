@@ -24,15 +24,15 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
 
   const updateUserMutation = api.users.update.useMutation({
     onSuccess: async () => {
-      toast.success("Subscriber status updated successfully");
+      toast.success("تم تحديث حالة المشترك بنجاح");
       await utils.subscribedEmails.getSubscribers.invalidate();
       router.refresh();
     },
     onError: error => {
-      toast.error(`Failed to update subscriber status: ${error.message}`);
+      toast.error(`فشل تحديث حالة المشترك: ${error.message}`);
     },
     onMutate: () => {
-      toast.loading("Updating Subscriber...");
+      toast.loading("يتم تحديث حالة المشترك...");
     },
   });
 
