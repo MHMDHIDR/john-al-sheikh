@@ -21,19 +21,19 @@ export default async function BuyCreditsPage({
   const session = await auth();
   const user = session?.user;
 
-  const { cancelled } = await searchParams;
-  const isCancelled = cancelled === "true";
-
   if (!user) {
     redirect("/signin?callbackUrl=/buy-credits");
   }
 
-  const userCountry = (await api.payments.getUserCountry()) ?? "GBP";
+  const { cancelled } = await searchParams;
+  const isCancelled = cancelled === "true";
+
+  const userCountry = (await api.payments.getUserCountry()) ?? { country: "GB" };
 
   const prices: CreditPackagePrices = {};
 
   for (const [id, packageInfo] of Object.entries(creditPackages)) {
-    const price = await getAdaptivePrice(packageInfo.priceId, userCountry);
+    const price = await getAdaptivePrice(packageInfo.priceId, userCountry.country);
     prices[id] = price;
   }
 

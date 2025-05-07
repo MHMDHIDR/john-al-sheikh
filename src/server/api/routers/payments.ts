@@ -76,10 +76,10 @@ export const paymentsRouter = createTRPCRouter({
    */
   getUserCountry: protectedProcedure.query(async () => {
     try {
-      const countryCode = await fetch("https://ipapi.co/country");
+      const countryCode = await fetch("https://api.country.is");
       if (countryCode.ok) {
-        const country = await countryCode.text();
-        return country.trim();
+        const countryResponse: { ip: string; country: string } = await countryCode.json();
+        return countryResponse;
       }
     } catch (error) {
       console.error("Error detecting user country:", error);
@@ -289,12 +289,7 @@ export const paymentsRouter = createTRPCRouter({
       try {
         // Set up options for temporary checkout session
         const options: SessionCreateOptions = {
-          line_items: [
-            {
-              price: priceId,
-              quantity: 1,
-            },
-          ],
+          line_items: [{ price: priceId, quantity: 1 }],
           mode: "payment",
           success_url: "https://example.com/success",
           cancel_url: "https://example.com/cancel",
