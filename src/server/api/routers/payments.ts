@@ -20,6 +20,8 @@ type SessionCreateOptions = {
   customer_email?: string;
 };
 
+type UserCountry = { ip: string; country: string };
+
 export const paymentsRouter = createTRPCRouter({
   /**
    * Create a Stripe checkout session for the user to purchase credits
@@ -78,7 +80,7 @@ export const paymentsRouter = createTRPCRouter({
     try {
       const countryCode = await fetch("https://api.country.is");
       if (countryCode.ok) {
-        const countryResponse: { ip: string; country: string } = await countryCode.json();
+        const countryResponse = (await countryCode.json()) as UserCountry;
         return countryResponse;
       }
     } catch (error) {
@@ -339,7 +341,7 @@ export const paymentsRouter = createTRPCRouter({
     }),
 
   /**Retrieves the current account balance */
-  getAccountBalance: protectedProcedure.query(async ({ ctx }) => {
+  getAccountBalance: protectedProcedure.query(async () => {
     const balance = await stripe.balance.retrieve();
 
     return { balance };
