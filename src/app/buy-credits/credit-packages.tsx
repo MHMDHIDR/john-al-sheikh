@@ -65,34 +65,35 @@ function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProp
   const priceDisplay = () => {
     if (!adaptivePrice) {
       // Fallback if adaptive price is not available
-      return formatPrice(credits);
+      return formatPrice({ price: credits });
     }
 
     // If we have converted currency information, show that
     if (adaptivePrice.converted_currency && adaptivePrice.converted_amount) {
-      return formatPrice(
-        adaptivePrice.converted_amount / 100, // Convert from cents to base unit
-        adaptivePrice.converted_currency === "JPY" ? 0 : 2, // JPY doesn't use decimals
-        undefined,
-        adaptivePrice.converted_currency,
-      );
+      return formatPrice({
+        price: adaptivePrice.converted_amount / 100,
+        currency: adaptivePrice.converted_currency,
+        minimumFractionDigits: adaptivePrice.converted_currency === "JPY" ? 0 : 2,
+      });
     }
 
     // Otherwise show the base price
-    return formatPrice(
-      adaptivePrice.unit_amount / 100, // Convert from cents to base unit
-      adaptivePrice.currency === "JPY" ? 0 : 2, // JPY doesn't use decimals
-      undefined,
-      adaptivePrice.currency,
-    );
+    return formatPrice({
+      price: adaptivePrice.unit_amount / 100,
+      currency: adaptivePrice.currency,
+      minimumFractionDigits: adaptivePrice.currency === "JPY" ? 0 : 2,
+    });
   };
 
   return (
     <Card
-      className={clsx("relative flex h-full select-none min-w-2xs md:max-w-sm flex-col", {
-        "border border-green-500/50 shadow-md md:-mx-4 z-10 md:order-none order-first": popular,
-        "border border-gray-200 lg:mt-5": !popular,
-      })}
+      className={clsx(
+        "relative flex h-full select-none min-w-xs md:min-w-2xs md:max-w-sm flex-col",
+        {
+          "border border-green-500/50 shadow-md md:-mx-3 z-10 md:order-none order-first": popular,
+          "border border-gray-200 lg:mt-5": !popular,
+        },
+      )}
     >
       {popular && (
         <div className="absolute left-0 right-0 top-0 flex justify-center">
@@ -119,10 +120,8 @@ function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProp
         <div className="space-y-3 text-sm">
           {features.map(feature => (
             <div key={feature} className="flex items-center">
-              <div className="flex-shrink-0 rounded-full p-1 text-green-500 bg-green-100/80 h-6 w-6 flex items-center justify-center ml-2">
-                <Check className="h-4 w-4" />
-              </div>
-              <span className="text-gray-600">{feature}</span>
+              <Check className="text-green-500 dark:text-green-400 bg-green-50/80 dark:bg-green-950/80 size-5 rounded-full p-0.5 ml-2" />
+              <span className="text-gray-600 dark:text-gray-300">{feature}</span>
             </div>
           ))}
         </div>

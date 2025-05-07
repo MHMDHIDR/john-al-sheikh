@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconCreditCard,
   IconHome,
   IconPackage,
   IconSettings,
@@ -35,6 +36,7 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
     { href: "/account", icon: IconUser, label: "الحساب" },
     { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
     { href: "/mock-test", icon: IconSpeakerphone, label: "اختبار المحادثة" },
+    { href: "/buy-credits", icon: IconCreditCard, label: "شراء نقاط" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
       ? { href: "/admin", icon: IconSettings, label: "الإدارة" }

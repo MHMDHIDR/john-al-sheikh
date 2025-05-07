@@ -41,7 +41,7 @@ export default async function DashboardPage() {
           <MetricCard title="الربح الحالي" hrefLabel="عرض المستخدمين">
             {accountBalance.available.map((item, index) => (
               <div key={index}>
-                <strong>{formatPrice(item.amount)}</strong>
+                <strong>{formatPrice({ price: item.amount })}</strong>
               </div>
             ))}
           </MetricCard>
