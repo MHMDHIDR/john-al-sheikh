@@ -1,6 +1,10 @@
+import clsx from "clsx";
 import { redirect } from "next/navigation";
 import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
+import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
+import { cn } from "@/lib/utils";
 import { auth } from "@/server/auth";
 import type { Metadata } from "next";
 
@@ -17,5 +21,77 @@ export default async function Home() {
     redirect("/onboarding");
   }
 
-  return <QuickSpeakingTest />;
+  return (
+    <>
+      {session && (
+        <div className="flex flex-col justify-center items-center mt-10">
+          <h1 className="text-lg md:text-2xl text-center text-gray-500">
+            جرّب واحد من التحديات المصممة خصيصاً لك
+          </h1>
+          <strong>في {env.NEXT_PUBLIC_APP_NAME}</strong>
+        </div>
+      )}
+
+      <div
+        className={clsx("grid md:min-h-screen gap-3 place-items-center", {
+          "grid-cols-1": !session,
+          "grid-cols-1 md:grid-cols-2 md:grid-rows-2": session,
+        })}
+      >
+        {!session ? (
+          <QuickSpeakingTest />
+        ) : (
+          <>
+            <InteractiveGridPattern
+              className={cn(
+                "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+                "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-30",
+              )}
+              width={40}
+              height={40}
+              squares={[30, 30]}
+              squaresClassName="hover:fill-blue-200"
+            />
+            <Card
+              className="z-10 border m-4 md:mt-32 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
+              href="/mock-test"
+              asLink
+            >
+              <CardHeader className="relative pb-2">
+                <CardTitle className="text-xl font-bold text-center">
+                  جرِب المحادثة مع مدرب الـ IELTS
+                </CardTitle>
+                <CardDescription className="text-sm text-blue-700 dark:text-blue-300">
+                  قم بإختبار نفسك في مهارة المحادثة وتعلم المزيد عن الـ IELTS
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="relative flex h-40 items-center justify-center">
+                <span className="pointer-events-none text-center text-xl font-medium text-blue-800 dark:text-blue-200">
+                  إختبار نفسك
+                </span>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="z-10 border m-4 md:mt-32 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
+              href="/general-english"
+              asLink
+            >
+              <CardHeader className="relative pb-2">
+                <CardTitle className="text-xl font-bold text-center">تحدي نفسك</CardTitle>
+                <CardDescription className="text-sm text-purple-700 dark:text-purple-300">
+                  قم بتجربة المحادثة العامة باللغة الإنجليزية مع مساعد لتحسين مهاراتك
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="relative flex h-40 items-center justify-center">
+                <span className="pointer-events-none text-center text-xl font-medium text-purple-800 dark:text-purple-200">
+                  جرب الآن
+                </span>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+    </>
+  );
 }

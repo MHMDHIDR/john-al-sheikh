@@ -40,8 +40,6 @@ export function QuickSpeakingTest() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [showQuickTipsDialog, setShowQuickTipsDialog] = useState(false);
-  // Commented out as it's currently not used but might be needed in the future
-  // const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(prompts[0]);
   const router = useRouter();
   const { success, error, warning } = useToast();
@@ -325,7 +323,7 @@ export function QuickSpeakingTest() {
   }, [mediaRecorder, isRecording]);
 
   return (
-    <main className="relative select-none flex min-h-screen flex-col items-center justify-center  p-4 overflow-hidden">
+    <main className="relative select-none flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
