@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { redirect } from "next/navigation";
 import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
@@ -33,9 +34,9 @@ export default async function Home() {
       )}
 
       <div
-        className={clsx("grid md:min-h-screen gap-3 place-items-center", {
+        className={clsx("grid gap-3 place-items-center", {
           "grid-cols-1": !session,
-          "grid-cols-1 md:grid-cols-2 md:grid-rows-2": session,
+          "grid-cols-1 md:grid-cols-2": session,
         })}
       >
         {!session ? (
@@ -66,9 +67,12 @@ export default async function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="relative flex h-40 items-center justify-center">
-                <span className="pointer-events-none text-center text-xl font-medium text-blue-800 dark:text-blue-200">
-                  إختبار نفسك
-                </span>
+                <Button
+                  className="pointer-events-none text-center text-xl font-medium text-blue-800 dark:text-blue-200"
+                  variant={"outline"}
+                >
+                  إختبر نفسك
+                </Button>
               </CardContent>
             </Card>
 
@@ -78,15 +82,18 @@ export default async function Home() {
               asLink
             >
               <CardHeader className="relative pb-2">
-                <CardTitle className="text-xl font-bold text-center">تحدي نفسك</CardTitle>
+                <CardTitle className="text-xl font-bold text-center">إتحدى نفسك!</CardTitle>
                 <CardDescription className="text-sm text-purple-700 dark:text-purple-300">
                   قم بتجربة المحادثة العامة باللغة الإنجليزية مع مساعد لتحسين مهاراتك
                 </CardDescription>
               </CardHeader>
               <CardContent className="relative flex h-40 items-center justify-center">
-                <span className="pointer-events-none text-center text-xl font-medium text-purple-800 dark:text-purple-200">
+                <Button
+                  className="pointer-events-none text-center text-xl font-medium text-purple-800 dark:text-purple-200"
+                  variant={"secondary"}
+                >
                   جرب الآن
-                </span>
+                </Button>
               </CardContent>
             </Card>
           </>

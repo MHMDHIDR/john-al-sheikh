@@ -8,6 +8,7 @@ import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Divider from "@/components/ui/divider";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/format-date";
@@ -64,7 +65,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
           </Link>
 
           <div className="flex flex-col justify-between items-start flex-wrap">
-            <AuroraText className="text-xl md:text-2xl font-bold">{details.topic}</AuroraText>
+            <AuroraText className="text-xl md:text-2xl font-bold ltr">{details.topic}</AuroraText>
             <div className="flex items-center text-gray-500 mt-2 flex-wrap gap-x-2">
               <div className="flex items-center">
                 <Calendar className="ml-1 h-4 w-4" />
@@ -285,6 +286,12 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
           <Link href="/mock-test">
             <Button variant="outline" className="w-full max-w-xs">
               ابدأ اختبار محادثة جديد
+            </Button>
+          </Link>
+          <Divider className="my-5">أو</Divider>
+          <Link href="/general-english">
+            <Button variant="outline" className="w-full max-w-xs">
+              محادثة عامة بالإنجليزي
             </Button>
           </Link>
         </div>

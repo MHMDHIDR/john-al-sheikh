@@ -36,16 +36,21 @@ export type UserProfile = {
   goalBand: Users["goalBand"];
 };
 
+export type ConversationModeType = "mock-test" | "general-english";
+
 /**
  * IELTS Assistant Configuration
- * @param {Object} { userName } - The component props
- * @param {string} props.userName - The user's name
+ * @param {Object} { userProfile, mode } - The component props
+ * @param {UserProfile} props.userProfile - The user's profile
+ * @param {ConversationModeType} props.mode - The conversation mode
  * @returns {CreateAssistantDTO} The configuration for the IELTS Assistant
  */
 function IeltsAssistantConfig({
   userProfile,
+  mode = "mock-test",
 }: {
   userProfile: Omit<UserProfile, "id">;
+  mode?: ConversationModeType;
 }): CreateAssistantDTO {
   const getTimeOfDay = () => {
     const now = new Date();
@@ -55,19 +60,10 @@ function IeltsAssistantConfig({
     return "Evening";
   };
 
-  return {
-    name: "IELTS Examiner",
-    firstMessage: userProfile
-      ? `Hello ${userProfile.name}, How are you this fine ${getTimeOfDay()}!, I'm John Al-Sheikh the IELTS examiner, by practicing together we will make sure you get to your goal band in the IELTS speaking test! Can you please tell me a bit more about yourself?`
-      : `Hey There, ${getTimeOfDay()}!, I'm John Al-Sheikh the IELTS examiner, can you please introduce yourself?`,
-    model: {
-      provider: "openai",
-      model: "gpt-4o-mini", //gpt-4.1-nano
-      temperature: 0.3,
-      messages: [
-        {
-          role: "system",
-          content: `
+  // Different system prompts based on mode
+  const systemPrompt =
+    mode === "mock-test"
+      ? `
           Introduce yourself as "John Al-Sheikh", the IELTS examiner. Before starting the test, please remind the candidate, this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
 
           First and foremost, ask the candidate to introduce himself/herself, you MUST wait for the candidate to respond first.
@@ -85,7 +81,7 @@ function IeltsAssistantConfig({
           Section 1: Introduction and General Questions (2-3 minutes)
           - DO NOT proceed to Section 1 until the candidate has introduced himself/herself.
           - Ask the candidate about their nationality country.
-          - Ask the candidate about their hobbies, familiar topics like their home, family, work, studies, or interests.
+          - Ask the candidate about a random topic from one of the followings: 1. their home town, 2. their family, 3. their work, 4. their studies, 5. their hobbies.
           - Ask ONE follow-up question based on their response.
 
           Section 2: Individual Long Turn (2-3 minutes)
@@ -112,9 +108,52 @@ function IeltsAssistantConfig({
           - ALWAYS end the test with the EXACT phrase: "That concludes our IELTS speaking test. Thank you for your participation."
 
           CRITICAL Notice: You must STRICTLY stay within the scope of the IELTS speaking test. If the candidate attempts to discuss any unrelated topics or asks you about anything outside the test context, respond with: "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test." Do not deviate from your role as an IELTS examiner under any circumstances.
-        `,
-        },
-      ],
+        `
+      : `
+          Introduce yourself as "John Al-Sheikh", an English conversation partner. The purpose of this conversation is to have a casual, general English conversation to help improve the user's English skills.
+
+          First, ask the user to introduce themselves, you MUST wait for the user to respond first.
+
+          Here is more information about the user:
+          - Name: ${userProfile.name}
+          - Age: ${userProfile.age}
+          - Gender: ${userProfile.gender}
+          - Hobbies: ${userProfile.hobbies?.flatMap(hobby => hobby).join(", ")}
+          - Nationality: ${countryNames.find(country => country.code === userProfile.nationality)?.label}
+
+          After they introduce themselves, engage in a casual conversation about general topics such as:
+          - Their favorite foods, movies, books, activities, or music
+          - Travel experiences or places they'd like to visit
+          - Future plans or aspirations
+          - Their interests and hobbies
+          - Their daily routine
+          - Recent events in their life
+
+          Guidelines for the conversation:
+          - Keep the conversation light and friendly
+          - Speak clearly and naturally
+          - Ask open-ended questions that encourage the user to talk more
+          - Show interest in their responses and ask natural follow-up questions
+          - Give the user time to think and respond
+          - The entire conversation should last 5-10 minutes maximum
+          - Don't ask more than 15 questions in total
+          - Be supportive and encouraging
+
+          End the conversation naturally when you've asked around 10-15 questions or after about 8-10 minutes. Conclude by thanking them for the conversation and say EXACTLY: "That concludes our English conversation. Thank you for your participation."
+
+          Do not offer any recordings or services outside the scope of this conversation. If the user asks about anything unrelated, politely redirect them back to the conversation.
+        `;
+
+  return {
+    name: mode === "mock-test" ? "IELTS Examiner" : "English Conversation Friend",
+    firstMessage: userProfile
+      ? `Hello ${userProfile.name}, How are you this fine ${getTimeOfDay()}!, I'm John Al-Sheikh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, ${mode === "mock-test" ? "by practicing together we will make sure you get to your goal band in the IELTS speaking test!" : "I'm here chat with you! let's practice your English conversation skills!"} Can you please tell me a bit more about yourself?`
+      : `Hey There, ${getTimeOfDay()}!, I'm John Al-Sheikh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, can you please introduce yourself?`,
+    model: {
+      provider: "openai",
+      model: "gpt-4o-mini", //gpt-4.1-nano
+      temperature: 0.3,
+      messages: [{ role: "system", content: systemPrompt }],
     },
     voice: { provider: "11labs", voiceId: "steve" },
     transcriber: {
@@ -146,9 +185,11 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
 export default function IELTSSpeakingRecorder({
   user,
   isFreeTrialEnded,
+  mode = "mock-test",
 }: {
   user: UserProfile;
   isFreeTrialEnded: boolean;
+  mode?: ConversationModeType;
 }) {
   const [hasPermission, setHasPermission] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -297,6 +338,7 @@ export default function IELTSSpeakingRecorder({
               grammaticalRangeAndAccuracy: analysis.feedback.grammaticalRangeAndAccuracy,
               pronunciation: analysis.feedback.pronunciation,
               feedback: analysis.feedback.feedback,
+              testType: mode, // Add the test type to the results
             };
 
             // Save results to session storage
@@ -344,6 +386,7 @@ export default function IELTSSpeakingRecorder({
     user.id,
     isProcessingResults,
     isFreeTrialEnded,
+    mode,
   ]);
 
   // Process results when test is completed
@@ -396,6 +439,7 @@ export default function IELTSSpeakingRecorder({
             nationality: user.nationality,
             goalBand: user.goalBand,
           },
+          mode,
         }),
         {
           silenceTimeoutSeconds: 85, // 1.25 minutes,
@@ -482,7 +526,7 @@ export default function IELTSSpeakingRecorder({
               size="icon"
               onClick={toggleMute}
               disabled={!isConnected}
-              title={isMuted ? "تصميت المحادثة" : "إلغاء تصميت المحادثة"}
+              title={isMuted ? "كتم المحادثة" : "إلغاء كتم المحادثة"}
               className={clsx(
                 "transition-transform duration-300",
                 !isConnected && "-translate-x-full opacity-0 invisible w-0",
@@ -506,15 +550,21 @@ export default function IELTSSpeakingRecorder({
               <Button
                 onClick={handleStartConversation}
                 disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
-                className="w-full cursor-pointer"
+                className={clsx("w-full relative cursor-pointer", {
+                  "animate-pulse": callStatus === CallStatus.INACTIVE,
+                })}
               >
-                <Mic className="mx-2 size-5" />
+                <Mic
+                  className={clsx("mx-2 size-5", {
+                    "animate-pulse text-blue-600": callStatus === CallStatus.INACTIVE,
+                  })}
+                />
                 <strong>
                   {callStatus === CallStatus.CONNECTING
-                    ? "جاري بدأ الاختبار..."
+                    ? `جاري بدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}...`
                     : isProcessingResults
                       ? "جاري معالجة النتائج..."
-                      : "إبدأ الاختبار"}
+                      : `إبدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}`}
                 </strong>
               </Button>
             )}

@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Divider from "@/components/ui/divider";
 import { Separator } from "@/components/ui/separator";
 import { creditsLabel } from "@/lib/credits-label";
 import { formatDate } from "@/lib/format-date";
@@ -101,7 +102,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalCount || 0}</div>
-              <p className="text-sm text-gray-500 mt-1">اختبار محادثة مكتمل</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">اختبار محادثة مكتمل</p>
             </CardContent>
           </Card>
 
@@ -114,7 +115,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.highestScore.toString() || "0.0"}</div>
-              <p className="text-sm text-gray-500 mt-1">من أصل 9.0</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">من أصل 9.0</p>
             </CardContent>
           </Card>
 
@@ -130,7 +131,7 @@ export default async function DashboardPage({
                 {getTrendIndicator()}
                 {Math.abs(stats.trend || 0).toFixed(1)}
               </div>
-              <p className="text-sm text-gray-500 mt-1">في آخر 5 اختبارات</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">في آخر 5 اختبارات</p>
             </CardContent>
           </Card>
         </div>
@@ -175,10 +176,10 @@ export default async function DashboardPage({
                   <div key={test.id}>
                     <Link
                       href={`/dashboard/${test.id}`}
-                      className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
+                      className="flex flex-col md:flex-row justify-between items-end md:items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
                     >
                       <section>
-                        <h3 className="font-medium">{test.topic || "اختبار محادثة"}</h3>
+                        <h3 className="font-medium ltr">{test.topic || "اختبار محادثة"}</h3>
                         <div className="flex items-center text-sm text-gray-500">
                           <CalendarClock className="ml-1 h-4 w-4" />
                           {formatDate(test.createdAt.toISOString(), true, true)}
@@ -209,14 +210,26 @@ export default async function DashboardPage({
                     ابدأ اختبار محادثة جديد
                   </Button>
                 </Link>
+                <Divider className="my-5">أو</Divider>
+                <Link href="/general-english" className="w-full">
+                  <Button variant="outline" className="w-full">
+                    محادثة عامة بالإنجليزي
+                  </Button>
+                </Link>
               </div>
             )}
           </CardContent>
           {testHistory && testHistory.length > 0 && (
-            <CardFooter>
+            <CardFooter className="flex gap-2 flex-col md:flex-row">
               <Link href="/mock-test" className="w-full">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
+                </Button>
+              </Link>
+              <Divider className="my-5">أو</Divider>
+              <Link href="/general-english" className="w-full">
+                <Button variant="outline" className="w-full">
+                  محادثة عامة بالإنجليزي
                 </Button>
               </Link>
             </CardFooter>

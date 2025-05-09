@@ -123,7 +123,7 @@ export function FeedbackButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 fixed bottom-6 right-6 z-50 shadow-lg animate-feedback-aurora"
+        className="flex items-center gap-2 fixed bottom-6 right-6 z-50 shadow-lg animate-feedback-aurora opacity-75"
       >
         <strong>Feedback</strong>
         <MessageSquare className="size-6" />
