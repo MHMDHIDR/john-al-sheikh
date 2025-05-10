@@ -369,6 +369,7 @@ export function QuickSpeakingTest() {
               isRecording={isRecording}
               onClick={() => setShowQuickTipsDialog(true)}
               disabled={
+                isRecording ||
                 isProcessing ||
                 transcribeAudioMutation.isPending ||
                 analyzeIELTSSpeakingMutation.isPending

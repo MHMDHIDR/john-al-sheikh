@@ -175,7 +175,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
   }, [isRecording, setupAudioAnalyzer, cleanupAudioAnalyzer]);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex relative flex-col items-center">
       <button
         id="recording-button"
         className={`relative flex h-16 w-16 cursor-pointer items-center justify-center rounded-full transition-all ${
@@ -185,22 +185,18 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
         disabled={disabled}
       >
         {isRecording ? (
-          <Square className="h-6 w-6 text-red-600" />
-        ) : (
-          <Mic className="h-6 w-6 text-white" />
-        )}
-
-        {isRecording && (
-          <div className="absolute -top-0.5 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-full">
-            <div className="h-4 w-4 animate-ping rounded-full bg-red-600 opacity-75"></div>
-            <div className="absolute top-0 left-0 h-4 w-4 rounded-full bg-red-600"></div>
+          <div className="relative">
+            <Square className="size-5 text-red-600" />
+            <div className="absolute top-0 left-0 size-4 animate-ping rounded-full bg-red-600"></div>
           </div>
+        ) : (
+          <Mic className="size-5 text-white" />
         )}
       </button>
 
       {isRecording && (
         <div
-          className="mt-8 flex h-32 w-80 items-center justify-center rounded-lg bg-white/90 p-4 shadow-lg"
+          className="-mt-8 flex h-32 w-80 items-center justify-center absolute -z-10"
           ref={waveContainerRef}
         />
       )}
