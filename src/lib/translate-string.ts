@@ -20,6 +20,9 @@ export const translateSring = (string: string) => {
     case "speaking-test-results": {
       return "نتائج اختبار المحادثة";
     }
+    case "dashboard": {
+      return "لوحة المعلومات";
+    }
 
     default: {
       return string;

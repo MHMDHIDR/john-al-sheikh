@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Divider from "@/components/ui/divider";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format-date";
 import { formatTestType } from "@/lib/format-test-type";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ type GetTestByIdOutput = inferRouterOutputs<AppRouter>["users"]["getTestById"];
 
 export default function TestDetails({ details }: { details: GetTestByIdOutput }) {
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
 
   // Get the active tab from the URL or default to "results"
   const activeTab = searchParams.get("view") ?? "results";
@@ -95,10 +97,12 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
           onValueChange={handleTabChange}
           className="mt-8"
         >
-          <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-3 gap-2.5">
-            <TabsTrigger value="results">النتائج التفصيلية</TabsTrigger>
-            <TabsTrigger value="feedback">التعليقات والملاحظات</TabsTrigger>
-            <TabsTrigger value="transcript">نص المحادثة</TabsTrigger>
+          <TabsList className="grid w-full md:w-auto rtl grid-cols-3 md:grid-cols-3 gap-0 md:gap-2.5">
+            <TabsTrigger value="results">{isMobile ? "النتائج" : "النتائج التفصيلية"}</TabsTrigger>
+            <TabsTrigger value="feedback">
+              {isMobile ? "التعليقات" : "التعليقات والملاحظات"}
+            </TabsTrigger>
+            <TabsTrigger value="transcript">{isMobile ? "نص المحادثة" : "نص المحادثة"}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="results" className="mt-10 rtl">
@@ -107,7 +111,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                 <CardTitle>النتائج التفصيلية</CardTitle>
                 <CardDescription>تفاصيل الدرجات حسب معايير IELTS</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-sm:p-2">
                 {details.feedback ? (
                   <>
                     <div className="flex justify-center mb-8 select-none">
@@ -182,7 +186,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                   تحليل مفصل لأدائك في الاختبار
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-sm:p-2">
                 {details.feedback ? (
                   <div className="space-y-6">
                     <div>
@@ -252,7 +256,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                 <CardTitle>نص المحادثة</CardTitle>
                 <CardDescription>نص كامل للمحادثة خلال الاختبار</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-sm:p-2">
                 {details.transcription?.messages && details.transcription.messages.length > 0 ? (
                   <div className="space-y-4">
                     {details.transcription.messages.map((message, index) => (
