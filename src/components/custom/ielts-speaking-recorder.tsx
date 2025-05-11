@@ -161,6 +161,8 @@ function IeltsAssistantConfig({
       model: "nova-2",
       language: "en-US",
     },
+    clientMessages: [],
+    serverMessages: [],
   };
 }
 
@@ -454,6 +456,8 @@ export default function IELTSSpeakingRecorder({
             waitSeconds: 3,
           },
           backgroundDenoisingEnabled: true,
+          clientMessages: [],
+          serverMessages: [],
         },
       );
     } catch (error) {

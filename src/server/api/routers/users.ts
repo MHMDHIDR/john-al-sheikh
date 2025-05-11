@@ -4,7 +4,7 @@ import { z } from "zod";
 import { accountFormSchema } from "@/app/schemas/account";
 import { onboardingSchema } from "@/app/schemas/onboarding";
 import { extractS3FileName } from "@/lib/extract-s3-filename";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { speakingTests, users } from "@/server/db/schema";
 
 const onboardingModifiedSchema = onboardingSchema
@@ -260,6 +260,41 @@ export const usersRouter = createTRPCRouter({
         return test;
       } catch (error) {
         console.error("Error fetching test details:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch test details",
+        });
+      }
+    }),
+
+  getPublicTestById: publicProcedure
+    .input(z.object({ testId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const test = await ctx.db.query.speakingTests.findFirst({
+          where: (tests, { eq }) => eq(tests.id, input.testId),
+          with: { user: true },
+        });
+
+        if (!test) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
+        }
+
+        // Return limited data for public sharing
+        return {
+          id: test.id,
+          type: test.type,
+          band: test.band ?? 0,
+          feedback: test.feedback,
+          createdAt: test.createdAt,
+          user: {
+            username: test.user.username,
+            displayName: test.user.displayName,
+            image: test.user.image,
+          },
+        };
+      } catch (error) {
+        console.error("Error fetching public test details:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch test details",

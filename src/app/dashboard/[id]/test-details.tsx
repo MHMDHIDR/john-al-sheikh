@@ -1,16 +1,19 @@
 "use client";
 
-import { Calendar, Clock, ExternalLink, Medal } from "lucide-react";
+import { Calendar, ExternalLink, Medal } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
+import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Divider from "@/components/ui/divider";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { env } from "@/env";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format-date";
 import { formatTestType } from "@/lib/format-test-type";
@@ -59,34 +62,40 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
 
       <div className="mx-auto max-w-4xl relative z-10">
         <div className="mb-4">
-          <Link href="/dashboard">
-            <Button className="w-full mb-4 dark:bg-slate-600 dark:text-accent-foreground dark:hover:bg-slate-700">
-              <ExternalLink className="size-4 mr-2" />
-              العودة إلى لوحة المعلومات
-            </Button>
-          </Link>
+          <div className="flex mb-4 flex-col md:flex-row gap-2.5 md:justify-between justify-center">
+            <Link href="/dashboard">
+              <Button className="w-full" variant={"default"}>
+                <ExternalLink className="size-4" />
+                العودة إلى لوحة المعلومات
+              </Button>
+            </Link>
+            <ShareTestDialog
+              testId={details.id}
+              username={details.user.username ?? env.NEXT_PUBLIC_APP_NAME}
+              band={details.band ?? 0}
+            />
+          </div>
 
           <div className="flex flex-col justify-between items-start flex-wrap">
             <AuroraText className="text-xl md:text-2xl font-bold ltr">{details.topic}</AuroraText>
-            <div className="flex items-center text-gray-500 mt-2 flex-wrap gap-x-2">
-              <div className="flex items-center">
-                <Calendar className="ml-1 h-4 w-4" />
+            <div className="flex items-center text-gray-500 mt-2 flex-wrap gap-x-2 text-xs sm:text-base">
+              <div
+                className="flex items-center"
+                title={formatDate(details.createdAt.toISOString(), true, false)}
+                aria-label={formatDate(details.createdAt.toISOString(), true, false)}
+              >
+                <Calendar className="ml-1 size-4" />
                 <span>{formatDate(details.createdAt.toISOString(), true, false)}</span>
-              </div>
-              <Separator orientation="vertical" className="h-4 bg-blue-400" />
-              <div className="flex items-center">
-                <Clock className="ml-1 h-4 w-4" />
-                <span>{formatDate(details.createdAt.toISOString(), false, true)}</span>
               </div>
               <Separator orientation="vertical" className="h-4 bg-blue-400" />
               <div>
                 <span>{formatTestType(details.type)}</span>
               </div>
 
-              <Medal className="ml-2 h-6 w-6 text-yellow-500" />
-              <div className="text-lg md:text-3xl font-bold text-blue-600">
-                {details.band?.toString() ?? "0.0"}
-              </div>
+              <Badge variant={"outline"} className="flex items-center gap-2">
+                <Medal className="size-4 text-yellow-500" />
+                <span className="text-blue-500">{details.band?.toString() ?? "0.0"}</span>
+              </Badge>
             </div>
           </div>
         </div>
@@ -105,7 +114,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
             <TabsTrigger value="transcript">{isMobile ? "نص المحادثة" : "نص المحادثة"}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="results" className="mt-10 rtl">
+          <TabsContent value="results" className="rtl">
             <Card>
               <CardHeader>
                 <CardTitle>النتائج التفصيلية</CardTitle>
@@ -178,7 +187,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
             </Card>
           </TabsContent>
 
-          <TabsContent value="feedback" className="mt-6 rtl">
+          <TabsContent value="feedback" className="rtl">
             <Card>
               <CardHeader>
                 <CardTitle>التعليقات والملاحظات</CardTitle>
@@ -250,7 +259,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
             </Card>
           </TabsContent>
 
-          <TabsContent value="transcript" className="mt-6 rtl">
+          <TabsContent value="transcript" className="rtl">
             <Card>
               <CardHeader>
                 <CardTitle>نص المحادثة</CardTitle>

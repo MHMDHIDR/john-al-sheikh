@@ -20,7 +20,7 @@ export default async function Account() {
 
   return (
     <section className="container px-6 py-10 mx-auto">
-      <h1 className="mb-6 text-3xl font-bold">تفاصيل الحساب</h1>
+      <h1 className="mb-6 text-lg md:text-3xl font-bold text-center select-none">تفاصيل الحساب</h1>
       <AccountForm user={user} />
     </section>
   );
