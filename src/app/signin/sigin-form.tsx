@@ -54,7 +54,9 @@ export default function SiginForm() {
             المتابعة عن طريق حساب Google
           </Button>
 
-          <Divider className="my-5">أو</Divider>
+          <Divider className="my-5" textClassName="bg-card!">
+            أو
+          </Divider>
 
           <form action={handleSigninAction} className="space-y-3">
             <div className="items-center w-full grid gap-4">

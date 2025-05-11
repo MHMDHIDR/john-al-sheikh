@@ -17,7 +17,10 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "./custom/icons";
+import { AuroraText } from "./magicui/aurora-text";
 import { Badge } from "./ui/badge";
+import Divider from "./ui/divider";
 
 interface ShareTestDialogProps {
   testId: string;
@@ -135,7 +138,7 @@ export function ShareTestDialog({ testId, username, band }: ShareTestDialogProps
                   {snapshotUrl ? (
                     <Image
                       src={snapshotUrl}
-                      alt="Test Result"
+                      alt={`${username} - ${band} في اختبار المحادثة`}
                       width={500}
                       height={300}
                       className="w-full rounded-md"
@@ -148,21 +151,29 @@ export function ShareTestDialog({ testId, username, band }: ShareTestDialogProps
                       <div className="text-center mb-4">
                         <div className="flex items-center justify-center mb-2">
                           <Badge
-                            className="rounded-full size-18 justify-center text-3xl"
+                            className="rounded-full size-18 flex-col justify-center text-3xl"
                             variant={band >= 6 ? "success" : "default"}
                           >
-                            {band}
+                            {Number(band)}
+                            <span className="text-xs">Band</span>
                           </Badge>
                         </div>
-                        <h2 className="text-2xl font-bold">نتيجة اختبار المحادثة</h2>
+
+                        <AuroraText className="text-xl font-bold py-3 whitespace-nowrap">
+                          🎉 حصلت على {Number(band)} في اختبار المحادثة 🎉
+                        </AuroraText>
+
                         <p className="text-muted-foreground">@{username}</p>
                       </div>
-                      <Separator className="my-4" />
+                      <Divider className="my-2.5" />
                       <div className="text-center">
                         <p className="text-lg mb-4 rtl">
-                          شاهد التفاصيل الكاملة والتعليقات على موقعنا:
+                          شاهد التفاصيل الكاملة والتعليقات على {env.NEXT_PUBLIC_APP_NAME}
                         </p>
-                        <p className="text-sm text-primary font-medium">{shareUrl}</p>
+                        <p className="text-sm inline-flex items-center gap-2 text-primary font-medium">
+                          <Logo className="mx-auto size-7 stroke-1 stroke-current" />
+                          {shareUrl}
+                        </p>
                       </div>
                     </div>
                   )}

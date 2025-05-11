@@ -210,7 +210,9 @@ export default async function DashboardPage({
                     ابدأ اختبار محادثة جديد
                   </Button>
                 </Link>
-                <Divider className="my-5">أو</Divider>
+                <Divider className="my-5" textClassName="bg-card!">
+                  أو
+                </Divider>
                 <Link href="/general-english" className="w-full">
                   <Button variant="outline" className="w-full">
                     محادثة عامة بالإنجليزي
@@ -226,7 +228,9 @@ export default async function DashboardPage({
                   ابدأ اختبار محادثة جديد
                 </Button>
               </Link>
-              <Divider className="my-5">أو</Divider>
+              <Divider className="my-5" textClassName="bg-card!">
+                أو
+              </Divider>
               <Link href="/general-english" className="w-full">
                 <Button variant="outline" className="w-full">
                   محادثة عامة بالإنجليزي

@@ -245,8 +245,8 @@ export const usersRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         const test = await ctx.db.query.speakingTests.findFirst({
-          where: (tests, { eq }) =>
-            eq(tests.id, input.testId) && eq(tests.userId, ctx.session.user.id),
+          where: (tests, { eq, and }) =>
+            and(eq(tests.id, input.testId), eq(tests.userId, ctx.session.user.id)),
           with: { user: true },
         });
 

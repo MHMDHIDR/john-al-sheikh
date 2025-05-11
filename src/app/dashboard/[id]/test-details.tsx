@@ -125,8 +125,8 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
                   <>
                     <div className="flex justify-center mb-8 select-none">
                       <div className="inline-flex items-center justify-center h-32 w-32 rounded-full bg-blue-50 border-4 border-blue-500">
-                        <span className="text-4xl font-bold text-blue-600">
-                          {details.band?.toString() ?? "0.0"}
+                        <span className="text-4xl md:text-5xl font-bold text-blue-600">
+                          {Number(details.band)}
                         </span>
                       </div>
                     </div>

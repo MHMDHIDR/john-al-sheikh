@@ -4,9 +4,11 @@ import type { JSX } from "react";
 export default function Divider({
   children,
   className,
+  textClassName,
 }: {
   children?: string | JSX.Element;
   className?: string;
+  textClassName?: string;
 }) {
   return (
     <div
@@ -16,7 +18,12 @@ export default function Divider({
       )}
     >
       {children ? (
-        <span className="z-10 px-2 select-none bg-background dark:bg-background text-primary/70 text-sm">
+        <span
+          className={cn(
+            "z-10 px-2 select-none bg-background dark:bg-background text-primary/70 text-sm",
+            textClassName,
+          )}
+        >
           {children}
         </span>
       ) : null}
