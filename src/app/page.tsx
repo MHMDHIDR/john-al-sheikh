@@ -54,7 +54,7 @@ export default async function Home() {
               squaresClassName="hover:fill-blue-200"
             />
             <Card
-              className="z-10 border m-4 md:mt-32 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
+              className="z-10 border m-4 md:mt-40 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
               href="/mock-test"
               asLink
             >
@@ -77,7 +77,7 @@ export default async function Home() {
             </Card>
 
             <Card
-              className="z-10 border m-4 md:mt-32 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
+              className="z-10 border m-4 md:mt-40 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
               href="/general-english"
               asLink
             >

@@ -323,7 +323,7 @@ export function QuickSpeakingTest() {
   }, [mediaRecorder, isRecording]);
 
   return (
-    <main className="relative select-none flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+    <main className="relative select-none flex h-screen sm:-my-20 px-3 flex-col items-center justify-center overflow-hidden">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",

@@ -26,9 +26,15 @@ interface ShareTestDialogProps {
   testId: string;
   username: string;
   band: number;
+  size: "icon" | "default";
 }
 
-export function ShareTestDialog({ testId, username, band }: ShareTestDialogProps) {
+export function ShareTestDialog({
+  testId,
+  username,
+  band,
+  size = "default",
+}: ShareTestDialogProps) {
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
   const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -102,9 +108,15 @@ export function ShareTestDialog({ testId, username, band }: ShareTestDialogProps
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="pressable" className="font-bold">
-          <Share2 className="size-4" />
-          مشاركة النتيجة
+        <Button variant={size === "icon" ? "ghost" : "pressable"} className="font-bold" size={size}>
+          {size === "icon" ? (
+            <Share2 className="size-4" />
+          ) : (
+            <>
+              <Share2 className="size-4" />
+              مشاركة النتيجة
+            </>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent

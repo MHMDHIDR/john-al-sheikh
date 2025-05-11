@@ -62,7 +62,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
 
       <div className="mx-auto max-w-4xl relative z-10">
         <div className="mb-4">
-          <div className="flex mb-4 flex-col md:flex-row gap-2.5 md:justify-between justify-center">
+          <div className="flex mb-4 md:mb-8 flex-col md:flex-row gap-2.5 md:justify-between justify-center">
             <Link href="/dashboard">
               <Button className="w-full" variant={"default"}>
                 <ExternalLink className="size-4" />
@@ -73,11 +73,14 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
               testId={details.id}
               username={details.user.username ?? env.NEXT_PUBLIC_APP_NAME}
               band={details.band ?? 0}
+              size="default"
             />
           </div>
 
           <div className="flex flex-col justify-between items-start flex-wrap">
-            <AuroraText className="text-xl md:text-2xl font-bold ltr">{details.topic}</AuroraText>
+            <AuroraText className="text-xl md:text-2xl font-bold text-center ltr w-full">
+              {details.topic}
+            </AuroraText>
             <div className="flex items-center text-gray-500 mt-2 flex-wrap gap-x-2 text-xs sm:text-base">
               <div
                 className="flex items-center"

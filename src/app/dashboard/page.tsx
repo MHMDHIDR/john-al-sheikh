@@ -1,5 +1,6 @@
 import { CalendarClock, ChevronRight, LineChart, ListChecks, Trophy } from "lucide-react";
 import Link from "next/link";
+import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Divider from "@/components/ui/divider";
-import { Separator } from "@/components/ui/separator";
+import { env } from "@/env";
 import { creditsLabel } from "@/lib/credits-label";
 import { formatDate } from "@/lib/format-date";
 import { formatTestType } from "@/lib/format-test-type";
 import { cn } from "@/lib/utils";
+import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 
 export default async function DashboardPage({
@@ -24,6 +26,9 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ payment_success?: string; session_id?: string }>;
 }) {
+  const session = await auth();
+  const username = session?.user?.username ?? session?.user.name ?? env.NEXT_PUBLIC_APP_NAME;
+
   const { payment_success, session_id } = await searchParams;
 
   // If returning from successful payment, verify the session
@@ -114,7 +119,7 @@ export default async function DashboardPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.highestScore.toString() || "0.0"}</div>
+              <div className="text-3xl font-bold">{stats.highestScore.toString()}</div>
               <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">من أصل 9.0</p>
             </CardContent>
           </Card>
@@ -173,32 +178,34 @@ export default async function DashboardPage({
             {testHistory && testHistory.length > 0 ? (
               <div className="space-y-4">
                 {testHistory.map(test => (
-                  <div key={test.id}>
-                    <Link
-                      href={`/dashboard/${test.id}`}
-                      className="flex flex-col md:flex-row justify-between items-end md:items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
-                    >
-                      <section>
-                        <h3 className="font-medium ltr">{test.topic || "اختبار محادثة"}</h3>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <CalendarClock className="ml-1 h-4 w-4" />
+                  <div
+                    key={test.id}
+                    className="flex select-none flex-col md:flex-row border justify-between items-end md:items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
+                  >
+                    <Link href={`/dashboard/${test.id}`} className="w-full text-right">
+                      <section className="max-sm:self-start max-sm:w-full">
+                        <h3 className="sm:font-medium max-sm:text-sm ltr">
+                          {test.topic || "اختبار محادثة"}
+                        </h3>
+                        <div className="flex items-center max-sm:text-xs text-sm text-gray-500">
+                          <CalendarClock className="ml-1 size-4" />
                           {formatDate(test.createdAt.toISOString(), true, true)}
-                          <span className="mx-2">•</span>
-                          <span>{formatTestType(test.type)}</span>
+                          <span className="mx-2 hidden sm:inline-flex">•</span>
+                          <span className="hidden sm:inline-flex">{formatTestType(test.type)}</span>
                         </div>
-                      </section>
-                      <section className="flex items-center">
-                        <div className="ml-4">
-                          <span className="text-2xl font-bold text-blue-600">
-                            {test.band?.toString() ?? "0.0"}
-                          </span>
-                        </div>
-                        <Button variant="ghost" size="icon">
-                          <ChevronRight className="h-5 w-5" />
-                        </Button>
                       </section>
                     </Link>
-                    <Separator className="mt-4" />
+                    <section className="flex items-center gap-x-2">
+                      <span className="text-base sm:text-2xl font-bold text-blue-600">
+                        {Number(test.band)}
+                      </span>
+                      <ShareTestDialog
+                        testId={test.id}
+                        username={username}
+                        band={test.band ?? 0}
+                        size="icon"
+                      />
+                    </section>
                   </div>
                 ))}
               </div>

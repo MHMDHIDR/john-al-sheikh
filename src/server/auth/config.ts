@@ -19,6 +19,7 @@ declare module "next-auth" {
       theme: themeEnumType;
       profileCompleted: boolean;
       displayName: string;
+      username: string;
       nationality: string;
       goalBand: number;
       hobbies: string[];
