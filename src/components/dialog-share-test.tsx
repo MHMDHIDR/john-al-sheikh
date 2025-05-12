@@ -43,6 +43,7 @@ export function ShareTestDialog({
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
   const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("image");
   const toast = useToast();
 
   const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/@${username}/english-test-results/${testId}`;
@@ -54,10 +55,7 @@ export function ShareTestDialog({
       const element = document.getElementById("test-snapshot");
       if (!element) return;
 
-      const dataUrl = await toPng(element, {
-        quality: 0.95,
-        pixelRatio: 2,
-      });
+      const dataUrl = await toPng(element, { quality: 0.95, pixelRatio: 2 });
 
       setSnapshotUrl(dataUrl);
     } catch (error) {
@@ -86,24 +84,79 @@ export function ShareTestDialog({
     link.click();
   };
 
+  // Helper function to share image directly (if available)
+  const shareImage = async () => {
+    if (!snapshotUrl) {
+      toast.error("لم يتم إنشاء الصورة بعد");
+      return false;
+    }
+
+    try {
+      // Convert base64 to blob
+      const res = await fetch(snapshotUrl);
+      const blob = await res.blob();
+
+      return blob;
+    } catch (error) {
+      console.error("Error sharing image:", error);
+      toast.error("تعذر مشاركة الصورة");
+      return false;
+    }
+  };
+
   // Share to social media
-  const shareToSocial = (platform: "twitter" | "facebook" | "instagram" | "whatsapp") => {
-    let shareLink = "";
+  const shareToSocial = async (platform: "twitter" | "facebook" | "instagram" | "whatsapp") => {
     const text = `شاهد نتيجة اختبار اللغة الإنجليزية الخاص بي! حصلت على ${band} في اختبار المحادثة.`;
+    const isImageTab = activeTab === "image";
+
+    // For platforms that support direct image sharing via Web Share API
+    if (isImageTab && (platform === "whatsapp" || platform === "instagram")) {
+      try {
+        const imageBlob = await shareImage();
+        if (
+          imageBlob &&
+          navigator.canShare &&
+          navigator.canShare({
+            files: [new File([imageBlob], "test-result.png", { type: "image/png" })],
+          })
+        ) {
+          await navigator.share({
+            title: "نتيجة اختبار اللغة الإنجليزية",
+            text: text,
+            url: shareUrl,
+            files: [new File([imageBlob], "test-result.png", { type: "image/png" })],
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Error using Web Share API:", error);
+        // Fall back to regular sharing if Web Share API fails
+      }
+    }
+
+    let shareLink = "";
 
     switch (platform) {
       case "twitter":
         shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
         break;
       case "facebook":
+        // Facebook doesn't support direct image sharing via URL parameters
         shareLink = `https://www.facebook.com/sharer.php?u=${encodeURI(shareUrl)}`;
         break;
       case "whatsapp":
         shareLink = `https://wa.me/?text=${encodeURI(text)} - ${encodeURI(shareUrl)}`;
         break;
       case "instagram":
-        void navigator.clipboard.writeText(shareUrl);
-        toast.success("تم نسخ الرابط بنجاح، يمكنك الآن مشاركته على انستغرام");
+        // Instagram doesn't support direct sharing via URL, so we copy to clipboard
+        if (isImageTab && snapshotUrl) {
+          downloadSnapshot(); // Download the image first
+          void navigator.clipboard.writeText(shareUrl);
+          toast.success("تم تحميل الصورة ونسخ الرابط، يمكنك الآن مشاركتهم على انستغرام");
+        } else {
+          void navigator.clipboard.writeText(shareUrl);
+          toast.success("تم نسخ الرابط بنجاح، يمكنك الآن مشاركته على انستغرام");
+        }
         return;
       default:
         void navigator.clipboard.writeText(shareUrl);
@@ -144,7 +197,7 @@ export function ShareTestDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="image" className="w-full">
+        <Tabs defaultValue="image" className="w-full" onValueChange={value => setActiveTab(value)}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="image">مشاركة كصورة</TabsTrigger>
             <TabsTrigger value="link">مشاركة كرابط</TabsTrigger>
