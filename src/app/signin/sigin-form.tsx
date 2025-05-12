@@ -70,9 +70,7 @@ export default function SiginForm() {
                 <Button
                   className={clsx(
                     "w-full h-10 cursor-pointer bg-gray-200 dark:bg-gray-800 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700",
-                    {
-                      "pointer-events-none cursor-not-allowed": isPending,
-                    },
+                    { "pointer-events-none cursor-not-allowed": isPending },
                   )}
                   disabled={isPending}
                 >

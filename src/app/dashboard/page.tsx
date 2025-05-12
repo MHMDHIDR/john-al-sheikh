@@ -1,4 +1,4 @@
-import { CalendarClock, ChevronRight, LineChart, ListChecks, Trophy } from "lucide-react";
+import { CalendarClock, LineChart, ListChecks, Trophy } from "lucide-react";
 import Link from "next/link";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";

@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
+import { generateMetadataImage } from "@/lib/generate-snapshot";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
 
@@ -24,13 +26,36 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
   try {
     const testData = await api.users.getPublicTestById({ testId });
 
+    if (!testData) {
+      return {
+        title: `نتيجة اختبار اللغة الإنجليزية | ${username ?? env.NEXT_PUBLIC_APP_NAME}`,
+        description: `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`,
+      };
+    }
+
+    const title = `نتيجة اختبار اللغة الإنجليزية | ${testData.user.displayName ?? username}`;
+    const description = `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`;
+    const image = generateMetadataImage({
+      username,
+      displayName: testData.user.displayName,
+      band: testData.band,
+      testId,
+    });
+
     return {
-      title: `نتيجة اختبار اللغة الإنجليزية - ${testData.user.displayName ?? username}`,
-      description: `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`,
+      title,
+      description,
       openGraph: {
-        title: `نتيجة اختبار اللغة الإنجليزية - ${testData.user.displayName ?? username}`,
-        description: `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`,
+        title,
+        description,
+        images: [{ url: image, width: 1200, height: 630, alt: title }],
         type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [image],
       },
     };
   } catch (error) {

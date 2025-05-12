@@ -7,7 +7,7 @@ import {
   IconBrandX,
 } from "@tabler/icons-react";
 import { toPng } from "html-to-image";
-import { Check, Copy, Download, Facebook, Instagram, Share2, Twitter } from "lucide-react";
+import { Check, Copy, Download, Share2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
