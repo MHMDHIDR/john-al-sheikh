@@ -12,10 +12,10 @@ export async function middleware(req: NextRequest) {
   const publicPaths = [
     "/api",
     "/signin",
-    "/signup",
     "/onboarding",
     "/terms",
     "/privacy",
+    "/contact",
     "/_next",
     "/logo.svg",
     "/favicon.ico",

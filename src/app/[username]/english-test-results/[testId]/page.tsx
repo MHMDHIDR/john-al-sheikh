@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
     const title = `نتيجة اختبار اللغة الإنجليزية | ${testData.user.displayName ?? username}`;
     const description = `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`;
-    const image = generateMetadataImage({
+    const imageUrl = await generateMetadataImage({
       username,
       displayName: testData.user.displayName,
       band: testData.band,
@@ -48,14 +48,14 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       openGraph: {
         title,
         description,
-        images: [{ url: image, width: 1200, height: 630, alt: title }],
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [image],
+        images: [{ url: imageUrl, alt: title }],
       },
     };
   } catch (error) {
