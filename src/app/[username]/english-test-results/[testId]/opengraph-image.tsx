@@ -113,7 +113,13 @@ export default async function Image({ params }: { params: { username: string; te
               gap: "15px",
             }}
           >
-            <img src={logoSrc} width="60" height="60" style={{ borderRadius: "10px" }} />
+            <img
+              src={logoSrc}
+              width="60"
+              height="60"
+              style={{ borderRadius: "10px" }}
+              alt={`${displayName} got ${bandScore} as the results of English test`}
+            />
             <h2 style={{ fontSize: "32px", margin: "0" }}>
               🎉 تهانينا على إكمال الاختبار في منصة {env.NEXT_PUBLIC_APP_NAME} 🎉
             </h2>

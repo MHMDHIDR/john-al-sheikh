@@ -115,7 +115,6 @@ export function ShareTestDialog({
         const imageBlob = await shareImage();
         if (
           imageBlob &&
-          navigator.canShare &&
           navigator.canShare({
             files: [new File([imageBlob], "test-result.png", { type: "image/png" })],
           })
