@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
     const title = `نتيجة اختبار اللغة الإنجليزية | ${testData.user.displayName ?? username}`;
     const description = `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`;
-    const imageUrl = await generateMetadataImage({
+    const imageUrl = generateMetadataImage({
       username,
       displayName: testData.user.displayName,
       band: testData.band,
