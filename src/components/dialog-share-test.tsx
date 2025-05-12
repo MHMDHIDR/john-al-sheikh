@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconBrandX,
+} from "@tabler/icons-react";
 import { toPng } from "html-to-image";
 import { Check, Copy, Download, Facebook, Instagram, Share2, Twitter } from "lucide-react";
 import Image from "next/image";
@@ -82,7 +88,7 @@ export function ShareTestDialog({
   };
 
   // Share to social media
-  const shareToSocial = (platform: string) => {
+  const shareToSocial = (platform: "twitter" | "facebook" | "instagram" | "whatsapp") => {
     let shareLink = "";
     const text = `شاهد نتيجة اختبار اللغة الإنجليزية الخاص بي! حصلت على ${band} في اختبار المحادثة.`;
 
@@ -91,12 +97,18 @@ export function ShareTestDialog({
         shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
         break;
       case "facebook":
-        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`;
+        shareLink = `https://www.facebook.com/sharer.php?u=${encodeURI(shareUrl)}`;
+        break;
+      case "whatsapp":
+        shareLink = `https://wa.me/?text=${encodeURI(text)} - ${encodeURI(shareUrl)}`;
         break;
       case "instagram":
-        // Instagram doesn't have a direct sharing URL, so we'll just copy the link
         void navigator.clipboard.writeText(shareUrl);
         toast.success("تم نسخ الرابط بنجاح، يمكنك الآن مشاركته على انستغرام");
+        return;
+      default:
+        void navigator.clipboard.writeText(shareUrl);
+        toast.success("تم نسخ الرابط بنجاح، يمكنك الآن مشاركته في المنصة التي تريدها");
         return;
     }
 
@@ -204,24 +216,36 @@ export function ShareTestDialog({
                   size="icon"
                   className="rounded-full bg-[#1877F2] hover:bg-[#0e5fc7]"
                   onClick={() => shareToSocial("facebook")}
+                  title="مشاركة في فيسبوك"
                 >
-                  <Facebook className="size-4 stroke-white" />
+                  <IconBrandFacebook className="size-4 stroke-white" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="rounded-full bg-[#1DA1F2] hover:bg-[#0c85d0]"
+                  className="rounded-full bg-[#000] hover:bg-[#222]"
                   onClick={() => shareToSocial("twitter")}
+                  title="مشاركة في تويتر"
                 >
-                  <Twitter className="size-4 stroke-white" />
+                  <IconBrandX className="size-4 stroke-white" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full bg-[#25D366] hover:bg-[#1da748]"
+                  onClick={() => shareToSocial("whatsapp")}
+                  title="مشاركة في واتساب"
+                >
+                  <IconBrandWhatsapp className="size-4 stroke-white" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   className="rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] hover:opacity-90"
                   onClick={() => shareToSocial("instagram")}
+                  title="مشاركة في انستغرام"
                 >
-                  <Instagram className="size-4 stroke-white" />
+                  <IconBrandInstagram className="size-4 stroke-white" />
                 </Button>
               </div>
             </div>
@@ -243,17 +267,29 @@ export function ShareTestDialog({
                 size="sm"
                 className="rounded-full bg-[#1877F2] hover:bg-[#0e5fc7]"
                 onClick={() => shareToSocial("facebook")}
+                title="مشاركة في فيسبوك"
               >
-                <Facebook className="size-4 stroke-white" />
+                <IconBrandFacebook className="size-4 stroke-white" />
                 <span className="text-white">فيسبوك</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full bg-[#1DA1F2] hover:bg-[#0c85d0]"
-                onClick={() => shareToSocial("twitter")}
+                className="rounded-full bg-[#25D366] hover:bg-[#1da748]"
+                onClick={() => shareToSocial("whatsapp")}
+                title="مشاركة في واتساب"
               >
-                <Twitter className="size-4 stroke-white" />
+                <IconBrandWhatsapp className="size-4 stroke-white" />
+                <span className="text-white">واتساب</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full bg-[#000] hover:bg-[#222]"
+                onClick={() => shareToSocial("twitter")}
+                title="مشاركة في تويتر"
+              >
+                <IconBrandX className="size-4 stroke-white" />
                 <span className="text-white">X</span>
               </Button>
               <Button
@@ -261,8 +297,9 @@ export function ShareTestDialog({
                 size="sm"
                 className="rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] hover:opacity-90"
                 onClick={() => shareToSocial("instagram")}
+                title="مشاركة في انستغرام"
               >
-                <Instagram className="size-4 stroke-white" />
+                <IconBrandInstagram className="size-4 stroke-white" />
                 <span className="text-white">انستغرام</span>
               </Button>
             </div>
