@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
-import { generateMetadataImage } from "@/lib/generate-snapshot";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
 
@@ -35,12 +34,6 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
     const title = `نتيجة اختبار اللغة الإنجليزية | ${testData.user.displayName ?? username}`;
     const description = `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`;
-    const imageUrl = generateMetadataImage({
-      username,
-      displayName: testData.user.displayName,
-      band: testData.band,
-      testId,
-    });
 
     return {
       title,
@@ -48,14 +41,12 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       openGraph: {
         title,
         description,
-        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [{ url: imageUrl, alt: title }],
       },
     };
   } catch (error) {
