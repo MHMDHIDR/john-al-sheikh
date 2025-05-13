@@ -268,9 +268,6 @@ export const paymentsRouter = createTRPCRouter({
     return { credits: user.credits };
   }),
 
-  /**
-   * Get user's credit transaction history
-   */
   getTransactionHistory: protectedProcedure.query(async ({ ctx }) => {
     const { session } = ctx;
     const userId = session.user.id;
@@ -340,9 +337,10 @@ export const paymentsRouter = createTRPCRouter({
       }
     }),
 
-  /**Retrieves the current account balance */
   getAccountBalance: protectedProcedure.query(async () => {
-    const balance = await stripe.balance.retrieve();
+    const balance = await stripe.balance.retrieve({
+      expand: ["pending", "available", "instant_available"],
+    });
 
     return { balance };
   }),

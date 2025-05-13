@@ -1,4 +1,4 @@
-import { Home, Users } from "lucide-react";
+import { CreditCard, Home, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 import Nav from "@/components/custom/nav";
 import { AppSidebar } from "@/components/ui/app-sidebar";
@@ -24,12 +24,17 @@ export default async function DashboardLayout({
           {
             title: "لوحة الإدارة",
             url: "/admin",
-            icon: <Home className="w-4 h-4" />,
+            icon: <Home className="size-4" />,
           },
           {
             title: "المستخدمين",
             url: "/admin/users",
-            icon: <Users className="w-4 h-4" />,
+            icon: <Users className="size-4" />,
+          },
+          {
+            title: "المدفوعات",
+            url: "/admin/payments",
+            icon: <CreditCard className="size-4" />,
           },
         ],
       },

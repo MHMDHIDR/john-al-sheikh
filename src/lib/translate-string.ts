@@ -23,6 +23,15 @@ export const translateSring = (string: string) => {
     case "dashboard": {
       return "لوحة المعلومات";
     }
+    case "card": {
+      return "بطاقة";
+    }
+    case "pending": {
+      return "معلق";
+    }
+    case "available": {
+      return "متاح";
+    }
 
     default: {
       return string;

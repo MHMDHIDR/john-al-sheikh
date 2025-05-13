@@ -3,6 +3,7 @@ type FormatPriceProps = {
   minimumFractionDigits?: number;
   locale?: string;
   currency?: string;
+  toPence?: boolean;
 };
 
 export function formatPrice({
@@ -10,10 +11,11 @@ export function formatPrice({
   minimumFractionDigits = 2,
   locale = "en-GB",
   currency = "GBP",
+  toPence = false,
 }: FormatPriceProps) {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     minimumFractionDigits,
-  }).format(price);
+  }).format(price / (toPence ? 100 : 1));
 }

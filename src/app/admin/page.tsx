@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,8 @@ export default async function DashboardPage() {
     api.payments.getAccountBalance(),
   ]);
 
+  const totalBalance = accountBalance.available.reduce((acc, item) => acc + item.amount, 0);
+
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-sm select-none text-center font-bold mb-6 border-4 border-double rounded-md w-fit mx-auto p-4 border-blue-200">
@@ -25,6 +28,18 @@ export default async function DashboardPage() {
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {accountBalance.available.length > 0 && (
+          <MetricCard
+            title="الربح الحالي في Stripe"
+            hrefLabel="عرض المدفوعات"
+            href="/admin/payments"
+          >
+            <strong className={clsx({ "text-red-500": totalBalance < 0 })}>
+              {formatPrice({ price: totalBalance, toPence: true })}
+            </strong>
+          </MetricCard>
+        )}
+
         <MetricCard title="عدد المستخدمين" hrefLabel="عرض المستخدمين">
           {usersCount}
         </MetricCard>
@@ -36,16 +51,6 @@ export default async function DashboardPage() {
         <MetricCard title="مستخدمي اختبار المحادثة" href="/admin/users" hrefLabel="عرض المستخدمين">
           {testUsersCount}
         </MetricCard>
-
-        {accountBalance.available && (
-          <MetricCard title="الربح الحالي" hrefLabel="عرض المستخدمين">
-            {accountBalance.available.map((item, index) => (
-              <div key={index}>
-                <strong>{formatPrice({ price: item.amount })}</strong>
-              </div>
-            ))}
-          </MetricCard>
-        )}
       </div>
     </div>
   );
@@ -68,7 +73,16 @@ function MetricCard({
         <CardTitle className="text-center text-sm">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <h3 className="text-5xl text-center font-bold text-green-600">{children}</h3>
+        <h3
+          className={clsx("text-5xl text-center font-bold", {
+            "text-green-600": title === "الربح الحالي في Stripe",
+            "text-blue-600": title === "عدد المستخدمين",
+            "text-yellow-600": title === "عدد الأشتراكات",
+            "text-purple-600": title === "مستخدمي اختبار المحادثة",
+          })}
+        >
+          {children}
+        </h3>
         <Link href={href ?? "/admin"}>
           <Button variant={"secondary"} className="w-full font-black border mt-2">
             {hrefLabel}
