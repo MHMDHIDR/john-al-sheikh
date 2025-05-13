@@ -48,7 +48,11 @@ export default async function DashboardPage() {
           {subscribersCount}
         </MetricCard>
 
-        <MetricCard title="مستخدمي اختبار المحادثة" href="/admin/users" hrefLabel="عرض المستخدمين">
+        <MetricCard
+          title="مستخدمي اختبار المحادثة"
+          href="/admin/test-users"
+          hrefLabel="عرض مستخدمي اختبار المحادثة"
+        >
           {testUsersCount}
         </MetricCard>
       </div>
