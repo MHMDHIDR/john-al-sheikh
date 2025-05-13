@@ -1,4 +1,4 @@
-import { CreditCard, Home, Users } from "lucide-react";
+import { CircleUser, CreditCard, Home, UserPlus } from "lucide-react";
 import { notFound } from "next/navigation";
 import Nav from "@/components/custom/nav";
 import { AppSidebar } from "@/components/ui/app-sidebar";
@@ -29,7 +29,12 @@ export default async function DashboardLayout({
           {
             title: "المستخدمين",
             url: "/admin/users",
-            icon: <Users className="size-4" />,
+            icon: <CircleUser className="size-4" />,
+          },
+          {
+            title: "المشتركين",
+            url: "/admin/subscribers",
+            icon: <UserPlus className="size-4" />,
           },
           {
             title: "المدفوعات",

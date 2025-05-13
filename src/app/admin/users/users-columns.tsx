@@ -57,36 +57,36 @@ const UsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="w-8 h-8 p-0">
+        <Button variant="ghost" className="size-8 p-0">
           <span className="sr-only">الإجراءات</span>
-          <MoreHorizontal className="w-4 h-4" />
+          <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="rtl">
         <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
         <DropdownMenuItem asChild>
           <Link href={`/dashboard/users/${user.id}`}>
-            <Pencil className="mr-0.5 h-4 w-4" />
+            <Pencil className="mr-0.5 size-4" />
             عرض / تعديل
           </Link>
         </DropdownMenuItem>
         {status === "PENDING" && (
           <DropdownMenuItem onClick={handleActivate}>
-            <Check className="mr-0.5 h-4 w-4" /> تفعيل
+            <Check className="mr-0.5 size-4" /> تفعيل
           </DropdownMenuItem>
         )}
         {status === "ACTIVE" && (
           <DropdownMenuItem onClick={handleSuspend}>
-            <Ban className="mr-0.5 h-4 w-4" /> تعطيل
+            <Ban className="mr-0.5 size-4" /> تعطيل
           </DropdownMenuItem>
         )}
         {isSuspended && (
           <DropdownMenuItem onClick={handleUnsuspend}>
-            <CheckCircle className="mr-0.5 h-4 w-4" /> تفعيل
+            <CheckCircle className="mr-0.5 size-4" /> تفعيل
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={handleDelete}>
-          <Trash2 className="mr-0.5 h-4 w-4" /> حذف
+          <Trash2 className="mr-0.5 size-4" /> حذف
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -99,7 +99,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         البريد الإلكتروني
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -108,7 +108,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الهاتف
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -117,7 +117,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         صلاحية المستخدم
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -126,7 +126,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الحالة
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -141,7 +141,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         تاريخ الإنشاء
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -154,7 +154,7 @@ export const userColumns: ColumnDef<Users>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         تاريخ التحديث
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {

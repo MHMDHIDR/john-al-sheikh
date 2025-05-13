@@ -42,9 +42,9 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="w-8 h-8 p-0">
+        <Button variant="ghost" className="size-8 p-0">
           <span className="sr-only">الإجراءات</span>
-          <MoreHorizontal className="w-4 h-4" />
+          <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="rtl">
@@ -63,7 +63,7 @@ export const subscribersColumns: ColumnDef<SubscribedEmail>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الاسم الكامل
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -72,7 +72,7 @@ export const subscribersColumns: ColumnDef<SubscribedEmail>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         البريد الإلكتروني
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -81,7 +81,7 @@ export const subscribersColumns: ColumnDef<SubscribedEmail>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         هدف الايلتس
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
   },
@@ -90,7 +90,7 @@ export const subscribersColumns: ColumnDef<SubscribedEmail>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         تاريخ الاشتراك
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {

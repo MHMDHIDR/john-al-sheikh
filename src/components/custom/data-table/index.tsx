@@ -22,9 +22,10 @@ import { checkRoleAccess } from "@/lib/check-role-access";
 import { UserRole } from "@/server/db/schema";
 import { LoadingCard } from "./loading";
 import type { BaseEntity } from "./base-columns";
+import type { Users } from "@/server/db/schema";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 
-type RowStatus = "inactive" | "deactivated" | "pending" | "active" | "default";
+type RowStatus = "inactive" | "suspended" | "pending" | "active" | "default";
 
 type DataTableProps<TData extends BaseEntity> = {
   columns: ColumnDef<TData>[];
@@ -104,18 +105,14 @@ export function DataTable<TData extends BaseEntity>({
   }, [rowSelection, table, onRowSelection]);
 
   const getRowStatus = (row: Row<TData>): RowStatus => {
-    const original = row.original as {
-      status?: string;
-      deletedAt?: Date;
-      suspendedAt?: Date;
-    };
-    const isInactive = original.deletedAt ?? original.suspendedAt;
+    const original = row.original as { status?: Users["status"]; deletedAt?: Date };
+    const isInactive = original.deletedAt;
 
     if (isInactive) return "inactive";
 
     switch (original.status) {
-      case "DEACTIVATED":
-        return "deactivated";
+      case "SUSPENDED":
+        return "suspended";
       case "PENDING":
         return "pending";
       case "ACTIVE":
@@ -126,14 +123,14 @@ export function DataTable<TData extends BaseEntity>({
   };
 
   const statusStyles: Record<RowStatus, string> = {
-    inactive:
+    suspended:
       "text-red-700 hover:text-red-50 bg-red-200 hover:bg-red-500 dark:text-red-200 dark:bg-red-900 dark:hover:bg-red-950",
-    deactivated:
+    inactive:
       "text-orange-700 hover:text-orange-50 bg-orange-200 hover:bg-orange-500 dark:text-orange-200 dark:bg-orange-900 dark:hover:bg-orange-950",
     pending:
-      "text-yellow-700 hover:text-yellow-50 bg-yellow-200 hover:bg-yellow-500 dark:text-yellow-200 dark:bg-yellow-900 dark:hover:bg-yellow-950",
+      "text-yellow-800 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-50 dark:bg-yellow-950 dark:hover:bg-yellow-900",
     active:
-      "text-green-700 hover:text-green-50 bg-green-200 hover:bg-green-500 dark:text-green-200 dark:bg-green-900 dark:hover:bg-green-950",
+      "text-green-800 bg-green-50 hover:bg-green-100 dark:text-green-50 dark:bg-green-950 dark:hover:bg-green-900",
     default: "",
   };
 
