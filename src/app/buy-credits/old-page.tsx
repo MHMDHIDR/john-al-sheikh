@@ -1,6 +1,9 @@
-import Script from "next/script";
 import { env } from "@/env";
-import { StripePricingTable } from "./stripe-pricing-table";
+import { getAdaptivePrice } from "@/lib/adaptive-pricing";
+import { creditPackages } from "@/lib/stripe-client";
+import { api } from "@/trpc/server";
+import CreditPackages from "./credit-packages";
+import type { CreditPackagePrices } from "@/lib/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,6 +18,15 @@ export default async function BuyCreditsPage({
 }) {
   const { cancelled } = await searchParams;
   const isCancelled = cancelled === "true";
+
+  const userCountry = (await api.payments.getUserCountry()) ?? { country: "GB" };
+
+  const prices: CreditPackagePrices = {};
+
+  for (const [id, packageInfo] of Object.entries(creditPackages)) {
+    const price = await getAdaptivePrice(packageInfo.priceId, userCountry.country);
+    prices[id] = price;
+  }
 
   return (
     <div className="container max-w-7xl py-10 px-4 mx-auto">
@@ -34,13 +46,9 @@ export default async function BuyCreditsPage({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 grid-rows-1">
-        <StripePricingTable
-          pricingTableId="prctbl_1ROK5pKGZR1rBesuEYRaAaGE"
-          publishableKey="pk_live_51RJiZYKGZR1rBesu3onSU4SoYc1dzzNnTvBRPPBFTUemHGRkO3CGZC5D3xFwFeSNjfaPBNYrxTugiSXvnO3H25Uo00YLbwUCun"
-        />
+      <div className="flex items-center">
+        <CreditPackages prices={prices} />
       </div>
-      <Script src="https://js.stripe.com/v3/pricing-table.js" async />
     </div>
   );
 }
