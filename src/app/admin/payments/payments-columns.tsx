@@ -17,7 +17,7 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const type = row.getValue("type") as unknown as string;
+      const type = row.original.type;
       return (
         <Badge variant={type === "pending" ? "secondary" : "success"}>{translateSring(type)}</Badge>
       );
@@ -32,7 +32,7 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const amount = row.getValue("amount") as unknown as number;
+      const amount = row.original.amount;
       return (
         <strong className={clsx({ "text-red-500": amount < 0 })}>
           {formatPrice({ price: amount, toPence: true })}
@@ -49,7 +49,7 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const currency = row.getValue("currency") as unknown as string;
+      const currency = row.original.currency;
       return currency.toUpperCase();
     },
   },
