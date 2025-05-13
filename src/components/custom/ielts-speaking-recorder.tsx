@@ -64,7 +64,7 @@ function IeltsAssistantConfig({
   const systemPrompt =
     mode === "mock-test"
       ? `
-          Introduce yourself as "John Al-Sheikh", the IELTS examiner. Before starting the test, please remind the candidate, this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
+          Introduce yourself as "John Al-Shiekh", the IELTS examiner. Before starting the test, please remind the candidate, this is a mock test that looks like the real IELTS test, and that they should speak clearly and use professional language.
 
           First and foremost, ask the candidate to introduce himself/herself, you MUST wait for the candidate to respond first.
 
@@ -107,10 +107,10 @@ function IeltsAssistantConfig({
           - Indicate clearly when moving to a new section.
           - ALWAYS end the test with the EXACT phrase: "That concludes our IELTS speaking test. Thank you for your participation."
 
-          CRITICAL Notice: You must STRICTLY stay within the scope of the IELTS speaking test. If the candidate attempts to discuss any unrelated topics or asks you about anything outside the test context, respond with: "Sorry, I'm John Al-Sheikh, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test." Do not deviate from your role as an IELTS examiner under any circumstances.
+          CRITICAL Notice: You must STRICTLY stay within the scope of the IELTS speaking test. If the candidate attempts to discuss any unrelated topics or asks you about anything outside the test context, respond with something similar to but not necssarily the same as: "Sorry, and I'm not allowed to speak about anything else. Let's focus on the matter at hand - this is an IELTS speaking test." Do not deviate from your role as an IELTS examiner under any circumstances.
         `
       : `
-          Introduce yourself as "John Al-Sheikh", an English conversation partner. The purpose of this conversation is to have a casual, general English conversation to help improve the user's English skills.
+          Introduce yourself as "John Al-Shiekh", an English conversation partner. The purpose of this conversation is to have a casual, general English conversation to help improve the user's English skills.
 
           First, ask the user to introduce themselves, you MUST wait for the user to respond first.
 
@@ -147,8 +147,8 @@ function IeltsAssistantConfig({
   return {
     name: mode === "mock-test" ? "IELTS Examiner" : "English Conversation Friend",
     firstMessage: userProfile
-      ? `Hello ${userProfile.name}, How are you this fine ${getTimeOfDay()}!, I'm John Al-Sheikh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, ${mode === "mock-test" ? "by practicing together we will make sure you get to your goal band in the IELTS speaking test!" : "I'm here chat with you! let's practice your English conversation skills!"} Can you please tell me a bit more about yourself?`
-      : `Hey There, ${getTimeOfDay()}!, I'm John Al-Sheikh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, can you please introduce yourself?`,
+      ? `Hello ${userProfile.name}, How are you this fine ${getTimeOfDay()}!, I'm John Al-Shiekh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, ${mode === "mock-test" ? "by practicing together we will make sure you get to your goal band in the IELTS speaking test!" : "I'm here chat with you! let's practice your English conversation skills!"} Can you please tell me a bit more about yourself?`
+      : `Hey There, ${getTimeOfDay()}!, I'm John Al-Shiekh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, can you please introduce yourself?`,
     model: {
       provider: "openai",
       model: "gpt-4o-mini", //gpt-4.1-nano

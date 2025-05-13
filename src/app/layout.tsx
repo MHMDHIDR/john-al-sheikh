@@ -20,9 +20,9 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "John Al-Sheikh",
+  title: "John Al-Shiekh – IELTS Speaking Practice with Instant Feedback",
   description:
-    "John Al-Sheikh helps you practice your IELTS speaking skills with instant feedback.",
+    "Enhance your IELTS speaking skills with John Al-Shiekh's AI-powered platform. Engage in realistic mock interviews and receive instant, detailed feedback to boost your performance.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
