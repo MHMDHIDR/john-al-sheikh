@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         ></script>
         <meta
           name="google-site-verification"
-          content="_SYX43HbHAkel1WpBxNdoV7s0oCdllx1RHczIjBaMdc"
+          content="KhZvqrqDjQJS93D-wVNVN55qmqI0C1a93a7lB1V66QA"
         />
       </head>
       <body
