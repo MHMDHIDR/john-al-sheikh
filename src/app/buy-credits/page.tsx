@@ -1,9 +1,7 @@
 import { env } from "@/env";
-import { getAdaptivePrice } from "@/lib/adaptive-pricing";
 import { creditPackages } from "@/lib/stripe-client";
 import { api } from "@/trpc/server";
 import CreditPackages from "./credit-packages";
-import type { CreditPackagePrices } from "@/lib/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,13 +17,20 @@ export default async function BuyCreditsPage({
   const { cancelled } = await searchParams;
   const isCancelled = cancelled === "true";
 
-  const userCountry = (await api.payments.getUserCountry()) ?? { country: "GB" };
+  const checkoutSessions: Record<string, string> = {};
 
-  const prices: CreditPackagePrices = {};
+  for (const packageId of Object.keys(creditPackages)) {
+    try {
+      const { checkoutUrl } = await api.payments.createCheckoutSession({
+        packageId: packageId as keyof typeof creditPackages,
+      });
 
-  for (const [id, packageInfo] of Object.entries(creditPackages)) {
-    const price = await getAdaptivePrice(packageInfo.priceId, userCountry.country);
-    prices[id] = price;
+      if (checkoutUrl) {
+        checkoutSessions[packageId] = checkoutUrl;
+      }
+    } catch (error) {
+      console.error(`Error creating checkout session for package ${packageId}:`, error);
+    }
   }
 
   return (
@@ -46,8 +51,8 @@ export default async function BuyCreditsPage({
         </div>
       )}
 
-      <div className="flex items-center">
-        <CreditPackages prices={prices} />
+      <div className="flex items-center justify-center w-full">
+        <CreditPackages checkoutSessions={checkoutSessions} />
       </div>
     </div>
   );

@@ -6,47 +6,34 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { creditsLabel } from "@/lib/credits-label";
 import { formatPrice } from "@/lib/format-price";
 import { creditPackages } from "@/lib/stripe-client";
-import { api } from "@/trpc/react";
 import type { PackageInfo } from "@/lib/stripe-client";
-import type { CreditPackagePrices, PriceWithCurrency } from "@/lib/types";
 
-export default function CreditPackages({ prices }: { prices: CreditPackagePrices }) {
+export default function CreditPackages({
+  checkoutSessions,
+}: {
+  checkoutSessions: Record<string, string>;
+}) {
   const router = useRouter();
-  const toast = useToast();
-
-  const { mutateAsync: createCheckoutSession } = api.payments.createCheckoutSession.useMutation({
-    onError: error => {
-      toast.error(error.message ?? "Failed to create checkout session");
-    },
-  });
 
   const handlePurchase = async (packageId: string) => {
     try {
-      const { checkoutUrl } = await createCheckoutSession({
-        packageId: packageId as keyof typeof creditPackages,
-      });
+      const checkoutUrl = checkoutSessions[packageId];
 
       if (checkoutUrl) {
         router.push(checkoutUrl);
       }
     } catch (error) {
-      console.error("Error creating checkout session:", error);
+      console.error("Error during checkout redirect:", error);
     }
   };
 
   return (
     <div className="grid gap-6 lg:gap-0 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
       {Object.entries(creditPackages).map(([id, packageInfo]) => (
-        <PackageCard
-          key={id}
-          packageInfo={packageInfo}
-          adaptivePrice={prices[id] ?? null}
-          onPurchase={() => handlePurchase(id)}
-        />
+        <PackageCard key={id} packageInfo={packageInfo} onPurchase={() => handlePurchase(id)} />
       ))}
     </div>
   );
@@ -54,36 +41,11 @@ export default function CreditPackages({ prices }: { prices: CreditPackagePrices
 
 type PackageCardProps = {
   packageInfo: PackageInfo;
-  adaptivePrice: PriceWithCurrency | null;
   onPurchase: () => void;
 };
 
-function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProps) {
+function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
   const { name, description, features, credits, popular } = packageInfo;
-
-  // Format the price display
-  const priceDisplay = () => {
-    if (!adaptivePrice) {
-      // Fallback if adaptive price is not available
-      return formatPrice({ price: credits });
-    }
-
-    // If we have converted currency information, show that
-    if (adaptivePrice.converted_currency && adaptivePrice.converted_amount) {
-      return formatPrice({
-        price: adaptivePrice.converted_amount / 100,
-        currency: adaptivePrice.converted_currency,
-        minimumFractionDigits: adaptivePrice.converted_currency === "JPY" ? 0 : 2,
-      });
-    }
-
-    // Otherwise show the base price
-    return formatPrice({
-      price: adaptivePrice.unit_amount / 100,
-      currency: adaptivePrice.currency,
-      minimumFractionDigits: adaptivePrice.currency === "JPY" ? 0 : 2,
-    });
-  };
 
   return (
     <Card
@@ -111,7 +73,7 @@ function PackageCard({ packageInfo, adaptivePrice, onPurchase }: PackageCardProp
       <CardContent className="flex-grow px-6 pb-0 pt-2">
         <div className="mb-6 flex flex-col items-center">
           <div className="flex items-baseline justify-center">
-            <span className="text-5xl font-bold">{priceDisplay()}</span>
+            <span className="text-5xl font-bold">{formatPrice({ price: credits })}</span>
             <span className="text-gray-500 dark:text-gray-200 text-base ml-1">مرة واحدة</span>
           </div>
           <small className="mt-2 text-xs">{description}</small>
