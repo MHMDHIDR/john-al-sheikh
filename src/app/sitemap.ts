@@ -10,6 +10,7 @@ export default async function sitemap() {
     "privacy",
     "terms",
     "mock-test",
+    "general-english",
     "buy-credits",
     "subscribe",
     "signin",
