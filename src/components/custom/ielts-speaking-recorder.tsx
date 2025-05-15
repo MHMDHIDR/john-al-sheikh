@@ -23,6 +23,7 @@ import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
 import { Timer } from "./timer";
+import type { MockTestMessage } from "@/hooks/use-mock-test-store";
 import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
 import type { Users } from "@/server/db/schema";
 
@@ -151,18 +152,12 @@ function IeltsAssistantConfig({
       : `Hey There, ${getTimeOfDay()}!, I'm John Al-Shiekh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, can you please introduce yourself?`,
     model: {
       provider: "openai",
-      model: "gpt-4o-mini", //gpt-4.1-nano
+      model: "gpt-4o-mini",
       temperature: 0.3,
       messages: [{ role: "system", content: systemPrompt }],
     },
     voice: { provider: "11labs", voiceId: "steve" },
-    transcriber: {
-      provider: "deepgram",
-      model: "nova-2",
-      language: "en-US",
-    },
-    clientMessages: [],
-    serverMessages: [],
+    transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
   };
 }
 
@@ -200,6 +195,15 @@ export default function IELTSSpeakingRecorder({
   const [isOneMinuteToPrepare, setIsOneMinuteToPrepare] = useState(false);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
+
+  const userProfile = {
+    name: user.name,
+    hobbies: user.hobbies,
+    gender: user.gender,
+    age: user.age,
+    nationality: user.nationality,
+    goalBand: user.goalBand,
+  };
 
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
@@ -299,9 +303,7 @@ export default function IELTSSpeakingRecorder({
       const topic = topicMessage?.content ?? "IELTS Speaking Test";
 
       // Use the new procedure that analyzes the full conversation
-      const analysis = await analyzeFullIELTSConversation.mutateAsync({
-        conversation: messages,
-      });
+      const analysis = await analyzeFullIELTSConversation.mutateAsync({ conversation: messages });
 
       if (analysis.success && analysis.feedback) {
         // Save results to the database
@@ -431,35 +433,21 @@ export default function IELTSSpeakingRecorder({
     try {
       setErrorMessage("");
       setIsTestCompleted(false);
-      await startSession(
-        IeltsAssistantConfig({
-          userProfile: {
-            name: user.name,
-            age: user.age,
-            gender: user.gender,
-            hobbies: user.hobbies,
-            nationality: user.nationality,
-            goalBand: user.goalBand,
-          },
-          mode,
-        }),
-        {
-          silenceTimeoutSeconds: 85, // 1.25 minutes,
-          maxDurationSeconds: 600, // 10 minutes
-          messagePlan: {
-            idleMessages: ["Are you still there?"],
-            idleTimeoutSeconds: 60,
-            silenceTimeoutMessage: "As there is no response, I am ending the call now.",
-            idleMessageResetCountOnUserSpeechEnabled: true,
-          },
-          startSpeakingPlan: {
-            waitSeconds: 3,
-          },
-          backgroundDenoisingEnabled: true,
-          clientMessages: [],
-          serverMessages: [],
+
+      clearTest();
+
+      await startSession(IeltsAssistantConfig({ userProfile, mode }), {
+        silenceTimeoutSeconds: 85, // 1.25 minutes,
+        maxDurationSeconds: 600, // 10 minutes
+        messagePlan: {
+          idleMessages: ["Are you still there?"],
+          idleTimeoutSeconds: 60,
+          silenceTimeoutMessage: "As there is no response, I am ending the call now.",
+          idleMessageResetCountOnUserSpeechEnabled: true,
         },
-      );
+        startSpeakingPlan: { waitSeconds: 3 },
+        backgroundDenoisingEnabled: true,
+      });
     } catch (error) {
       setErrorMessage(typeof error === "string" ? error : (error as Error).message);
       console.error("Error starting conversation:", error);

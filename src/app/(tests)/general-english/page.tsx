@@ -19,7 +19,6 @@ export default async function GeneralEnglishPage() {
     redirect("/signin?callbackUrl=/general-english");
   }
 
-  if (!user) notFound();
   if (!user.profileCompleted) redirect("/onboarding");
 
   const stats = await api.users.getUserTestStats();

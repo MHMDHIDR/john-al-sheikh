@@ -19,7 +19,6 @@ export default async function MockTestPage() {
     redirect("/signin?callbackUrl=/mock-test");
   }
 
-  if (!user) notFound();
   if (!user.profileCompleted) redirect("/onboarding");
 
   const stats = await api.users.getUserTestStats();

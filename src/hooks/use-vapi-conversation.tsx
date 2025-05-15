@@ -1,8 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
-import type { AssistantOverrides, CreateAssistantDTO } from "@vapi-ai/web/dist/api";
+import type {
+  AssistantOverrides as BaseAssistantOverrides,
+  CreateAssistantDTO as BaseCreateAssistantDTO,
+} from "@vapi-ai/web/dist/api";
 
-export type { CreateAssistantDTO, AssistantOverrides } from "@vapi-ai/web/dist/api";
+// Create our own modified types where clientMessages and serverMessages are optional
+export type CreateAssistantDTO = Omit<
+  BaseCreateAssistantDTO,
+  "clientMessages" | "serverMessages"
+> & {
+  clientMessages?: BaseCreateAssistantDTO["clientMessages"];
+  serverMessages?: BaseCreateAssistantDTO["serverMessages"];
+};
+
+export type AssistantOverrides = Omit<
+  BaseAssistantOverrides,
+  "clientMessages" | "serverMessages"
+> & {
+  clientMessages?: BaseAssistantOverrides["clientMessages"];
+  serverMessages?: BaseAssistantOverrides["serverMessages"];
+};
 
 export type VapiError = {
   errorMsg: string;
@@ -109,7 +127,22 @@ export function useVapiConversation({
     async (config: CreateAssistantDTO, assistantOverrides: AssistantOverrides) => {
       try {
         setCallStatus(CallStatus.CONNECTING);
-        await vapi.start(config, assistantOverrides);
+        // Cast our modified types back to the original types expected by the vapi SDK
+        const fullConfig: BaseCreateAssistantDTO = {
+          ...config,
+          clientMessages: config.clientMessages as BaseCreateAssistantDTO["clientMessages"],
+          serverMessages: config.serverMessages as BaseCreateAssistantDTO["serverMessages"],
+        };
+
+        const fullOverrides: BaseAssistantOverrides = {
+          ...assistantOverrides,
+          clientMessages:
+            assistantOverrides.clientMessages as BaseAssistantOverrides["clientMessages"],
+          serverMessages:
+            assistantOverrides.serverMessages as BaseAssistantOverrides["serverMessages"],
+        };
+
+        await vapi.start(fullConfig, fullOverrides);
       } catch (error) {
         setCallStatus(CallStatus.INACTIVE);
         throw error;

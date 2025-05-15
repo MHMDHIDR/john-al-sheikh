@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { AccountForm } from "./account-form";
@@ -11,12 +11,11 @@ export const metadata: Metadata = {
 
 export default async function Account() {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session) {
-    notFound();
+  if (!user) {
+    redirect("/signin?callbackUrl=/account");
   }
-
-  const user = session.user;
 
   return (
     <section className="container px-6 py-10 mx-auto">

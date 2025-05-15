@@ -14,6 +14,12 @@ export const translateSring = (string: string) => {
     case "general-english": {
       return "المحادثة العامة";
     }
+    case "account": {
+      return "الحساب";
+    }
+    case "onboarding": {
+      return "تكملة بيانات المستخدم";
+    }
     case "buy-credits": {
       return "شراء رصيد نقاط";
     }

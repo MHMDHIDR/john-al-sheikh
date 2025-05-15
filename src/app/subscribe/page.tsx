@@ -1,18 +1,27 @@
+import { redirect } from "next/navigation";
 import { Logo } from "@/components/custom/icons";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
+import { auth } from "@/server/auth";
 import { SubscriptionForm } from "./subscription-form";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `الاشتراك معنا في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+  title: `الاشتراك معنا في منصة | ${env.NEXT_PUBLIC_APP_NAME}`,
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 
-export default function SubscribePage() {
+export const dynamic = "force-static";
+
+export default async function SubscribePage() {
+  const session = await auth();
+  const user = session?.user;
+
+  if (user) redirect("/");
+
   return (
-    <main className="relative select-none flex min-h-screen flex-col items-center justify-center p-3.5 overflow-hidden">
+    <main className="relative select-none flex h-screen md:-mt-20 flex-col items-center justify-center p-3.5 overflow-hidden">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",

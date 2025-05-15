@@ -26,7 +26,7 @@ export default async function SignInPage({
     callbackUrl?.split("step=")[1] ?? callbackUrl?.replace("/", "") ?? "هذه الصفحة";
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen -mt-20">
+    <main className="flex flex-col items-center justify-center h-screen md:-mt-20">
       {callbackUrl && (
         <Card className="mb-4 mx-2 select-none flex items-center gap-x-3 rounded-lg border-l-4 border-l-red-500 bg-red-50 p-2.5 dark:bg-red-950/50">
           <AlertCircle className="size-5 text-red-500" />
