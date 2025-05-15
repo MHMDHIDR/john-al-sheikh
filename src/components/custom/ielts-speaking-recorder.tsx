@@ -23,7 +23,6 @@ import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
 import { Timer } from "./timer";
-import type { MockTestMessage } from "@/hooks/use-mock-test-store";
 import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
 import type { Users } from "@/server/db/schema";
 

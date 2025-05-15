@@ -6,19 +6,6 @@ import { creditPackages, stripe } from "@/lib/stripe";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { creditTransactions, users } from "@/server/db/schema";
-import type { PriceWithCurrency } from "@/lib/types";
-
-type SessionCreateOptions = {
-  line_items: {
-    price: string;
-    quantity: number;
-  }[];
-  mode: "payment";
-  success_url: string;
-  cancel_url: string;
-  client_reference_id: string;
-  customer_email?: string;
-};
 
 type UserCountry = { ip: string; country: string };
 

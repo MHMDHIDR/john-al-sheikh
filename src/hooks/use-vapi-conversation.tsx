@@ -130,16 +130,14 @@ export function useVapiConversation({
         // Cast our modified types back to the original types expected by the vapi SDK
         const fullConfig: BaseCreateAssistantDTO = {
           ...config,
-          clientMessages: config.clientMessages as BaseCreateAssistantDTO["clientMessages"],
-          serverMessages: config.serverMessages as BaseCreateAssistantDTO["serverMessages"],
+          clientMessages: config.clientMessages!,
+          serverMessages: config.serverMessages!,
         };
 
         const fullOverrides: BaseAssistantOverrides = {
           ...assistantOverrides,
-          clientMessages:
-            assistantOverrides.clientMessages as BaseAssistantOverrides["clientMessages"],
-          serverMessages:
-            assistantOverrides.serverMessages as BaseAssistantOverrides["serverMessages"],
+          clientMessages: assistantOverrides.clientMessages!,
+          serverMessages: assistantOverrides.serverMessages!,
         };
 
         await vapi.start(fullConfig, fullOverrides);

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { AccountForm } from "./account-form";
