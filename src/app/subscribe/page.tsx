@@ -12,8 +12,6 @@ export const metadata: Metadata = {
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 
-export const dynamic = "force-static";
-
 export default async function SubscribePage() {
   const session = await auth();
   const user = session?.user;
