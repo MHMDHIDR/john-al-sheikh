@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import {
   AlertDialog,
@@ -37,6 +37,11 @@ export type UserProfile = {
 };
 
 export type ConversationModeType = "mock-test" | "general-english";
+
+// Add a new interface for the ref methods
+export interface IELTSSpeakingRecorderRef {
+  stopTest: () => void;
+}
 
 /**
  * IELTS Assistant Configuration
@@ -178,15 +183,15 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
   "1 minute to prepare",
 ];
 
-export default function IELTSSpeakingRecorder({
-  user,
-  isFreeTrialEnded,
-  mode = "mock-test",
-}: {
-  user: UserProfile;
-  isFreeTrialEnded: boolean;
-  mode?: ConversationModeType;
-}) {
+// Modify component to use forwardRef
+const IELTSSpeakingRecorder = forwardRef<
+  IELTSSpeakingRecorderRef,
+  {
+    user: UserProfile;
+    isFreeTrialEnded: boolean;
+    mode?: ConversationModeType;
+  }
+>(({ user, isFreeTrialEnded, mode = "mock-test" }, ref) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -207,7 +212,7 @@ export default function IELTSSpeakingRecorder({
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
 
-  const { callStatus, isMuted, startSession, setVolume } = useVapiConversation({
+  const { callStatus, isMuted, startSession, setVolume, endSession } = useVapiConversation({
     onConnect: () => {
       console.info("Connected to IELTS Assistant Agent");
     },
@@ -463,6 +468,16 @@ export default function IELTSSpeakingRecorder({
 
   const isConnected = callStatus === CallStatus.ACTIVE;
 
+  // Expose methods to parent component through ref
+  useImperativeHandle(ref, () => ({
+    stopTest: () => {
+      if (callStatus === CallStatus.ACTIVE) {
+        endSession();
+        setIsTestCompleted(true);
+      }
+    },
+  }));
+
   return (
     <>
       {isOneMinuteToPrepare && (
@@ -589,4 +604,8 @@ export default function IELTSSpeakingRecorder({
       </Card>
     </>
   );
-}
+});
+
+IELTSSpeakingRecorder.displayName = "IELTSSpeakingRecorder";
+
+export default IELTSSpeakingRecorder;

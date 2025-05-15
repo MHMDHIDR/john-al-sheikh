@@ -36,8 +36,10 @@ export function ConfirmationDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription asChild>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex justify-end flex-row-reverse gap-x-3 items-end">
-          <AlertDialogCancel variant={"destructive"}>إلغاء</AlertDialogCancel>
+        <AlertDialogFooter className="flex ltr">
+          <AlertDialogCancel variant={"destructive"} className="sm:ml-auto">
+            إلغاء
+          </AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className={buttonClass}>
             {buttonText}
           </AlertDialogAction>

@@ -82,7 +82,7 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
           </div>
         </SheetHeader>
 
-        <SheetFooter className="self-stretch md:self-start">
+        <SheetFooter className="rtl:self-start">
           <SheetClose asChild>
             <SignoutButton />
           </SheetClose>

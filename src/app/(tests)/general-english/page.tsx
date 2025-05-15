@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
+import ConversationUI from "@/components/custom/conversation-ui";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
-import MockTestUI from "./general-test-ui";
 import type { UserProfile } from "@/components/custom/ielts-speaking-recorder";
 import type { Metadata } from "next";
 
@@ -40,5 +40,12 @@ export default async function GeneralEnglishPage() {
     goalBand: user.goalBand ?? 0,
   };
 
-  return <MockTestUI user={userProfile} isFreeTrialEnded={freeTrialEnded} />;
+  return (
+    <ConversationUI
+      user={userProfile}
+      isFreeTrialEnded={freeTrialEnded}
+      mode="general-english"
+      title="محادثة اللغة الإنجليزية العامة"
+    />
+  );
 }

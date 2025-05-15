@@ -81,40 +81,64 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-0">
+              <CardTitle className="max-sm:text-center">إبدا المحادثة</CardTitle>
+            </CardHeader>
+            <CardContent />
+            <CardFooter className="flex gap-2 flex-col">
+              <Link href="/mock-test" className="w-full">
+                <Button variant="outline" className="w-full">
+                  ابدأ اختبار محادثة جديد
+                </Button>
+              </Link>
+              <Divider className="my-1" textClassName="bg-card!">
+                أو
+              </Divider>
+              <Link href="/general-english" className="w-full">
+                <Button variant="outline" className="w-full">
+                  محادثة عامة بالإنجليزي
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-1.5">
               <CardTitle>رصيدك</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {credits} <strong>{creditsLabel({ credits })}</strong>
               </div>
-              <Link href="/buy-credits">
+            </CardContent>
+            <CardFooter>
+              <Link href="/buy-credits" className="w-full">
                 <Button variant={"pressable"} className="w-full font-black text-lg">
                   شراء رصيد
                 </Button>
               </Link>
-            </CardContent>
+            </CardFooter>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
-                <ListChecks className="ml-2 h-5 w-5 text-blue-500" />
+                <ListChecks className="ml-2 size-5 text-blue-500" />
                 إجمالي الاختبارات
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalCount || 0}</div>
-              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">اختبار محادثة مكتمل</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-3">اختبار محادثة مكتمل</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
-                <Trophy className="ml-2 h-5 w-5 text-yellow-500" />
+                <Trophy className="ml-2 size-5 text-yellow-500" />
                 أعلى درجة
               </CardTitle>
             </CardHeader>
@@ -127,7 +151,7 @@ export default async function DashboardPage({
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
-                <LineChart className="ml-2 h-5 w-5 text-green-500" />
+                <LineChart className="ml-2 size-5 text-green-500" />
                 معدل التحسن
               </CardTitle>
             </CardHeader>
@@ -169,12 +193,12 @@ export default async function DashboardPage({
           </Card>
         )}
 
-        <Card>
+        <Card className="mb-12">
           <CardHeader>
             <CardTitle>سجل الاختبارات</CardTitle>
             <CardDescription>قائمة بجميع اختبارات المحادثة التي أكملتها</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-sm:px-2">
             {testHistory && testHistory.length > 0 ? (
               <div className="space-y-4">
                 {testHistory.map(test => (
@@ -229,7 +253,7 @@ export default async function DashboardPage({
             )}
           </CardContent>
           {testHistory && testHistory.length > 0 && (
-            <CardFooter className="flex gap-2 flex-col md:flex-row">
+            <CardFooter className="flex max-sm:px-2 gap-2 flex-col md:flex-row">
               <Link href="/mock-test" className="w-full">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
