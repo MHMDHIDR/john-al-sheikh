@@ -96,10 +96,15 @@ export function FeedbackForm({
               <FormControl>
                 <Textarea
                   placeholder="ادخل رسالتك"
-                  className="min-h-[120px] resize-none rtl"
+                  className="min-h-[120px] overflow-y-clip resize-none rtl leading-loose"
                   maxLength={MAX_MESSAGE_LENGTH}
                   minLength={10}
                   dir="auto"
+                  onInput={e => {
+                    const textarea = e.target as HTMLTextAreaElement;
+                    textarea.style.height = "auto";
+                    textarea.style.height = `${textarea.scrollHeight}px`;
+                  }}
                   {...field}
                 />
               </FormControl>
