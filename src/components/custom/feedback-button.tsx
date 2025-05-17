@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FeedbackForm } from "@/components/custom/feedback-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +15,15 @@ import { useFeedbackForm } from "@/hooks/use-feedback-form";
 
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { form, files, setFiles, handleFilesSelected, onSubmit, feedbackMutation } =
     useFeedbackForm();
 
-  return (
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  return !isMounted ? null : (
     <>
       <Button
         onClick={() => setIsOpen(true)}
