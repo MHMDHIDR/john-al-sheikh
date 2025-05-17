@@ -1,16 +1,17 @@
 import clsx from "clsx";
 import { redirect } from "next/navigation";
-import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
-import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import {
+  HomePageInteractiveGridPattern,
+  QuickSpeakingTest,
+} from "@/components/custom/quick-speaking-test";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
-import { cn } from "@/lib/utils";
 import { auth } from "@/server/auth";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: env.NEXT_PUBLIC_APP_NAME,
+  title: `${env.NEXT_PUBLIC_APP_NAME} | ${env.NEXT_PUBLIC_APP_DESCRIPTION}`,
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
 };
 
@@ -43,16 +44,7 @@ export default async function Home() {
           <QuickSpeakingTest />
         ) : (
           <>
-            <InteractiveGridPattern
-              className={cn(
-                "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
-                "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-30",
-              )}
-              width={40}
-              height={40}
-              squares={[30, 30]}
-              squaresClassName="hover:fill-blue-200"
-            />
+            <HomePageInteractiveGridPattern />
             <Card
               className="z-10 border m-4 md:mt-40 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
               href="/mock-test"

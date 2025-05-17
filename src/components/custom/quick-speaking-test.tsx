@@ -324,16 +324,7 @@ export function QuickSpeakingTest() {
 
   return (
     <main className="relative select-none flex h-screen sm:-my-20 px-3 flex-col items-center justify-center overflow-hidden">
-      <InteractiveGridPattern
-        className={cn(
-          "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
-          "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-50",
-        )}
-        width={70}
-        height={70}
-        squares={[30, 30]}
-        squaresClassName="hover:fill-blue-200"
-      />
+      <HomePageInteractiveGridPattern />
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
@@ -414,5 +405,20 @@ export function QuickSpeakingTest() {
         </div>
       </div>
     </main>
+  );
+}
+
+export function HomePageInteractiveGridPattern() {
+  return (
+    <InteractiveGridPattern
+      className={cn(
+        "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+        "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-30",
+      )}
+      width={40}
+      height={40}
+      squares={[30, 30]}
+      squaresClassName="hover:fill-blue-200"
+    />
   );
 }
