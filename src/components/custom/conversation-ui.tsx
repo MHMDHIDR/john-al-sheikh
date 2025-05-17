@@ -32,7 +32,11 @@ export default function ConversationUI({
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  useEffect(() => clearTest(), [clearTest]);
+  // Run clearTest only once when the component mounts
+  useEffect(() => {
+    clearTest();
+  }, []);
+
   useEffect(() => scrollToBottom(), [messages]);
 
   return (

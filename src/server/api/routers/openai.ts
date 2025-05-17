@@ -28,10 +28,10 @@ type IELTSFeedback = {
 
 type analyzeFullIELTSConversationFeedback = {
   overall: string;
-  fluencyAndCoherence: string;
-  lexicalResource: string;
-  grammaticalRangeAndAccuracy: string;
-  pronunciation: string;
+  fluencyAndCoherence: number;
+  lexicalResource: number;
+  grammaticalRangeAndAccuracy: number;
+  pronunciation: number;
   band: IELTSFeedback["band"];
   feedback: {
     overall: string;
@@ -44,6 +44,21 @@ type analyzeFullIELTSConversationFeedback = {
   areasToImprove: IELTSFeedback["areasToImprove"];
   improvementTips: IELTSFeedback["improvementTips"];
 };
+
+// Define the success type for analyzeFullIELTSConversation
+type AnalyzeFullIELTSSuccess = {
+  success: true;
+  feedback: analyzeFullIELTSConversationFeedback;
+};
+
+// Define the error type for analyzeFullIELTSConversation
+type AnalyzeFullIELTSError = {
+  success: false;
+  error: string;
+};
+
+// Union type for all possible responses
+type AnalyzeFullIELTSResponse = AnalyzeFullIELTSSuccess | AnalyzeFullIELTSError;
 
 export const openaiRouter = createTRPCRouter({
   /** ==> Only used for Quick Speaking Test Proceedure */
@@ -394,9 +409,10 @@ export const openaiRouter = createTRPCRouter({
             timestamp: z.string(),
           }),
         ),
+        mode: z.enum(["mock-test", "general-english"]).default("mock-test"),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input }): Promise<AnalyzeFullIELTSResponse> => {
       try {
         // Extract candidate responses and examiner questions
         const candidateResponses = input.conversation
@@ -407,7 +423,7 @@ export const openaiRouter = createTRPCRouter({
         // Ensure we have enough content to analyze
         if (!candidateResponses || candidateResponses.trim().length < 50) {
           return {
-            success: false,
+            success: false as const,
             error: "الإجابات غير كافية للتحليل",
           };
         }
@@ -418,78 +434,147 @@ export const openaiRouter = createTRPCRouter({
           .join("\n\n");
 
         // Set up timeout to ensure we don't exceed Vercel's limits
-        const timeoutPromise = new Promise<{ success: false; error: string }>(resolve => {
+        const timeoutPromise = new Promise<AnalyzeFullIELTSError>(resolve => {
           setTimeout(() => {
             resolve({
-              success: false,
+              success: false as const,
               error: "تجاوز المدة المسموحة للتحليل",
             });
           }, 8000); // 8 seconds to stay under Vercel's 10s limit
         });
 
+        // Choose the appropriate system prompt based on the mode
+        const systemPrompt =
+          input.mode === "mock-test"
+            ? `You are an expert IELTS speaking examiner. Analyze the following IELTS speaking test conversation.
+            First, understand the structure of the conversation - identify the three IELTS speaking test sections:
+            1. Introduction and general questions
+            2. Individual long turn (usually a topic the candidate must speak about)
+            3. Two-way discussion related to the topic
+            Then evaluate the candidate's performance based on the official IELTS criteria:
+            1. Fluency and Coherence (how smoothly they speak, whether they use connectives, ability to speak at length)
+            2. Lexical Resource (vocabulary range and accuracy)
+            3. Grammatical Range and Accuracy (variety of structures and grammatical accuracy)
+            4. Pronunciation (clarity, intonation, accent)
+            Provide your feedback in Arabic language in the following JSON format:
+            {
+              "band": number, // Overall score (1-9, decimals allowed)
+              "fluencyAndCoherence": number,
+              "lexicalResource": number,
+              "grammaticalRangeAndAccuracy": number,
+              "pronunciation": number,
+              "feedback": {
+                "overall": "إجمالي التقييم العام (3-4 جمل)",
+                "fluencyAndCoherence": "تحليل الطلاقة والتماسك (جملة أو جملتين)",
+                "lexicalResource": "تحليل الثروة اللغوية (جملة أو جملتين)",
+                "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملة أو جملتين)",
+                "pronunciation": "تحليل النطق (جملة أو جملتين)"
+              },
+              "strengths": {
+                "summary": "ملخص نقاط القوة باللغة العربية",
+                "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3"]
+              },
+              "areasToImprove": {
+                "errors": [
+                  {
+                    "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
+                    "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
+                  },
+                  {
+                    "mistake": "مثال آخر على خطأ أو مشكلة",
+                    "correction": "كيفية تحسين هذه النقطة"
+                  }
+                ]
+              },
+              "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين"]
+            }
+            Be fair but critical in your assessment. The feedback should be helpful and specific.
+            Make sure to include at least 2-3 specific examples of errors with corrections, and 3-4 improvement tips.
+            Include quotes from the candidate's responses to illustrate the errors.
+            The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`
+            : `You are an expert English language coach specializing in conversational English assessment.
+            Analyze the following English conversation between a coach (EXAMINER) and a learner (CANDIDATE).
+
+            Evaluate the learner's performance on a scale of 1-100 in these categories:
+            1. Fluency and Natural Expression (how smoothly they converse, use of fillers, hesitations)
+            2. Vocabulary Usage (range, appropriateness, and variety of expressions)
+            3. Grammatical Accuracy (sentence structure, tense usage, common errors)
+            4. Pronunciation and Intonation (clarity, stress patterns, natural rhythm)
+            5. Conversation Skills (ability to maintain discussion, ask questions, express opinions)
+
+            Pay special attention to:
+            - Common grammatical errors that affect communication
+            - Vocabulary limitations or repetitions
+            - Pronunciation patterns that might affect comprehension
+            - Conversation flow and the learner's ability to elaborate on topics
+
+            Provide your feedback in Arabic language in the following JSON format:
+            {
+              "band": number, // Overall score (1-100)
+              "fluencyAndCoherence": number, // Score out of 100
+              "lexicalResource": number, // Score out of 100
+              "grammaticalRangeAndAccuracy": number, // Score out of 100
+              "pronunciation": number, // Score out of 100
+              "feedback": {
+                "overall": "إجمالي التقييم العام (3-4 جمل)",
+                "fluencyAndCoherence": "تحليل الطلاقة والتعبير الطبيعي (جملتين)",
+                "lexicalResource": "تحليل استخدام المفردات (جملتين)",
+                "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملتين)",
+                "pronunciation": "تحليل النطق والتنغيم (جملتين)"
+              },
+              "strengths": {
+                "summary": "ملخص نقاط القوة باللغة العربية",
+                "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3", "نقطة قوة 4"]
+              },
+              "areasToImprove": {
+                "errors": [
+                  {
+                    "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
+                    "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
+                  },
+                  {
+                    "mistake": "مثال آخر على خطأ أو مشكلة",
+                    "correction": "كيفية تحسين هذه النقطة"
+                  },
+                  {
+                    "mistake": "مثال ثالث على خطأ أو مشكلة",
+                    "correction": "كيفية تحسين هذه النقطة"
+                  },
+                  {
+                    "mistake": "مثال رابع على خطأ أو مشكلة",
+                    "correction": "كيفية تحسين هذه النقطة"
+                  }
+                ]
+              },
+              "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين", "نصيحة 4 للتحسين", "نصيحة 5 للتحسين"]
+            }
+
+            Be encouraging but thorough in your assessment. The feedback should be detailed and actionable.
+            Make sure to include at least 4 specific examples of errors with corrections, and 5 improvement tips.
+            Include direct quotes from the learner's responses to illustrate points.
+            Focus on everyday conversational English rather than academic or test-oriented language.
+            The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`;
+
+        // Create the analysis request with the appropriate system prompt
+        const userContent =
+          input.mode === "mock-test"
+            ? `IELTS Speaking Test Conversation:\n\n${conversationText}\n\nPlease analyze this IELTS speaking test based on the criteria.`
+            : `English Conversation Practice:\n\n${conversationText}\n\nPlease analyze this English conversation practice based on the criteria.`;
+
         // Create a more streamlined analysis request
         const analysisPromise = openai.chat.completions.create({
           model: "gpt-4o-mini",
           temperature: 0,
-          max_tokens: 500, // Reduced from 800 it was 500
+          max_tokens: 600, // Increased slightly to accommodate more detailed feedback for general-english
           response_format: { type: "json_object" }, // Force JSON format for faster parsing
           messages: [
             {
               role: "system",
-              content: `You are an expert IELTS speaking examiner. Analyze the following IELTS speaking test conversation.
-
-              First, understand the structure of the conversation - identify the three IELTS speaking test sections:
-              1. Introduction and general questions
-              2. Individual long turn (usually a topic the candidate must speak about)
-              3. Two-way discussion related to the topic
-
-              Then evaluate the candidate's performance based on the official IELTS criteria:
-              1. Fluency and Coherence (how smoothly they speak, whether they use connectives, ability to speak at length)
-              2. Lexical Resource (vocabulary range and accuracy)
-              3. Grammatical Range and Accuracy (variety of structures and grammatical accuracy)
-              4. Pronunciation (clarity, intonation, accent)
-
-              Provide your feedback in Arabic language in the following JSON format:
-              {
-                "band": number, // Overall score (1-9, decimals allowed)
-                "fluencyAndCoherence": number,
-                "lexicalResource": number,
-                "grammaticalRangeAndAccuracy": number,
-                "pronunciation": number,
-                "feedback": {
-                  "overall": "إجمالي التقييم العام (3-4 جمل)",
-                  "fluencyAndCoherence": "تحليل الطلاقة والتماسك (جملة أو جملتين)",
-                  "lexicalResource": "تحليل الثروة اللغوية (جملة أو جملتين)",
-                  "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملة أو جملتين)",
-                  "pronunciation": "تحليل النطق (جملة أو جملتين)"
-                },
-                "strengths": {
-                  "summary": "ملخص نقاط القوة باللغة العربية",
-                  "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3"]
-                },
-                "areasToImprove": {
-                  "errors": [
-                    {
-                      "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
-                      "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
-                    },
-                    {
-                      "mistake": "مثال آخر على خطأ أو مشكلة",
-                      "correction": "كيفية تحسين هذه النقطة"
-                    }
-                  ]
-                },
-                "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين"]
-              }
-
-              Be fair but critical in your assessment. The feedback should be helpful and specific.
-              Make sure to include at least 2-3 specific examples of errors with corrections, and 3-4 improvement tips.
-              Include quotes from the candidate's responses to illustrate the errors.
-              The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`,
+              content: systemPrompt,
             },
             {
               role: "user",
-              content: `IELTS Speaking Test Conversation:\n\n${conversationText}\n\nPlease analyze this IELTS speaking test based on the criteria.`,
+              content: userContent,
             },
           ],
         });
@@ -499,7 +584,7 @@ export const openaiRouter = createTRPCRouter({
 
         // If we got a timeout result
         if ("error" in result) {
-          return provideFallbackIELTSAnalysis(candidateResponses);
+          return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
         }
 
         const analysisText = result.choices[0]?.message.content ?? "";
@@ -508,18 +593,31 @@ export const openaiRouter = createTRPCRouter({
           // Parse the JSON response
           const feedback = JSON.parse(analysisText.trim()) as analyzeFullIELTSConversationFeedback;
 
+          // For general-english mode, normalize the band score to match the expected range (1-9)
+          if (input.mode === "general-english" && feedback.band > 9) {
+            feedback.band = Number(((feedback.band / 100) * 9).toFixed(1));
+            feedback.fluencyAndCoherence = Number(
+              ((feedback.fluencyAndCoherence / 100) * 9).toFixed(1),
+            );
+            feedback.lexicalResource = Number(((feedback.lexicalResource / 100) * 9).toFixed(1));
+            feedback.grammaticalRangeAndAccuracy = Number(
+              ((feedback.grammaticalRangeAndAccuracy / 100) * 9).toFixed(1),
+            );
+            feedback.pronunciation = Number(((feedback.pronunciation / 100) * 9).toFixed(1));
+          }
+
           return {
-            success: true,
+            success: true as const,
             feedback,
           };
         } catch (parseError) {
           console.error("Failed to parse JSON response:", parseError);
-          return provideFallbackIELTSAnalysis(candidateResponses);
+          return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
         }
       } catch (error) {
         console.error("Analysis error:", error);
         return {
-          success: false,
+          success: false as const,
           error: "حدث خطأ أثناء تحليل المحادثة",
         };
       }
@@ -563,7 +661,10 @@ function provideFallbackResponse() {
 }
 
 // New helper function for IELTS conversation analysis fallback
-function provideFallbackIELTSAnalysis(candidateText: string) {
+function provideFallbackIELTSAnalysis(
+  candidateText: string,
+  mode: "mock-test" | "general-english" = "mock-test",
+): AnalyzeFullIELTSSuccess {
   // Simple heuristic: estimate based on text length and complexity
   let estimatedBand = 5.5; // Default mid-range score
 
@@ -580,14 +681,20 @@ function provideFallbackIELTSAnalysis(candidateText: string) {
   // Cap at reasonable bounds
   estimatedBand = Math.min(Math.max(estimatedBand, 4.0), 7.5);
 
+  // For general-english mode, we might want to use a different scale originally (0-100)
+  // but we normalize it to the IELTS scale (1-9) for consistency in the database
+  const normalizedBand =
+    mode === "general-english" ? Math.min(Math.max(estimatedBand, 4.0), 7.5) : estimatedBand;
+
   return {
-    success: true,
+    success: true as const,
     feedback: {
-      band: estimatedBand,
-      fluencyAndCoherence: estimatedBand,
-      lexicalResource: estimatedBand,
-      grammaticalRangeAndAccuracy: estimatedBand,
-      pronunciation: estimatedBand,
+      band: normalizedBand,
+      fluencyAndCoherence: normalizedBand,
+      lexicalResource: normalizedBand,
+      grammaticalRangeAndAccuracy: normalizedBand,
+      pronunciation: normalizedBand,
+      overall: "تقييم أولي بناءً على بيانات محدودة",
       feedback: {
         overall: "تقييم أولي بناءً على بيانات محدودة",
         fluencyAndCoherence: "طلاقة متوسطة",

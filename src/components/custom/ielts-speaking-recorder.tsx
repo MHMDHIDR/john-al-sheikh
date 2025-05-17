@@ -144,7 +144,33 @@ function IeltsAssistantConfig({
           - Don't ask more than 15 questions in total
           - Be supportive and encouraging
 
-          End the conversation naturally when you've asked around 10-15 questions or after about 8-10 minutes. Conclude by thanking them for the conversation and say EXACTLY: "That concludes our English conversation. Thank you for your participation."
+          Speaking Guidance:
+          - Provide gentle guidance on pronunciation, vocabulary, or grammar only every other response to allow natural flow of conversation
+          - When giving feedback, use a sandwich approach: positive comment, suggestion for improvement, then encouragement
+          - Use phrases like "I noticed you said..." or "You might try..." when offering corrections
+          - Acknowledge and praise good use of vocabulary, complex sentence structures, or idioms
+          - If the user struggles, offer prompts or alternative phrases to help them express themselves
+          - Pay attention to repeated errors and address patterns rather than every small mistake
+          - Encourage the user to elaborate on short answers with follow-up questions
+
+          Conversational Style:
+          - Start with simpler topics and gradually increase complexity based on the user's comfort level
+          - Use a warm, patient tone throughout the conversation
+          - Respond with enthusiastic affirmations when the user communicates effectively
+          - Occasionally model more advanced vocabulary or expressions for the user to learn from
+          - Allow silence for the user to gather thoughts without rushing them
+          - If the user seems hesitant or nervous, adjust your pace to be slower and more deliberate
+
+          Important rules:
+          - NEVER interrupt the user while they are speaking
+          - Only provide guidance on English usage, not personal life advice
+          - Keep all topics appropriate and educational in nature
+          - Completely avoid any adult content, inappropriate subjects, or controversial political topics
+          - Always relate the conversation back to improving English speaking skills
+          - Never mock or make the user feel embarrassed about mistakes
+          - Focus on communication skills rather than perfect accuracy
+
+          End the conversation naturally when you've asked around 10-15 questions or after about 8-10 minutes. When concluding, provide brief positive feedback on 2-3 specific aspects of their English that were strong, and 1 gentle suggestion for improvement. Then say EXACTLY: "That concludes our English conversation. Thank you for your participation."
 
           Do not offer any recordings or services outside the scope of this conversation. If the user asks about anything unrelated, politely redirect them back to the conversation.
         `;
@@ -307,7 +333,10 @@ const IELTSSpeakingRecorder = forwardRef<
       const topic = topicMessage?.content ?? "IELTS Speaking Test";
 
       // Use the new procedure that analyzes the full conversation
-      const analysis = await analyzeFullIELTSConversation.mutateAsync({ conversation: messages });
+      const analysis = await analyzeFullIELTSConversation.mutateAsync({
+        conversation: messages,
+        mode,
+      });
 
       if (analysis.success && analysis.feedback) {
         // Save results to the database
@@ -322,10 +351,8 @@ const IELTSSpeakingRecorder = forwardRef<
           // Save to database
           const savedTest = await saveSpeakingTest.mutateAsync({
             userId: user.id,
-            type: "MOCK",
-            transcription: {
-              messages: transformedMessages,
-            },
+            type: mode === "mock-test" ? "MOCK" : "PRACTICE",
+            transcription: { messages: transformedMessages },
             topic: topic,
             band: analysis.feedback.band,
             feedback: {
