@@ -369,7 +369,10 @@ export function QuickSpeakingTest() {
           </div>
 
           {!isRecording && !isProcessing && (
-            <label className="block text-gray-500 cursor-pointer" htmlFor="recording-button">
+            <label
+              className="block text-accent-foreground/75 cursor-pointer"
+              htmlFor="recording-button"
+            >
               إضغط لبدأ المحادثة
             </label>
           )}

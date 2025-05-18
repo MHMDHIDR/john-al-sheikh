@@ -1,6 +1,6 @@
 "use client";
 
-import { IconLoader, IconMail } from "@tabler/icons-react";
+import { IconBrandX, IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -35,6 +35,10 @@ export default function SiginForm() {
     await signIn("google", { callbackUrl });
   };
 
+  const handleTwitterSignIn = async () => {
+    await signIn("twitter", { callbackUrl });
+  };
+
   return (
     <div className="flex flex-col items-center gap-y-2">
       <Card className="w-96 md:min-w-110 border-gray-300 select-none">
@@ -44,14 +48,22 @@ export default function SiginForm() {
             تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
           </CardDescription>
         </CardHeader>
-        <CardContent className="md:px-10">
+        <CardContent className="md:px-10 space-y-1 md:space-y-2">
           <Button
             onClick={handleGoogleSignIn}
             variant={"outline"}
             className="w-full cursor-pointer h-10"
           >
-            <GoogleIcon className="inline-block mx-1" />
+            <GoogleIcon className="mx-1" />
             المتابعة عن طريق حساب Google
+          </Button>
+          <Button
+            onClick={handleTwitterSignIn}
+            variant={"outline"}
+            className="w-full cursor-pointer h-10"
+          >
+            <IconBrandX className="mx-1" />
+            المتابعة عن طريق حساب Twitter
           </Button>
 
           <Divider className="my-5" textClassName="bg-card!">
@@ -86,13 +98,21 @@ export default function SiginForm() {
           </form>
         </CardContent>
       </Card>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 select-none">
         بالمتابعة، أنت توافق على
-        <Link href="/terms" className="text-blue-500 inline-flex px-1 hover:underline">
+        <Link
+          href="/terms"
+          target="_blank"
+          className="text-blue-500 inline-flex px-1 hover:underline"
+        >
           شروط الخدمة
         </Link>
         و
-        <Link href="/privacy" className="text-blue-500 inline-flex px-1 hover:underline">
+        <Link
+          href="/privacy"
+          target="_blank"
+          className="text-blue-500 inline-flex px-1 hover:underline"
+        >
           سياسة الخصوصية
         </Link>
       </p>

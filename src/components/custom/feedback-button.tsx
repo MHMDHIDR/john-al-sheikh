@@ -27,7 +27,7 @@ export function FeedbackButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="flex max-sm:scale-70 items-center gap-2 fixed bottom-10 -rotate-90 max-sm:-right-12.5 -right-11 z-50 shadow-lg animate-feedback-aurora max-sm:opacity-45 opacity-75"
+        className="flex select-none max-sm:scale-70 items-center gap-2 fixed bottom-10 -rotate-90 max-sm:-right-12.5 -right-11 z-50 shadow-lg animate-feedback-aurora max-sm:opacity-45 opacity-75"
       >
         <strong>Feedback</strong>
         <MessageSquare className="size-6" />

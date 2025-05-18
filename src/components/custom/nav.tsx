@@ -36,7 +36,7 @@ export default function Nav({
             <AccountNav user={currentUser!} />
           ) : (
             <Link href="/signin">
-              <Button className="cursor-pointer" variant="default">
+              <Button className="cursor-pointer select-none" variant="default">
                 تسجيل الدخول
               </Button>
             </Link>

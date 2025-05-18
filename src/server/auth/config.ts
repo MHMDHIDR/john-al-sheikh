@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
+import Twitter from "next-auth/providers/twitter";
 import { Resend as ResendEmail } from "resend";
 import { env } from "@/env";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
@@ -52,6 +53,7 @@ const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
 
 export const authConfig = {
   providers: [
+    Twitter,
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
     Resend({
       name: "Email",
