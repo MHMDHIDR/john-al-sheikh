@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
   const session = await auth();
   if (session) redirect("/");
@@ -24,6 +24,8 @@ export default async function SignInPage({
   const callbackUrl = searchParamsProp.callbackUrl;
   const callbackUrlPageName =
     callbackUrl?.split("step=")[1] ?? callbackUrl?.replace("/", "") ?? "هذه الصفحة";
+
+  const error = searchParamsProp.error;
 
   return (
     <main className="flex flex-col items-center justify-center h-screen md:-mt-20">
@@ -38,6 +40,22 @@ export default async function SignInPage({
               <p className="text-sm text-red-600 dark:text-red-300">
                 يجب عليك تسجيل الدخول أو إنشاء حساب للوصول إلى{" "}
                 <strong>{translateSring(callbackUrlPageName)}</strong>
+              </p>
+            </CardContent>
+          </CardHeader>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="mb-4 mx-2 select-none flex items-center gap-x-3 rounded-lg border-l-4 border-l-red-500 bg-red-50 p-2.5 dark:bg-red-950/50">
+          <AlertCircle className="size-5 text-red-500" />
+          <CardHeader className="flex flex-col p-0">
+            <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
+              خطأ في تسجيل الدخول
+            </CardTitle>
+            <CardContent className="p-0">
+              <p className="text-sm text-red-600 dark:text-red-300">
+                حدث خطأ عند التسجيل الدخول بهذا البريد الإلكتروني الرجاء المحاولة مرة أخرى
               </p>
             </CardContent>
           </CardHeader>
