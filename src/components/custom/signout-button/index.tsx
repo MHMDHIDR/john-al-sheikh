@@ -2,6 +2,7 @@
 
 import { IconLogout2 } from "@tabler/icons-react";
 import { useState } from "react";
+import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
@@ -9,11 +10,14 @@ import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
 import { handleSignout } from "./actions/handle-signout";
 
 export function SignoutButton() {
-  const { callStatus, endSession } = useVapiConversation();
+  const { callStatus } = useGlobalVapiConversation();
+  const { endSession } = useVapiConversation();
   const { clearTest } = useMockTestStore();
 
   const isConnected = callStatus === CallStatus.ACTIVE;
   const [confirmSignoutDialog, setConfirmSignoutDialog] = useState(false);
+
+  console.log("Test is==>", isConnected);
 
   async function handleSignoutClick() {
     const savedResult = sessionStorage.getItem("ieltsResult");
@@ -41,6 +45,8 @@ export function SignoutButton() {
     <>
       <Button
         onClick={() => {
+          console.log("Test is==>", isConnected);
+
           if (isConnected) {
             setConfirmSignoutDialog(true);
           } else {

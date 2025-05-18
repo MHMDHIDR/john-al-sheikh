@@ -5,6 +5,7 @@ import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import {
   AlertDialog,
@@ -243,8 +244,8 @@ const IELTSSpeakingRecorder = forwardRef<
 
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
-
-  const { callStatus, isMuted, startSession, setVolume, endSession } = useVapiConversation({
+  const { callStatus } = useGlobalVapiConversation();
+  const { isMuted, startSession, setVolume, endSession } = useVapiConversation({
     onConnect: () => {
       console.info("Connected to IELTS Assistant Agent");
     },

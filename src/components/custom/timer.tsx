@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 type TimerProps = {
   isRunning: boolean;
@@ -7,14 +7,18 @@ type TimerProps = {
   mode: "preparation" | "recording" | "general-english";
 };
 
-export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
+// Using memo to prevent unnecessary rerenders
+export const Timer = memo(function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const prevRunningRef = useRef(false);
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const initializedRef = useRef(false);
 
-  // Only reset time when isRunning changes from false to true
+  // Only reset time when isRunning changes from false to true or on first initialization
   useEffect(() => {
-    if (isRunning && !prevRunningRef.current) {
+    if (!initializedRef.current || (isRunning && !prevRunningRef.current)) {
       setTimeLeft(totalSeconds);
+      initializedRef.current = true;
     }
 
     prevRunningRef.current = isRunning;
@@ -23,14 +27,23 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   // Use a separate effect for the countdown logic
   useEffect(() => {
     // Don't set up interval if not running
-    if (!isRunning) return;
+    if (!isRunning) {
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
+      return;
+    }
 
     // Use a simple interval to count down
-    const intervalId = setInterval(() => {
+    intervalIdRef.current = setInterval(() => {
       setTimeLeft(prev => {
         // Handle reaching zero
         if (prev <= 1) {
-          clearInterval(intervalId);
+          if (intervalIdRef.current) {
+            clearInterval(intervalIdRef.current);
+            intervalIdRef.current = null;
+          }
           setTimeout(onTimeUp, 0); // Use setTimeout to avoid state update issues
           return 0;
         }
@@ -40,7 +53,10 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
 
     // Clean up on unmount or when dependencies change
     return () => {
-      clearInterval(intervalId);
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
     };
   }, [isRunning, onTimeUp]);
 
@@ -71,4 +87,4 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
       </div>
     </div>
   );
-}
+});
