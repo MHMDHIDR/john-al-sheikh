@@ -1,4 +1,4 @@
-import { type AdapterAccountType, type AdapterUser } from "@auth/core/adapters";
+import { type AdapterUser } from "@auth/core/adapters";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
@@ -186,11 +186,16 @@ export const authConfig = {
                 providerAccountId: account.providerAccountId,
                 refresh_token: account.refresh_token ? String(account.refresh_token) : null,
                 access_token: account.access_token ? String(account.access_token) : null,
-                expires_at: account.expires_at || null,
+                expires_at: account.expires_at ?? null,
                 token_type: account.token_type ? String(account.token_type) : null,
                 scope: account.scope ? String(account.scope) : null,
                 id_token: account.id_token ? String(account.id_token) : null,
-                session_state: account.session_state ? String(account.session_state) : null,
+                session_state:
+                  account.session_state && typeof account.session_state === "string"
+                    ? account.session_state
+                    : account.session_state
+                      ? JSON.stringify(account.session_state)
+                      : null,
               });
             }
           }
@@ -218,7 +223,7 @@ export const authConfig = {
             // Simplified user data for email sign-in
             await db.insert(users).values({
               id: user.id ?? crypto.randomUUID(),
-              name: username || "User",
+              name: username ?? "User",
               email: email,
               image: getFullImageUrl("logo.svg"),
               phone: "",
