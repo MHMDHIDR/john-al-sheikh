@@ -434,14 +434,14 @@ export const openaiRouter = createTRPCRouter({
           .join("\n\n");
 
         // Set up timeout to ensure we don't exceed Vercel's limits
-        const timeoutPromise = new Promise<AnalyzeFullIELTSError>(resolve => {
-          setTimeout(() => {
-            resolve({
-              success: false as const,
-              error: "تجاوز المدة المسموحة للتحليل",
-            });
-          }, 8000); // 8 seconds to stay under Vercel's 10s limit
-        });
+        // const timeoutPromise = new Promise<AnalyzeFullIELTSError>(resolve => {
+        //   setTimeout(() => {
+        //     resolve({
+        //       success: false as const,
+        //       error: "تجاوز المدة المسموحة للتحليل",
+        //     });
+        //   }, 60000); // 60 seconds to stay under Vercel's 10s limit
+        // });
 
         // Choose the appropriate system prompt based on the mode
         const systemPrompt =
@@ -580,12 +580,13 @@ export const openaiRouter = createTRPCRouter({
         });
 
         // Race the analysis against the timeout
-        const result = await Promise.race([analysisPromise, timeoutPromise]);
+        // const result = await Promise.race([analysisPromise, timeoutPromise]);
+        const result = await analysisPromise;
 
         // If we got a timeout result
-        if ("error" in result) {
-          return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
-        }
+        // if ("error" in result) {
+        //   return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
+        // }
 
         const analysisText = result.choices[0]?.message.content ?? "";
 
