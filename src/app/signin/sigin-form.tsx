@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBrandX, IconLoader, IconMail } from "@tabler/icons-react";
+import { IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -35,9 +35,9 @@ export default function SiginForm() {
     await signIn("google", { callbackUrl });
   };
 
-  const handleTwitterSignIn = async () => {
-    await signIn("twitter", { callbackUrl });
-  };
+  // const handleTwitterSignIn = async () => {
+  //   await signIn("twitter", { callbackUrl });
+  // };
 
   return (
     <div className="flex flex-col items-center gap-y-2">
@@ -57,14 +57,14 @@ export default function SiginForm() {
             <GoogleIcon className="mx-1" />
             المتابعة عن طريق حساب Google
           </Button>
-          <Button
+          {/* <Button
             onClick={handleTwitterSignIn}
             variant={"outline"}
             className="w-full cursor-pointer h-10"
           >
             <IconBrandX className="mx-1" />
             المتابعة عن طريق حساب Twitter
-          </Button>
+          </Button> */}
 
           <Divider className="my-5" textClassName="bg-card!">
             أو
