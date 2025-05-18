@@ -9,8 +9,8 @@ import { env } from "@/env";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verificationTokens } from "@/server/db/schema";
-import type { themeEnumType, UserRoleType, Users } from "@/server/db/schema";
-import type { AdapterUser } from "@auth/core/adapters";
+import type { themeEnumType, UserRoleType } from "@/server/db/schema";
+import type { AdapterAccount, AdapterUser } from "@auth/core/adapters";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -43,7 +43,6 @@ declare module "@auth/core/adapters" {
 const getFullImageUrl = (path: string) => {
   // If the path is already a full URL (e.g., from Google), return it as is
   if (path.startsWith("http")) return path;
-
   // Otherwise, ensure the path starts with a slash and combine with base URL
   const basePath = path.startsWith("/") ? path : `/${path}`;
   return `${env.NEXT_PUBLIC_APP_URL}${basePath}`;
@@ -52,6 +51,7 @@ const getFullImageUrl = (path: string) => {
 const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
 
 export const authConfig = {
+  debug: process.env.NODE_ENV === "development",
   providers: [
     Twitter({ allowDangerousEmailAccountLinking: true }),
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
@@ -60,10 +60,8 @@ export const authConfig = {
       from: env.ADMIN_EMAIL,
       sendVerificationRequest: async params => {
         const { identifier: email, url } = params;
-
         try {
           const { SignInEmailTemplate } = await import("@/components/custom/signin-email");
-
           // Send the email using Resend
           const result = await resendEmail.emails.send({
             from: env.ADMIN_EMAIL,
@@ -71,7 +69,6 @@ export const authConfig = {
             subject: `تسجيل الدخول إلى منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
             react: SignInEmailTemplate({ url }),
           });
-
           if (result.error) {
             console.error("Resend error:", result.error);
             throw new Error(`Error sending verification email: ${JSON.stringify(result.error)}`);
@@ -92,73 +89,81 @@ export const authConfig = {
   }),
   callbacks: {
     async signIn({ user, account, profile }) {
+      // First, ensure user has an email
+      if (!user.email) {
+        console.error("Sign-in failed: User email is missing");
+        return false;
+      }
+
       if ((account?.provider === "google" || account?.provider === "twitter") && profile) {
         try {
           // Find the user by email
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, profile.email!),
+            where: eq(users.email, user.email),
           });
 
           // If no user exists, create a new user
           if (!existingUser) {
-            const result = await db
-              .insert(users)
-              .values({
-                id: user.id, // Use the same user ID that will be used for the account
-                name: profile.name ?? user.name ?? "Unknown",
-                email: profile.email!,
-                image: (profile.picture as string) ?? user.image ?? getFullImageUrl("logo.svg"),
-                phone: "",
-                status: "ACTIVE",
-              })
-              .returning();
+            // Safely prepare user data, avoiding undefined values
+            // Ensure all required fields are defined with non-nullable values
+            const userData: typeof users.$inferInsert = {
+              id: user.id!, // Non-null assertion since we know user has an ID at this point
+              name: String(profile.name ?? user.name ?? "Unknown"),
+              email: user.email,
+              image: user.image ?? getFullImageUrl("logo.svg"),
+              phone: "",
+              status: "ACTIVE",
+            };
+
+            const result = await db.insert(users).values(userData).returning();
 
             existingUser = result[0];
           }
 
-          // If user exists but name is not set, then set it with Google profile name
+          // If user exists but name is not set, then set it with provider profile name
           if (existingUser && !existingUser.name) {
-            await db
-              .update(users)
-              .set({ name: profile.name ?? existingUser.name ?? "Unknown" })
-              .where(eq(users.email, user.email!));
+            const name = (profile.name ?? user.name ?? existingUser.name ?? "Unknown").toString();
+            await db.update(users).set({ name }).where(eq(users.id, existingUser.id));
           }
-          // If user exists but image is not set, then update it with Google profile image
+
+          // If user exists but image is not set, update it with provider profile image
           if (existingUser && !existingUser.image) {
-            await db
-              .update(users)
-              .set({ image: (profile.picture as string) ?? getFullImageUrl("logo.svg") })
-              .where(eq(users.email, user.email!));
+            const image = user.image ?? getFullImageUrl("logo.svg");
+            await db.update(users).set({ image }).where(eq(users.id, existingUser.id));
           }
 
-          // If no account exists for this user with Google provider, create one
-          const existingAccount = existingUser
-            ? await db.query.accounts.findFirst({
-                where: (accounts, { and, eq }) =>
-                  and(
-                    eq(accounts.userId, existingUser.id),
-                    eq(accounts.provider, account.provider),
-                  ),
-              })
-            : null;
-
-          // If no existing Google account, create a new account
-          if (existingUser && !existingAccount && account) {
-            await db.insert(accounts).values({
-              userId: existingUser.id,
-              type: "oauth",
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token ?? null,
-              token_type: account.token_type ?? null,
-              scope: account.scope ?? null,
-              id_token: account.id_token ?? null,
+          // Check if an account already exists for this user with this provider
+          if (existingUser && account) {
+            const existingAccount = await db.query.accounts.findFirst({
+              where: (accounts, { and, eq }) =>
+                and(eq(accounts.userId, existingUser.id), eq(accounts.provider, account.provider)),
             });
+
+            // If no existing account for this provider, create a new one
+            if (!existingAccount) {
+              // Safely prepare account data with proper nullish coalescing
+              const accountData = {
+                userId: existingUser.id,
+                type: account.type ?? "oauth",
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                // Handle all possible undefined values
+                refresh_token: account.refresh_token ?? null,
+                access_token: account.access_token ?? null,
+                expires_at: account.expires_at ?? null,
+                token_type: account.token_type ?? null,
+                scope: account.scope ?? null,
+                id_token: account.id_token ?? null,
+                session_state: account.session_state ?? null,
+              } as AdapterAccount;
+
+              await db.insert(accounts).values(accountData);
+            }
           }
 
           return true;
         } catch (error) {
-          console.error("Google Sign-In Error:", error);
+          console.error(`${account?.provider} Sign-In Error:`, error);
           return false;
         }
       }
@@ -174,17 +179,17 @@ export const authConfig = {
           // If no user exists, create a new user with a default name
           if (!existingUser) {
             const username = user.email.split("@")[0];
-            const result = await db
-              .insert(users)
-              .values({
-                id: user.id, // Use the same user ID that will be used for the account
-                name: username,
-                email: user.email,
-                image: getFullImageUrl("logo.svg"),
-                phone: "",
-                status: "ACTIVE",
-              } as Users)
-              .returning();
+
+            const userData = {
+              id: user.id,
+              name: username,
+              email: user.email,
+              image: getFullImageUrl("logo.svg"),
+              phone: "",
+              status: "ACTIVE",
+            } as typeof users.$inferInsert;
+
+            const result = await db.insert(users).values(userData).returning();
 
             existingUser = result[0];
           }
@@ -199,32 +204,47 @@ export const authConfig = {
       return true;
     },
     async session({ session, user }) {
-      let blurImage: string | null = null;
-      if (user.image) {
-        blurImage = await getBlurPlaceholder(user.image);
+      try {
+        let blurImage: string | null = null;
+        if (user?.image) {
+          blurImage = await getBlurPlaceholder(user.image);
+        }
+
+        // Get user data from the database to ensure we have the most updated info
+        const userData = await db.query.users.findFirst({
+          where: eq(users.id, user.id),
+        });
+
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: user.id,
+            role: user.role || "USER",
+            phone: userData?.phone ?? "",
+            theme: userData?.theme ?? "light",
+            blurImageDataURL: blurImage,
+            nationality: userData?.nationality ?? "",
+            goalBand: userData?.goalBand ?? 0,
+            hobbies: userData?.hobbies ?? [],
+            gender: userData?.gender ?? "male",
+            age: userData?.age ?? 0,
+          },
+        };
+      } catch (error) {
+        console.error("Session callback error:", error);
+        return session;
       }
-
-      // Get user data from the database to ensure we have the most updated info
-      const userData = await db.query.users.findFirst({
-        where: eq(users.id, user.id),
-      });
-
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: user.id,
-          role: user.role,
-          phone: userData?.phone ?? "",
-          theme: userData?.theme ?? "light",
-          blurImageDataURL: blurImage,
-          nationality: userData?.nationality ?? "",
-          goalBand: userData?.goalBand ?? 0,
-          hobbies: userData?.hobbies ?? [],
-          gender: userData?.gender ?? "male",
-          age: userData?.age ?? 0,
-        },
-      };
     },
+  },
+  events: {
+    async signIn(message) {
+      console.log("Sign-in successful:", message);
+    },
+    async signOut(message) {
+      console.log("Sign-out successful:", message);
+    },
+    // error event is not supported in the current version of NextAuth
+    // remove the error handler
   },
 } satisfies NextAuthConfig;
