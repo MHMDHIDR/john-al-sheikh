@@ -29,15 +29,22 @@ export default function ConversationUI({
   const { messages, clearTest } = useMockTestStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<IELTSSpeakingRecorderRef>(null);
+  const clearTestRef = useRef(clearTest);
+
+  // Update the ref when clearTest changes
+  useEffect(() => {
+    clearTestRef.current = clearTest;
+  }, [clearTest]);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   // Run clearTest only once when the component mounts
   useEffect(() => {
-    clearTest();
+    // Use the ref instead of the actual function
+    clearTestRef.current();
 
     return () => {
-      clearTest();
+      clearTestRef.current();
     };
   }, []);
 

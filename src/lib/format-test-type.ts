@@ -1,4 +1,4 @@
-import { speakingTestEnum } from "@/server/db/schema";
+import type { speakingTestEnum } from "@/server/db/schema";
 
 export type SpeakingTestType = (typeof speakingTestEnum.enumValues)[number];
 
