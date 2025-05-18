@@ -22,16 +22,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
+import { formatTestType } from "@/lib/format-test-type";
 import { Logo } from "./custom/icons";
 import { AuroraText } from "./magicui/aurora-text";
 import { Badge } from "./ui/badge";
 import Divider from "./ui/divider";
+import type { SpeakingTestType } from "@/lib/format-test-type";
 
 interface ShareTestDialogProps {
   testId: string;
   username: string;
   band: number;
   size: "icon" | "default";
+  type: SpeakingTestType;
 }
 
 export function ShareTestDialog({
@@ -39,6 +42,7 @@ export function ShareTestDialog({
   username,
   band,
   size = "default",
+  type = "MOCK",
 }: ShareTestDialogProps) {
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
   const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
@@ -120,7 +124,7 @@ export function ShareTestDialog({
           })
         ) {
           await navigator.share({
-            title: "نتيجة اختبار اللغة الإنجليزية",
+            title: `نتيجة ${formatTestType(type)} اللغة الإنجليزية`,
             text: text,
             url: shareUrl,
             files: [new File([imageBlob], "test-result.png", { type: "image/png" })],
@@ -190,9 +194,9 @@ export function ShareTestDialog({
         }}
       >
         <DialogHeader className="text-center! select-none">
-          <DialogTitle>مشاركة نتيجة الاختبار</DialogTitle>
+          <DialogTitle>مشاركة نتيجة {formatTestType(type)}</DialogTitle>
           <DialogDescription>
-            يمكنك مشاركة نتيجة اختبارك مع الآخرين عبر وسائل التواصل الاجتماعي
+            يمكنك مشاركة نتيجة {formatTestType(type)} مع الآخرين عبر وسائل التواصل الاجتماعي
           </DialogDescription>
         </DialogHeader>
 
@@ -235,7 +239,7 @@ export function ShareTestDialog({
                         </div>
 
                         <AuroraText className="text-xl font-bold py-3 whitespace-nowrap">
-                          🎉 حصلت على {Number(band)} في اختبار المحادثة 🎉
+                          🎉 حصلت على {Number(band)} في {formatTestType(type)} اللغة الإنجليزية 🎉
                         </AuroraText>
 
                         <p className="text-muted-foreground">@{username}</p>

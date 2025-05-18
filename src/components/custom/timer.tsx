@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type TimerProps = {
   isRunning: boolean;
@@ -9,30 +9,32 @@ type TimerProps = {
 
 export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
+  const prevRunningRef = useRef(false);
 
-  // Simple direct implementation - reset on any property change
+  // Only reset time when isRunning changes from false to true
   useEffect(() => {
-    // Reset time when total seconds changes or when running starts
-    if (isRunning) {
+    if (isRunning && !prevRunningRef.current) {
       setTimeLeft(totalSeconds);
     }
 
+    prevRunningRef.current = isRunning;
+  }, [isRunning, totalSeconds]);
+
+  // Use a separate effect for the countdown logic
+  useEffect(() => {
     // Don't set up interval if not running
     if (!isRunning) return;
 
     // Use a simple interval to count down
     const intervalId = setInterval(() => {
       setTimeLeft(prev => {
-        // Log every tick for debugging
-        const newVal = prev - 1;
-
         // Handle reaching zero
         if (prev <= 1) {
           clearInterval(intervalId);
           setTimeout(onTimeUp, 0); // Use setTimeout to avoid state update issues
           return 0;
         }
-        return newVal;
+        return prev - 1;
       });
     }, 1000);
 
@@ -40,7 +42,7 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
     return () => {
       clearInterval(intervalId);
     };
-  }, [isRunning, totalSeconds, onTimeUp]);
+  }, [isRunning, onTimeUp]);
 
   // Format time
   const minutes = Math.floor(timeLeft / 60);
@@ -54,7 +56,7 @@ export function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
   };
 
   return (
-    <div className="flex items-center select-none justify-center md:space-y-1.5 space-x-1.5 md:space-x-0">
+    <div className="flex items-center select-none justify-center md:gap-1.5 gap-1.5">
       <div className={`text-xl font-bold ${getTimerColor()}`}>
         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>

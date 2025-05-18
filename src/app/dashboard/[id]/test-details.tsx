@@ -74,6 +74,7 @@ export default function TestDetails({ details }: { details: GetTestByIdOutput })
               username={details.user.username ?? env.NEXT_PUBLIC_APP_NAME}
               band={details.band ?? 0}
               size="default"
+              type={details.type}
             />
           </div>
 

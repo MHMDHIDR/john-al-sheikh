@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { CalendarClock, LineChart, ListChecks, Trophy } from "lucide-react";
 import Link from "next/link";
 import { ShareTestDialog } from "@/components/dialog-share-test";
@@ -70,7 +71,7 @@ export default async function DashboardPage({
       />
 
       <div className="mx-auto max-w-6xl relative z-10">
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center select-none">
           <AuroraText className="text-3xl font-bold mb-2">لوحة المعلومات</AuroraText>
           <p className="text-gray-600">تابع تقدمك في اختبارات المحادثة IELTS</p>
         </div>
@@ -83,7 +84,7 @@ export default async function DashboardPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader className="pb-0">
+            <CardHeader className="pb-0 select-none">
               <CardTitle className="max-sm:text-center">إبدا المحادثة</CardTitle>
             </CardHeader>
             <CardContent />
@@ -105,7 +106,7 @@ export default async function DashboardPage({
           </Card>
 
           <Card>
-            <CardHeader className="pb-1.5">
+            <CardHeader className="pb-1.5 select-none">
               <CardTitle>رصيدك</CardTitle>
             </CardHeader>
             <CardContent>
@@ -123,7 +124,7 @@ export default async function DashboardPage({
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 select-none">
               <CardTitle className="text-lg flex items-center">
                 <ListChecks className="ml-2 size-5 text-blue-500" />
                 إجمالي الاختبارات
@@ -136,7 +137,7 @@ export default async function DashboardPage({
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 select-none">
               <CardTitle className="text-lg flex items-center">
                 <Trophy className="ml-2 size-5 text-yellow-500" />
                 أعلى درجة
@@ -149,7 +150,7 @@ export default async function DashboardPage({
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 select-none">
               <CardTitle className="text-lg flex items-center">
                 <LineChart className="ml-2 size-5 text-green-500" />
                 معدل التحسن
@@ -167,7 +168,7 @@ export default async function DashboardPage({
 
         {stats.averageScores && stats.averageScores.length > 0 && (
           <Card className="mb-8">
-            <CardHeader>
+            <CardHeader className="select-none">
               <CardTitle>متوسط الدرجات حسب نوع الاختبار</CardTitle>
             </CardHeader>
             <CardContent>
@@ -194,9 +195,9 @@ export default async function DashboardPage({
         )}
 
         <Card className="mb-12">
-          <CardHeader>
-            <CardTitle>سجل الاختبارات</CardTitle>
-            <CardDescription>قائمة بجميع اختبارات المحادثة التي أكملتها</CardDescription>
+          <CardHeader className="select-none">
+            <CardTitle>سجل المحادثات</CardTitle>
+            <CardDescription>قائمة بجميع المحادثات والإختبارات التي أكملتها</CardDescription>
           </CardHeader>
           <CardContent className="max-sm:px-2">
             {testHistory && testHistory.length > 0 ? (
@@ -215,7 +216,15 @@ export default async function DashboardPage({
                           <CalendarClock className="ml-1 size-4" />
                           {formatDate(test.createdAt.toISOString(), true, true)}
                           <span className="mx-2 hidden sm:inline-flex">•</span>
-                          <span className="hidden sm:inline-flex">{formatTestType(test.type)}</span>
+                          <span
+                            className={clsx("hidden sm:inline-flex", {
+                              "text-green-600 dark:text-green-400": test.type === "MOCK",
+                              "text-yellow-600 dark:text-yellow-400": test.type === "PRACTICE",
+                              "text-blue-600 dark:text-blue-400": test.type === "OFFICIAL",
+                            })}
+                          >
+                            {formatTestType(test.type)}
+                          </span>
                         </div>
                       </section>
                     </Link>
@@ -228,6 +237,7 @@ export default async function DashboardPage({
                         username={username}
                         band={test.band ?? 0}
                         size="icon"
+                        type={test.type}
                       />
                     </section>
                   </div>

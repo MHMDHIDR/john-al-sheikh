@@ -33,7 +33,7 @@ export function ConfirmationDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="select-none py-2">
         <AlertDialogHeader className="rtl:items-center pb-3">
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogTitle className="mb-4">{title}</AlertDialogTitle>
           <AlertDialogDescription asChild>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex ltr">

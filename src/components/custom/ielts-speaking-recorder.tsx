@@ -662,10 +662,13 @@ const IELTSSpeakingRecorder = forwardRef<
             onOpenChange={setShowQuickTipsDialog}
             title="نصيحة سريعة"
             description={
-              <ul className="text-right list-decimal leading-10">
+              <ul className="text-justify list-decimal leading-7">
                 <li className="text-gray-500">
                   ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة{" "}
                   <strong>{GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60} دقائق</strong>
+                </li>
+                <li className="text-purple-500 font-bold">
+                  إجعل إجابتك واضحة ومنظمة في محور السؤال باللغة الإنجليزية
                 </li>
                 <li className="text-red-400 font-bold text-sm">
                   تحدث بصوت واضح وفي مكان قليل الضوضاء
