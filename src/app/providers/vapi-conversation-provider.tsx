@@ -8,13 +8,11 @@ import { vapi } from "@/lib/vapi.sdk";
 type VapiConversationContextType = {
   callStatus: CallStatus;
   isSpeaking: boolean;
-  isMuted: boolean;
 };
 
 const VapiConversationContext = createContext<VapiConversationContextType>({
   callStatus: CallStatus.INACTIVE,
   isSpeaking: false,
-  isMuted: false,
 });
 
 // Provider component
@@ -22,7 +20,6 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
   // Initialize state
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
 
   // Set up global event listeners
   useEffect(() => {
@@ -61,7 +58,6 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
   const value = {
     callStatus,
     isSpeaking,
-    isMuted,
   };
 
   return (

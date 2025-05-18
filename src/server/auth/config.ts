@@ -1,3 +1,4 @@
+import { type AdapterAccountType, type AdapterUser } from "@auth/core/adapters";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
@@ -10,7 +11,6 @@ import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verificationTokens } from "@/server/db/schema";
 import type { themeEnumType, UserRoleType } from "@/server/db/schema";
-import type { AdapterAccount, AdapterUser } from "@auth/core/adapters";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -51,10 +51,28 @@ const getFullImageUrl = (path: string) => {
 const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
 
 export const authConfig = {
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Enable debug to see detailed logs
   providers: [
-    Twitter({ allowDangerousEmailAccountLinking: true }),
-    GoogleProvider({ allowDangerousEmailAccountLinking: true }),
+    Twitter({
+      allowDangerousEmailAccountLinking: true,
+      // Ensure email is included in the returned profile
+      authorization: {
+        params: {
+          include_email: "true",
+        },
+      },
+    }),
+    GoogleProvider({
+      allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: "openid email profile",
+        },
+      },
+    }),
     Resend({
       name: "Email",
       from: env.ADMIN_EMAIL,
@@ -89,50 +107,65 @@ export const authConfig = {
   }),
   callbacks: {
     async signIn({ user, account, profile }) {
-      // First, ensure user has an email
-      if (!user.email) {
-        console.error("Sign-in failed: User email is missing");
+      // Log data received from provider to diagnose issues
+      console.log("SIGNIN CALLBACK - User:", {
+        id: user.id,
+        name: user.name,
+        email: user.email ?? "missing",
+        image: user.image ?? "missing",
+      });
+
+      console.log(
+        "SIGNIN CALLBACK - Profile:",
+        profile ? { name: profile.name, email: profile.email } : "No profile data",
+      );
+
+      console.log(
+        "SIGNIN CALLBACK - Account:",
+        account ? { provider: account.provider, type: account.type } : "No account data",
+      );
+
+      // Get email from multiple possible sources
+      const email = user.email ?? profile!.email ?? "";
+
+      if (!email) {
+        console.error(`Sign-in failed: Email missing from both user and profile objects`);
         return false;
       }
 
+      // Now we have an email to work with
       if ((account?.provider === "google" || account?.provider === "twitter") && profile) {
         try {
           // Find the user by email
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, user.email),
+            where: eq(users.email, email),
           });
 
           // If no user exists, create a new user
           if (!existingUser) {
-            // Safely prepare user data, avoiding undefined values
-            // Ensure all required fields are defined with non-nullable values
-            const userData: typeof users.$inferInsert = {
-              id: user.id!, // Non-null assertion since we know user has an ID at this point
-              name: String(profile.name ?? user.name ?? "Unknown"),
-              email: user.email,
-              image: user.image ?? getFullImageUrl("logo.svg"),
+            // Get name from available sources
+            const name = profile.name ?? user.name ?? email.split("@")[0] ?? "Unknown";
+            const image = user.image ?? getFullImageUrl("logo.svg");
+
+            console.log(`Creating new user with email: ${email}, name: ${name}`);
+
+            // Simplified user data
+            await db.insert(users).values({
+              id: user.id ?? crypto.randomUUID(),
+              name: name.toString(),
+              email: email,
+              image: image,
               phone: "",
               status: "ACTIVE",
-            };
+            });
 
-            const result = await db.insert(users).values(userData).returning();
-
-            existingUser = result[0];
+            // Query to get the inserted user
+            existingUser = await db.query.users.findFirst({
+              where: eq(users.email, email),
+            });
           }
 
-          // If user exists but name is not set, then set it with provider profile name
-          if (existingUser && !existingUser.name) {
-            const name = (profile.name ?? user.name ?? existingUser.name ?? "Unknown").toString();
-            await db.update(users).set({ name }).where(eq(users.id, existingUser.id));
-          }
-
-          // If user exists but image is not set, update it with provider profile image
-          if (existingUser && !existingUser.image) {
-            const image = user.image ?? getFullImageUrl("logo.svg");
-            await db.update(users).set({ image }).where(eq(users.id, existingUser.id));
-          }
-
-          // Check if an account already exists for this user with this provider
+          // If no account exists for this user with this provider, create one
           if (existingUser && account) {
             const existingAccount = await db.query.accounts.findFirst({
               where: (accounts, { and, eq }) =>
@@ -141,26 +174,28 @@ export const authConfig = {
 
             // If no existing account for this provider, create a new one
             if (!existingAccount) {
-              // Safely prepare account data with proper nullish coalescing
-              const accountData = {
+              console.log(
+                `Creating new ${account.provider} account for user: ${existingUser.email}`,
+              );
+
+              // Simplified account insertion with type casting
+              await db.insert(accounts).values({
                 userId: existingUser.id,
-                type: account.type ?? "oauth",
+                type: (account.type || "oauth") as "oauth",
                 provider: account.provider,
                 providerAccountId: account.providerAccountId,
-                // Handle all possible undefined values
-                refresh_token: account.refresh_token ?? null,
-                access_token: account.access_token ?? null,
-                expires_at: account.expires_at ?? null,
-                token_type: account.token_type ?? null,
-                scope: account.scope ?? null,
-                id_token: account.id_token ?? null,
-                session_state: account.session_state ?? null,
-              } as AdapterAccount;
-
-              await db.insert(accounts).values(accountData);
+                refresh_token: account.refresh_token ? String(account.refresh_token) : null,
+                access_token: account.access_token ? String(account.access_token) : null,
+                expires_at: account.expires_at || null,
+                token_type: account.token_type ? String(account.token_type) : null,
+                scope: account.scope ? String(account.scope) : null,
+                id_token: account.id_token ? String(account.id_token) : null,
+                session_state: account.session_state ? String(account.session_state) : null,
+              });
             }
           }
 
+          console.log(`${account?.provider} authentication successful for: ${email}`);
           return true;
         } catch (error) {
           console.error(`${account?.provider} Sign-In Error:`, error);
@@ -169,31 +204,34 @@ export const authConfig = {
       }
 
       // Handle email provider
-      if (account?.provider === "resend" && user.email) {
+      if (account?.provider === "resend" && email) {
         try {
           // Find the user by email
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, user.email),
+            where: eq(users.email, email),
           });
 
           // If no user exists, create a new user with a default name
           if (!existingUser) {
-            const username = user.email.split("@")[0];
+            const username = email.split("@")[0];
 
-            const userData = {
-              id: user.id,
-              name: username,
-              email: user.email,
+            // Simplified user data for email sign-in
+            await db.insert(users).values({
+              id: user.id ?? crypto.randomUUID(),
+              name: username || "User",
+              email: email,
               image: getFullImageUrl("logo.svg"),
               phone: "",
               status: "ACTIVE",
-            } as typeof users.$inferInsert;
+            });
 
-            const result = await db.insert(users).values(userData).returning();
-
-            existingUser = result[0];
+            // Query to get the inserted user
+            existingUser = await db.query.users.findFirst({
+              where: eq(users.email, email),
+            });
           }
 
+          console.log(`Email authentication successful for: ${email}`);
           return true;
         } catch (error) {
           console.error("Email Sign-In Error:", error);
@@ -220,7 +258,7 @@ export const authConfig = {
           user: {
             ...session.user,
             id: user.id,
-            role: user.role || "USER",
+            role: user.role ?? "USER",
             phone: userData?.phone ?? "",
             theme: userData?.theme ?? "light",
             blurImageDataURL: blurImage,
@@ -239,12 +277,11 @@ export const authConfig = {
   },
   events: {
     async signIn(message) {
-      console.log("Sign-in successful:", message);
+      console.log("Sign-in event:", message);
     },
     async signOut(message) {
-      console.log("Sign-out successful:", message);
+      console.log("Sign-out event:", message);
     },
-    // error event is not supported in the current version of NextAuth
-    // remove the error handler
+    // Error event removed: not supported in NextAuth 5
   },
 } satisfies NextAuthConfig;
