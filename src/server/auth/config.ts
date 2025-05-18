@@ -1,5 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
@@ -107,7 +107,7 @@ export const authConfig = {
                 id: user.id, // Use the same user ID that will be used for the account
                 name: profile.name ?? user.name ?? "Unknown",
                 email: profile.email!,
-                image: profile.picture ?? user.image ?? getFullImageUrl("logo.svg"),
+                image: (profile.picture as string) ?? user.image ?? getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
               })
@@ -127,7 +127,7 @@ export const authConfig = {
           if (existingUser && !existingUser.image) {
             await db
               .update(users)
-              .set({ image: profile.picture ?? getFullImageUrl("logo.svg") })
+              .set({ image: (profile.picture as string) ?? getFullImageUrl("logo.svg") })
               .where(eq(users.email, user.email!));
           }
 
