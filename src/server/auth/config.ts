@@ -1,5 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
@@ -53,7 +53,7 @@ const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
 
 export const authConfig = {
   providers: [
-    Twitter,
+    Twitter({ allowDangerousEmailAccountLinking: true }),
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
     Resend({
       name: "Email",
@@ -92,7 +92,7 @@ export const authConfig = {
   }),
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && profile) {
+      if ((account?.provider === "google" || account?.provider === "twitter") && profile) {
         try {
           // Find the user by email
           let existingUser = await db.query.users.findFirst({
@@ -135,7 +135,10 @@ export const authConfig = {
           const existingAccount = existingUser
             ? await db.query.accounts.findFirst({
                 where: (accounts, { and, eq }) =>
-                  and(eq(accounts.userId, existingUser.id), eq(accounts.provider, "google")),
+                  and(
+                    eq(accounts.userId, existingUser.id),
+                    or(eq(accounts.provider, "google"), eq(accounts.provider, "twitter")),
+                  ),
               })
             : null;
 
@@ -144,7 +147,7 @@ export const authConfig = {
             await db.insert(accounts).values({
               userId: existingUser.id,
               type: "oauth",
-              provider: "google",
+              provider: account.provider,
               providerAccountId: account.providerAccountId,
               access_token: account.access_token,
               token_type: account.token_type,
