@@ -107,7 +107,7 @@ export const authConfig = {
                 id: user.id, // Use the same user ID that will be used for the account
                 name: profile.name ?? user.name ?? "Unknown",
                 email: profile.email!,
-                image: (profile.picture as string) ?? user.image ?? getFullImageUrl("logo.svg"),
+                image: profile.picture ?? user.image ?? getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
               })
@@ -127,7 +127,7 @@ export const authConfig = {
           if (existingUser && !existingUser.image) {
             await db
               .update(users)
-              .set({ image: (profile.picture as string) ?? getFullImageUrl("logo.svg") })
+              .set({ image: profile.picture ?? getFullImageUrl("logo.svg") })
               .where(eq(users.email, user.email!));
           }
 
@@ -137,22 +137,22 @@ export const authConfig = {
                 where: (accounts, { and, eq }) =>
                   and(
                     eq(accounts.userId, existingUser.id),
-                    or(eq(accounts.provider, "google"), eq(accounts.provider, "twitter")),
+                    eq(accounts.provider, account.provider),
                   ),
               })
             : null;
 
           // If no existing Google account, create a new account
-          if (existingUser && !existingAccount) {
+          if (existingUser && !existingAccount && account) {
             await db.insert(accounts).values({
               userId: existingUser.id,
               type: "oauth",
               provider: account.provider,
               providerAccountId: account.providerAccountId,
-              access_token: account.access_token,
-              token_type: account.token_type,
-              scope: account.scope,
-              id_token: account.id_token,
+              access_token: account.access_token ?? null,
+              token_type: account.token_type ?? null,
+              scope: account.scope ?? null,
+              id_token: account.id_token ?? null,
             });
           }
 
