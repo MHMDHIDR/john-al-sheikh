@@ -35,6 +35,10 @@ export default function ConversationUI({
   // Run clearTest only once when the component mounts
   useEffect(() => {
     clearTest();
+
+    return () => {
+      clearTest();
+    };
   }, []);
 
   useEffect(() => scrollToBottom(), [messages]);

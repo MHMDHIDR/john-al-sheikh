@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import {
   AlertDialog,
@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { env } from "@/env";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
+import { GENERAL_ENGLISH_CONVERSATION_TIME, MINUTES_IN_MS } from "@/lib/constants";
 import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
@@ -200,6 +202,8 @@ const TEST_CONCLUSION_PHRASES = [
   "test has ended",
   "thank you for your participation",
   "that concludes",
+  "concludes our English conversation",
+  "thank you, this concludes our English conversation",
 ];
 
 const TEST_ONE_MINUTE_TO_PREPARE = [
@@ -222,9 +226,11 @@ const IELTSSpeakingRecorder = forwardRef<
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
+  const [showQuickTipsDialog, setShowQuickTipsDialog] = useState(false);
   const [isOneMinuteToPrepare, setIsOneMinuteToPrepare] = useState(false);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
+  const conversationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const userProfile = {
     name: user.name,
@@ -265,15 +271,9 @@ const IELTSSpeakingRecorder = forwardRef<
       }
 
       if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
-        const ONE_MINUTE_IN_MS = 60000;
-        // Mute the Mic immediately
         setVolume(0);
-
-        // Wait for 3 seconds before showing the one minute to prepare dialog
         setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
-
-        // Mute the call after {ONE_MINUTE_IN_MS} full minute
-        setTimeout(() => vapi.setMuted(true), ONE_MINUTE_IN_MS);
+        setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
       }
     },
     onError: error => {
@@ -431,6 +431,36 @@ const IELTSSpeakingRecorder = forwardRef<
     }
   }, [isTestCompleted, isProcessingResults, processTestResults]);
 
+  // Conversation timer for general-english mode
+  useEffect(() => {
+    // Only start timer if in general-english mode and call is active
+    if (mode === "general-english" && callStatus === CallStatus.ACTIVE) {
+      // Clear any existing timer
+      if (conversationTimerRef.current) {
+        clearTimeout(conversationTimerRef.current);
+      }
+
+      // Set new timer based on the conversation time limit
+      conversationTimerRef.current = setTimeout(() => {
+        // Set the test to completed state which will trigger the end sequence
+        setIsTestCompleted(true);
+
+        // End the session after a short delay to allow for final processing
+        setTimeout(() => {
+          endSession();
+        }, 5000); // Wait 5 seconds before ending the session
+      }, GENERAL_ENGLISH_CONVERSATION_TIME - 5000); // End 5 seconds before the limit
+    }
+
+    // Cleanup timer on unmount or status change
+    return () => {
+      if (conversationTimerRef.current) {
+        clearTimeout(conversationTimerRef.current);
+        conversationTimerRef.current = null;
+      }
+    };
+  }, [callStatus, mode, endSession]);
+
   const requestMicPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -468,10 +498,15 @@ const IELTSSpeakingRecorder = forwardRef<
       clearTest();
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
-        silenceTimeoutSeconds: 85, // 1.25 minutes,
-        maxDurationSeconds: 600, // 10 minutes
+        silenceTimeoutSeconds: 85, // Allow 1.25 minutes of silence,
+        maxDurationSeconds: mode === "mock-test" ? 600 : GENERAL_ENGLISH_CONVERSATION_TIME / 1000,
         messagePlan: {
-          idleMessages: ["Are you still there?"],
+          idleMessages: [
+            "Are you still there?",
+            "May I remind we have limited time! Please speak up!",
+            "Can you please continue speaking?",
+            "I'm still waiting for you to speak!",
+          ],
           idleTimeoutSeconds: 60,
           silenceTimeoutMessage: "As there is no response, I am ending the call now.",
           idleMessageResetCountOnUserSpeechEnabled: true,
@@ -546,13 +581,14 @@ const IELTSSpeakingRecorder = forwardRef<
             <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
           </CardHeader>
         )}
+
         <CardContent className="p-0">
           <div
-            className={clsx(
-              "flex justify-center items-center ",
-              !isConnected && "gap-0",
-              isConnected && "gap-x-1",
-            )}
+            className={clsx("flex justify-center items-center ", {
+              "gap-0": !isConnected,
+              "gap-1": isConnected,
+              "px-10": mode === "general-english" && isConnected,
+            })}
           >
             <Button
               variant="ghost"
@@ -560,11 +596,10 @@ const IELTSSpeakingRecorder = forwardRef<
               onClick={toggleMute}
               disabled={!isConnected}
               title={isMuted ? "كتم المحادثة" : "إلغاء كتم المحادثة"}
-              className={clsx(
-                "transition-transform duration-300",
-                !isConnected && "-translate-x-full opacity-0 invisible w-0",
-                isConnected && "opacity-100 translate-x-0 visible w-full",
-              )}
+              className={clsx("transition-transform duration-300", {
+                "-translate-x-full opacity-0 invisible w-0": !isConnected,
+                "opacity-100 translate-x-0 visible w-full": isConnected,
+              })}
             >
               {isMuted ? (
                 <>
@@ -579,9 +614,28 @@ const IELTSSpeakingRecorder = forwardRef<
               )}
             </Button>
 
+            {isConnected && mode === "general-english" && (
+              <Timer
+                isRunning={isConnected}
+                onTimeUp={() => {
+                  toggleMute();
+                  vapi.setMuted(false);
+                  setIsOneMinuteToPrepare(false);
+                }}
+                totalSeconds={GENERAL_ENGLISH_CONVERSATION_TIME / 1000}
+                mode="general-english"
+              />
+            )}
+
             {!isConnected && (
               <Button
-                onClick={handleStartConversation}
+                onClick={() => {
+                  if (mode === "general-english") {
+                    setShowQuickTipsDialog(true);
+                  } else {
+                    void handleStartConversation();
+                  }
+                }}
                 disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
                 className={clsx("w-full relative cursor-pointer", {
                   "animate-pulse": callStatus === CallStatus.INACTIVE,
@@ -602,6 +656,33 @@ const IELTSSpeakingRecorder = forwardRef<
               </Button>
             )}
           </div>
+
+          <ConfirmationDialog
+            open={showQuickTipsDialog}
+            onOpenChange={setShowQuickTipsDialog}
+            title="نصيحة سريعة"
+            description={
+              <ul className="text-right list-decimal leading-10">
+                <li className="text-gray-500">
+                  ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة{" "}
+                  <strong>{GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60} دقائق</strong>
+                </li>
+                <li className="text-red-400 font-bold text-sm">
+                  تحدث بصوت واضح وفي مكان قليل الضوضاء
+                </li>
+                <li className="text-green-600 dark:text-green-400">
+                  في نهاية الوقت سيقوم <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> بإنهاء المحادثة
+                  وإعطائك تقييم على مستوى المحادثة لديك
+                </li>
+              </ul>
+            }
+            buttonText="مـوافق"
+            buttonClass="bg-green-600 hover:bg-green-700"
+            onConfirm={() => {
+              setShowQuickTipsDialog(false);
+              void handleStartConversation();
+            }}
+          />
 
           <ConfirmationDialog
             open={showPermissionDialog}
