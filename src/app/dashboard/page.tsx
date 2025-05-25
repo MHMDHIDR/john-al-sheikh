@@ -172,7 +172,7 @@ export default async function DashboardPage({
               <CardTitle>متوسط الدرجات حسب نوع الاختبار</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stats.averageScores.map((score, index) => (
                   <div key={index} className="flex flex-col">
                     <div className="flex justify-between items-center">
@@ -207,17 +207,17 @@ export default async function DashboardPage({
                     key={test.id}
                     className="flex select-none flex-col md:flex-row border justify-between items-end md:items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 rounded py-1 px-1.5"
                   >
-                    <Link href={`/dashboard/${test.id}`} className="w-full text-right">
+                    <Link href={`/dashboard/${test.id}`} className="w-full">
                       <section className="max-sm:self-start max-sm:w-full">
-                        <h3 className="sm:font-medium max-sm:text-sm ltr">
+                        <h3 className="sm:font-medium max-sm:text-sm ltr max-sm:text-left text-right">
                           {test.topic || "اختبار محادثة"}
                         </h3>
                         <div className="flex items-center max-sm:text-xs text-sm text-gray-500">
                           <CalendarClock className="ml-1 size-4" />
                           {formatDate(test.createdAt.toISOString(), true, true)}
-                          <span className="mx-2 hidden sm:inline-flex">•</span>
+                          <span className="mx-2 inline-flex">•</span>
                           <span
-                            className={clsx("hidden sm:inline-flex", {
+                            className={clsx("inline-flex", {
                               "text-green-600 dark:text-green-400": test.type === "MOCK",
                               "text-yellow-600 dark:text-yellow-400": test.type === "PRACTICE",
                               "text-blue-600 dark:text-blue-400": test.type === "OFFICIAL",

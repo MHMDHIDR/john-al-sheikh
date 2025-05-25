@@ -1,15 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
-import IELTSSpeakingRecorder from "@/components/custom/ielts-speaking-recorder";
+import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
+import FullSpeakingRecorderButton from "@/components/custom/full-speaking-recorder-button";
+import FullSpeakingRecorderWaves from "@/components/custom/full-speaking-recorder-waves";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
+import { CallStatus } from "@/hooks/use-vapi-conversation";
 import { cn } from "@/lib/utils";
 import type {
-  IELTSSpeakingRecorderRef,
+  FullSpeakingRecorderButtonRef,
   UserProfile,
-} from "@/components/custom/ielts-speaking-recorder";
+} from "@/components/custom/full-speaking-recorder-button";
 
 export type ConversationModeType = "mock-test" | "general-english";
 
@@ -20,6 +24,10 @@ type ConversationUIProps = {
   title?: string;
 };
 
+const LatestMessage = dynamic(() => import("@/components/custom/latest-message"), {
+  ssr: false,
+});
+
 export default function ConversationUI({
   user,
   isFreeTrialEnded,
@@ -27,8 +35,10 @@ export default function ConversationUI({
   title = "اختبار المحادثة",
 }: ConversationUIProps) {
   const { messages, clearTest } = useMockTestStore();
+  const { callStatus } = useGlobalVapiConversation();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recorderRef = useRef<IELTSSpeakingRecorderRef>(null);
+  const recorderRef = useRef<FullSpeakingRecorderButtonRef>(null);
   const clearTestRef = useRef(clearTest);
 
   // Update the ref when clearTest changes
@@ -50,6 +60,11 @@ export default function ConversationUI({
 
   useEffect(() => scrollToBottom(), [messages]);
 
+  const isConnected = callStatus === CallStatus.ACTIVE;
+
+  // Get the latest message
+  const latestMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
+
   return (
     <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip">
       <AuroraText
@@ -60,7 +75,7 @@ export default function ConversationUI({
         {title}
       </AuroraText>
 
-      <div className="relative w-full max-w-5xl mx-auto">
+      <div className="relative w-full max-w-5xl mx-auto flex items-center justify-center">
         <InteractiveGridPattern
           className={cn(
             "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -72,38 +87,13 @@ export default function ConversationUI({
           squaresClassName="hover:fill-blue-200"
         />
 
-        <div className="relative z-10 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 ltr">
-            {messages.map((message, index) => (
-              <div
-                key={`${message.timestamp}-${index}`}
-                className={`flex w-full ${
-                  message.role === "examiner" ? "justify-start" : "justify-end"
-                } mb-4`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg p-4 ${
-                    message.role === "examiner"
-                      ? "bg-blue-100 text-blue-900"
-                      : "bg-green-100 text-green-900"
-                  }`}
-                >
-                  <div className="font-semibold mb-1">
-                    {message.role === "examiner" ? "Examiner" : "You"}
-                  </div>
-                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
-                  <div className="text-xs mt-2 opacity-70">{message.timestamp}</div>
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
+        <FullSpeakingRecorderWaves isConnected={isConnected} />
       </div>
 
       <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 dark:bg-black/50 py-2 backdrop-blur-md flex flex-col">
-        <div className="flex justify-between items-center select-none px-4">
-          <IELTSSpeakingRecorder
+        <LatestMessage message={latestMessage} />
+        <div className="flex flex-col items-center gap-4 select-none px-4">
+          <FullSpeakingRecorderButton
             ref={recorderRef}
             user={user}
             isFreeTrialEnded={isFreeTrialEnded}

@@ -3,7 +3,7 @@ import ConversationUI from "@/components/custom/conversation-ui";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
-import type { UserProfile } from "@/components/custom/ielts-speaking-recorder";
+import type { UserProfile } from "@/components/custom/full-speaking-recorder-button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

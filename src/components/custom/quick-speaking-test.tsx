@@ -323,7 +323,7 @@ export function QuickSpeakingTest() {
   }, [mediaRecorder, isRecording]);
 
   return (
-    <main className="relative select-none flex h-screen sm:-my-20 px-3 flex-col items-center justify-center overflow-hidden">
+    <>
       <HomePageInteractiveGridPattern />
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
@@ -407,7 +407,7 @@ export function QuickSpeakingTest() {
           </ul>
         </div>
       </div>
-    </main>
+    </>
   );
 }
 

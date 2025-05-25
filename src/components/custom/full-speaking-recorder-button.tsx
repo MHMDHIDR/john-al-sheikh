@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ExternalLink, Mic, Volume2, VolumeX } from "lucide-react";
+import { ExternalLink, Mic } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
@@ -42,7 +42,7 @@ export type UserProfile = {
 export type ConversationModeType = "mock-test" | "general-english";
 
 // Add a new interface for the ref methods
-export interface IELTSSpeakingRecorderRef {
+export interface FullSpeakingRecorderButtonRef {
   stopTest: () => void;
 }
 
@@ -215,8 +215,8 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
 ];
 
 // Modify component to use forwardRef
-const IELTSSpeakingRecorder = forwardRef<
-  IELTSSpeakingRecorderRef,
+const FullSpeakingRecorderButton = forwardRef<
+  FullSpeakingRecorderButtonRef,
   {
     user: UserProfile;
     isFreeTrialEnded: boolean;
@@ -591,7 +591,7 @@ const IELTSSpeakingRecorder = forwardRef<
               "px-10": mode === "general-english" && isConnected,
             })}
           >
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               onClick={toggleMute}
@@ -613,7 +613,7 @@ const IELTSSpeakingRecorder = forwardRef<
                   <Volume2 className="size-5" />
                 </>
               )}
-            </Button>
+            </Button> */}
 
             {isConnected && mode === "general-english" && (
               <Timer
@@ -630,6 +630,7 @@ const IELTSSpeakingRecorder = forwardRef<
 
             {!isConnected && (
               <Button
+                id="start-conversation-button"
                 onClick={() => {
                   if (mode === "general-english") {
                     setShowQuickTipsDialog(true);
@@ -718,6 +719,6 @@ const IELTSSpeakingRecorder = forwardRef<
   );
 });
 
-IELTSSpeakingRecorder.displayName = "IELTSSpeakingRecorder";
+FullSpeakingRecorderButton.displayName = "FullSpeakingRecorderButton";
 
-export default IELTSSpeakingRecorder;
+export default FullSpeakingRecorderButton;
