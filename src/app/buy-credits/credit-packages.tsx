@@ -73,7 +73,7 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
       <CardContent className="flex-grow px-6 pb-0 pt-2">
         <div className="mb-6 flex flex-col items-center">
           <div className="flex items-baseline justify-center">
-            <span className="text-5xl font-bold">{formatPrice({ price: credits })}</span>
+            <span className="text-4xl font-bold">{formatPrice({ price: credits })}</span>
             <span className="text-gray-500 dark:text-gray-200 text-base ml-1">مرة واحدة</span>
           </div>
           <small className="mt-2 text-xs">{description}</small>
