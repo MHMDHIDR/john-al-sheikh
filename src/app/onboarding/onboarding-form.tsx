@@ -127,11 +127,11 @@ export default function OnboardingForm({ session }: { session: Session }) {
 
         // Reset form with existing data, ensuring all fields are properly set
         form.reset({
-          displayName: user.displayName || session?.user?.name || "",
-          username: user.username || generateUsername(session?.user?.name || "") || "user",
+          displayName: user.displayName ?? session?.user?.name ?? "",
+          username: user.username ?? generateUsername(session?.user?.name ?? "") ?? "user",
           gender: user.gender as "male" | "female" | undefined,
-          goalBand: user.goalBand || 5.0,
-          hobbies: user.hobbies || [],
+          goalBand: user.goalBand ?? 5.0,
+          hobbies: user.hobbies ?? [],
           profileImage: undefined, // File object can't be restored
         });
 
@@ -253,7 +253,7 @@ export default function OnboardingForm({ session }: { session: Session }) {
             <FormField
               control={form.control}
               name="profileImage"
-              render={({ field: { onChange, value, ...field } }) => (
+              render={({ field: { onChange, value: _value, ...field } }) => (
                 <FormItem>
                   <FormLabel
                     className="cursor-pointer text-sm text-gray-600 hover:text-black"
