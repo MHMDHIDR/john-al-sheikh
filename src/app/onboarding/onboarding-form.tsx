@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Images, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export default function OnboardingForm({ session }: { session: Session }) {
     api.users.checkProfileCompletion.useQuery(undefined, { retry: false });
 
   // Create proper default values with all required fields
-  const getDefaultValues = () => {
+  const getDefaultValues = useCallback(() => {
     const displayName = session?.user?.name ?? "";
     const generatedUsername = displayName
       ? generateUsername(displayName)
@@ -74,7 +74,7 @@ export default function OnboardingForm({ session }: { session: Session }) {
       hobbies: [] as string[],
       profileImage: undefined as File | undefined,
     };
-  };
+  }, [session?.user?.name, session?.user?.email]);
 
   // Initialize the form with proper default values
   const form = useForm<OnboardingForm>({
@@ -148,7 +148,7 @@ export default function OnboardingForm({ session }: { session: Session }) {
       const defaultValues = getDefaultValues();
       form.reset(defaultValues);
     }
-  }, [profileData, session, form]);
+  }, [profileData, session, form, getDefaultValues]);
 
   const isSubmitting = form.formState.isSubmitting;
 

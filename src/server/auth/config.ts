@@ -112,10 +112,12 @@ export const authConfig = {
               })
               .returning();
 
-            void sendWelcomeEmail({
-              name: result[0]?.name! ?? user.name,
-              email: result[0]?.email! ?? user.email,
-            });
+            if (result[0]) {
+              void sendWelcomeEmail({
+                name: result[0].name ?? user.name,
+                email: result[0].email ?? user.email,
+              });
+            }
 
             existingUser = result[0];
           }
@@ -245,7 +247,7 @@ async function sendWelcomeEmail({ name, email, ctaButtonLabel }: sendWelcomeEmai
     react: WelcomeEmailTemplate({
       name: name,
       signupUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
-      ctaButtonLabel: ctaButtonLabel || "إبدأ بتجربة المحادثة",
+      ctaButtonLabel: ctaButtonLabel ?? "إبدأ بتجربة المحادثة",
     }),
   });
 }
