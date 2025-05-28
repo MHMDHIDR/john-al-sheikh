@@ -112,6 +112,11 @@ export const authConfig = {
               })
               .returning();
 
+            void sendWelcomeEmail({
+              name: result[0]?.name! ?? user.name,
+              email: result[0]?.email! ?? user.email,
+            });
+
             existingUser = result[0];
           }
 
@@ -150,19 +155,12 @@ export const authConfig = {
               scope: account.scope,
               id_token: account.id_token,
             });
-          }
 
-          // send welcome email if this is a new user
-          await resendEmail.emails.send({
-            from: env.ADMIN_EMAIL,
-            to: existingUser?.email ?? user.email!,
-            subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
-            react: WelcomeEmailTemplate({
+            void sendWelcomeEmail({
               name: existingUser?.name ?? user.name,
-              signupUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
-              ctaButtonLabel: "إبدأ بتجربة المحادثة",
-            }),
-          });
+              email: existingUser?.email ?? user.email,
+            });
+          }
 
           return true;
         } catch (error) {
@@ -236,3 +234,18 @@ export const authConfig = {
     },
   },
 } satisfies NextAuthConfig;
+
+type sendWelcomeEmailType = { name: string; email: string; ctaButtonLabel?: string };
+/** Use this function to send welcome email if this is a new user  */
+async function sendWelcomeEmail({ name, email, ctaButtonLabel }: sendWelcomeEmailType) {
+  await resendEmail.emails.send({
+    from: env.ADMIN_EMAIL,
+    to: email,
+    subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+    react: WelcomeEmailTemplate({
+      name: name,
+      signupUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
+      ctaButtonLabel: ctaButtonLabel || "إبدأ بتجربة المحادثة",
+    }),
+  });
+}
