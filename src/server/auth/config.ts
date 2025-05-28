@@ -4,6 +4,7 @@ import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import { Resend as ResendEmail } from "resend";
+import { WelcomeEmailTemplate } from "@/components/custom/welcome-email";
 import { env } from "@/env";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
@@ -150,6 +151,18 @@ export const authConfig = {
               id_token: account.id_token,
             });
           }
+
+          // send welcome email if this is a new user
+          await resendEmail.emails.send({
+            from: env.ADMIN_EMAIL,
+            to: existingUser?.email ?? user.email!,
+            subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+            react: WelcomeEmailTemplate({
+              name: existingUser?.name ?? user.name,
+              signupUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
+              ctaButtonLabel: "إبدأ بتجربة المحادثة",
+            }),
+          });
 
           return true;
         } catch (error) {
