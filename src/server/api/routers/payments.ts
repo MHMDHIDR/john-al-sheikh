@@ -1,38 +1,36 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { env } from "@/env";
 import { creditPackages, stripe } from "@/lib/stripe";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { creditTransactions, users } from "@/server/db/schema";
+import type Stripe from "stripe";
 
 type UserCountry = { ip: string; country: string };
 
 export const paymentsRouter = createTRPCRouter({
-  /**
-   * Create a Stripe checkout session for the user to purchase credits
-   */
+  /** Create a Stripe checkout session for the user to purchase credits */
   createCheckoutSession: protectedProcedure
-    .input(
-      z.object({
-        packageId: z.enum(["fiveCredits", "fifteenCredits", "twentyCredits"]),
-      }),
-    )
+    .input(z.object({ packageId: z.enum(["fiveCredits", "fifteenCredits", "twentyCredits"]) }))
     .mutation(async ({ ctx, input }) => {
       const { packageId } = input;
       const { session } = ctx;
       const userId = session.user.id;
-
-      // Get user's email from session and ensure it's a string
       const userEmail = session.user.email ?? "";
 
       const packageInfo = creditPackages[packageId];
 
+      const cookieStore = await cookies();
+      const datafastVisitorId = cookieStore.get("datafast_visitor_id")?.value;
+      const datafastSessionId = cookieStore.get("datafast_session_id")?.value;
+
       // Create Stripe Checkout session
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        customer_email: userEmail, // Prefill the email field
+        customer_email: userEmail,
         line_items: [
           {
             price: packageInfo.priceId,
@@ -47,8 +45,10 @@ export const paymentsRouter = createTRPCRouter({
           packageId,
           credits: packageInfo.credits.toString(),
           packageName: packageInfo.name,
+          datafast_visitor_id: datafastVisitorId,
+          datafast_session_id: datafastSessionId,
         },
-      });
+      } as Stripe.Checkout.SessionCreateParams);
 
       if (!checkoutSession.url) {
         throw new TRPCError({
@@ -57,12 +57,10 @@ export const paymentsRouter = createTRPCRouter({
         });
       }
 
-      return { checkoutUrl: checkoutSession.url };
+      return { checkoutUrl: checkoutSession.url, sessionId: checkoutSession.id };
     }),
 
-  /**
-   * Get the user's country from ipapi.co based on
-   */
+  /** Get the user's country from ipapi.co based on */
   getUserCountry: protectedProcedure.query(async () => {
     try {
       const countryCode = await fetch("https://api.country.is");
@@ -79,9 +77,7 @@ export const paymentsRouter = createTRPCRouter({
     }
   }),
 
-  /**
-   * Verify a Stripe checkout session and add credits to the user's account
-   */
+  /** Verify a Stripe checkout session and add credits to the user's account */
   verifySession: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -178,16 +174,9 @@ export const paymentsRouter = createTRPCRouter({
       }
     }),
 
-  /**
-   * Use credits for a speaking test
-   */
+  /** Use credits for a speaking test */
   useCreditsForTest: protectedProcedure
-    .input(
-      z.object({
-        speakingTestId: z.string(),
-        creditCost: z.number().default(1), // Default cost is 1 credit
-      }),
-    )
+    .input(z.object({ speakingTestId: z.string(), creditCost: z.number().default(1) }))
     .mutation(async ({ ctx, input }) => {
       const { speakingTestId, creditCost } = input;
       const { session } = ctx;
