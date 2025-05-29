@@ -12,7 +12,7 @@ async function EmailList() {
   ]);
 
   // Combine and deduplicate emails
-  const emailMap = new Map<string, { email: string; name: string | null }>();
+  const emailMap = new Map<string, { email: string; name: string }>();
 
   // Add subscribed emails
   subscribers.forEach((sub: SubscribedEmail) => {
@@ -26,24 +26,24 @@ async function EmailList() {
     }
   });
 
-  // const emailList = Array.from(emailMap.values());
+  const emailList = Array.from(emailMap.values());
 
-  const testimgEmailList = [
-    {
-      email: "mr.hamood277@gmail.com",
-      name: "حمود العتيبي",
-    },
-    {
-      email: "mr.hamood277+1@gmail.com",
-      name: "مثال ٢",
-    },
-    {
-      email: "mr.hamood277+2@gmail.com",
-      name: "مثال 1",
-    },
-  ];
+  // const testingEmailList = [
+  //   {
+  //     email: "mr.hamood277@gmail.com",
+  //     name: "حمود العتيبي",
+  //   },
+  //   {
+  //     email: "mr.hamood277+1@gmail.com",
+  //     name: "مثال ٢",
+  //   },
+  //   {
+  //     email: "mr.hamood277+2@gmail.com",
+  //     name: "مثال 1",
+  //   },
+  // ];
 
-  return <EmailEditor emailList={testimgEmailList} />;
+  return <EmailEditor emailList={emailList} />;
 }
 
 export default function ComposeNewsletterPage() {

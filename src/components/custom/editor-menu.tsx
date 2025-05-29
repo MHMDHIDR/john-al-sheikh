@@ -8,7 +8,7 @@ import {
   Code,
   Code2,
   Highlighter,
-  Image,
+  Image as ImageIcon,
   Italic,
   LetterText,
   Link,
@@ -32,7 +32,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/trpc/react";
 import type { Editor } from "@tiptap/core";
 
 interface EditorMenuProps {
@@ -103,29 +106,100 @@ const HIGHLIGHT_COLORS = [
 
 export function EditorMenu({ editor }: EditorMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+
+  const optimizeImageMutation = api.optimizeImage.optimizeImage.useMutation();
+  const uploadFilesMutation = api.S3.uploadFiles.useMutation({
+    onMutate: () => {
+      toast.loading("جاري رفع الصورة...");
+    },
+    onSuccess: () => {
+      toast.success("تم رفع الصورة بنجاح");
+    },
+    onError: error => {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء رفع الصورة");
+    },
+  });
 
   if (!editor) {
     return null;
   }
 
   // File upload handler
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("يرجى اختيار ملف صورة صحيح");
+      toast.warning("يرجى اختيار ملف صورة صحيح");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = e => {
-      const result = e.target?.result as string;
-      if (result) {
-        editor.chain().focus().setImage({ src: result }).run();
+    const MAX_FILE_SIZE = 3 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      toast.warning("حجم الصورة يجب أن لا يتجاوز 3 ميجابايت");
+      return;
+    }
+
+    try {
+      // Add loading placeholder while isUploading
+      editor
+        .chain()
+        .focus()
+        .setImage({
+          src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' class='animate-pulse bg-muted' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
+          alt: "جاري رفع الصورة...",
+        })
+        .run();
+
+      // Convert file to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Optimize image
+      const optimizedBase64 = await optimizeImageMutation.mutateAsync({
+        base64,
+        quality: 70,
+      });
+
+      // Prepare file data for S3 upload
+      const fileData = [
+        {
+          name: file.name.replace(/\.[^.]+$/, ".webp"),
+          type: "image/webp",
+          size: optimizedBase64.length,
+          lastModified: file.lastModified,
+          base64: optimizedBase64,
+        },
+      ];
+
+      // Upload to S3
+      const uploadedUrls = await uploadFilesMutation.mutateAsync({
+        entityId: `newsletter-images/${new Date().toLocaleDateString("en-GB")}`,
+        fileData,
+      });
+
+      // Replace loading placeholder with actual image
+      if (uploadedUrls[0]) {
+        editor
+          .chain()
+          .focus()
+          .setImage({
+            src: uploadedUrls[0],
+            alt: file.name,
+            title: file.name,
+          })
+          .run();
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء رفع الصورة");
+      // Remove loading placeholder on error
+      editor.chain().focus().deleteSelection().run();
+    }
 
     // Reset input
     if (fileInputRef.current) {
@@ -169,9 +243,12 @@ export function EditorMenu({ editor }: EditorMenuProps) {
     editor.chain().focus().setFontSize(size).run();
   };
 
+  const MIN_FONT_SIZE = 10;
+  const MAX_FONT_SIZE = 100;
+  const DEFAULT_FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 88, 96];
+
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30 rounded-t-lg">
-      {/* Undo/Redo */}
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().undo().run()}
@@ -191,7 +268,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Headings */}
       <div className="flex items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -200,7 +276,7 @@ export function EditorMenu({ editor }: EditorMenuProps) {
               عنوان
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
+          <DropdownMenuContent align="end" className="rtl">
             <DropdownMenuItem onClick={() => editor.chain().focus().setParagraph().run()}>
               نص عادي
             </DropdownMenuItem>
@@ -225,7 +301,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Text Formatting */}
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -255,7 +330,7 @@ export function EditorMenu({ editor }: EditorMenuProps) {
         >
           <Strikethrough className="size-4" />
         </EditorButton>
-        {/* // setFontSize handler */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8">
@@ -264,29 +339,45 @@ export function EditorMenu({ editor }: EditorMenuProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <div className="p-2">
-              <p className="text-sm flex gap-1 font-medium mb-2">
+            <div className="p-1 rtl">
+              <p className="text-sm flex items-center gap-1.5 font-medium mb-2">
                 <span>حجم الخط</span>
-                <small>من 10 الى 100</small>
+                <small className="text-muted-foreground">(أعلى حجم {MAX_FONT_SIZE})</small>
               </p>
               <div className="flex flex-col gap-1">
-                {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map(size => (
-                  <Button
-                    key={size}
-                    variant="ghost"
-                    size="sm"
-                    className={clsx(
-                      "h-8 w-full p-0 hover:bg-muted",
-                      editor.isActive({ fontSize: `${size}px` }) &&
-                        "bg-muted border border-primary text-primary",
-                    )}
-                    onClick={() => setFontSize(`${size}px`)}
-                    title={`${size}px`}
-                    type="button"
-                  >
-                    {size}px
-                  </Button>
-                ))}
+                <Input
+                  type="number"
+                  min={MIN_FONT_SIZE}
+                  max={MAX_FONT_SIZE}
+                  defaultValue="16"
+                  placeholder="حجم الخط"
+                  onChange={e => {
+                    const size = e.target.value;
+                    if (size) {
+                      setFontSize(`${size}px`);
+                    }
+                  }}
+                  className="w-full"
+                />
+                <div className="flex flex-col gap-1.5 max-h-44 overflow-y-auto">
+                  {DEFAULT_FONT_SIZES.map(size => (
+                    <Button
+                      key={size}
+                      variant="ghost"
+                      size="sm"
+                      className={clsx(
+                        "h-8 w-full p-1.5 hover:bg-muted",
+                        editor.isActive({ fontSize: `${size}px` }) &&
+                          "bg-muted border border-primary text-primary",
+                      )}
+                      onClick={() => setFontSize(`${size}px`)}
+                      title={`${size}px`}
+                      type="button"
+                    >
+                      {size}px
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </DropdownMenuContent>
@@ -295,7 +386,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Text Color */}
       <div className="flex items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -305,13 +395,13 @@ export function EditorMenu({ editor }: EditorMenuProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <div className="p-2">
+            <div className="p-2 rtl">
               <p className="text-sm font-medium mb-2">لون النص</p>
               <div className="grid grid-cols-5 gap-1">
                 {TEXT_COLORS.map(color => (
                   <button
                     key={color}
-                    className="size-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                    className="size-6 cursor-pointer rounded border border-gray-300 hover:scale-110 transition-transform"
                     style={{ backgroundColor: color }}
                     onClick={() => setTextColor(color)}
                     title={color}
@@ -338,13 +428,13 @@ export function EditorMenu({ editor }: EditorMenuProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <div className="p-2">
+            <div className="p-2 rtl">
               <p className="text-sm font-medium mb-2">لون التمييز</p>
               <div className="grid grid-cols-5 gap-1">
                 {HIGHLIGHT_COLORS.map(color => (
                   <button
                     key={color}
-                    className="size-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                    className="size-6 cursor-pointer rounded border border-gray-300 hover:scale-110 transition-transform"
                     style={{ backgroundColor: color }}
                     onClick={() => setHighlightColor(color)}
                     title={color}
@@ -366,7 +456,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Alignment */}
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
@@ -400,7 +489,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Lists */}
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -420,7 +508,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Code & Quote */}
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().toggleCode().run()}
@@ -447,7 +534,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Links & Images */}
       <div className="flex items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -466,7 +552,7 @@ export function EditorMenu({ editor }: EditorMenuProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="size-8 p-0 hover:bg-muted">
-              <Image className="size-4" />
+              <ImageIcon className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -481,7 +567,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -493,7 +578,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Clear Formatting */}
       <EditorButton
         onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
         tooltip="مسح التنسيق"

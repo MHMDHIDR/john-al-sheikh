@@ -17,8 +17,6 @@ export function SignoutButton() {
   const isConnected = callStatus === CallStatus.ACTIVE;
   const [confirmSignoutDialog, setConfirmSignoutDialog] = useState(false);
 
-  console.log("Test is==>", isConnected);
-
   async function handleSignoutClick() {
     const savedResult = sessionStorage.getItem("ieltsResult");
     if (savedResult) {
@@ -45,8 +43,6 @@ export function SignoutButton() {
     <>
       <Button
         onClick={() => {
-          console.log("Test is==>", isConnected);
-
           if (isConnected) {
             setConfirmSignoutDialog(true);
           } else {

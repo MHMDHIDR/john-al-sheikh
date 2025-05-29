@@ -51,7 +51,6 @@ export type PaginationResult = {
  * const pagination = PaginationService.getInstance()
  * const params = { page: 1, limit: 10, totalItems: 100 }
  * const result = pagination.calculate(params)
- * console.log(result)
  */
 class PaginationService {
   private static instance: PaginationService;

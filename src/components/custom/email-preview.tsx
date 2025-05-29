@@ -19,7 +19,6 @@ export function EmailPreview({
   return (
     <div className="email-preview bg-white rounded-lg shadow-sm">
       <div className="p-6">
-        {/* Header */}
         <div className="text-center mb-6 pb-6 border-b">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Image
@@ -34,7 +33,6 @@ export function EmailPreview({
           <p className="text-sm text-gray-500">منصتك لتعلم وممارسة المحادثة باللغة الإنجليزية</p>
         </div>
 
-        {/* Content */}
         <div className="mb-6">
           <h2 className="text-xl font-medium mb-4">مرحباً {name}،</h2>
 
@@ -76,7 +74,6 @@ export function EmailPreview({
           )}
         </div>
 
-        {/* Footer */}
         <div className="pt-6 border-t text-center text-sm text-gray-500">
           © {year} {env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
         </div>

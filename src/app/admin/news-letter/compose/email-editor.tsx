@@ -11,13 +11,29 @@ import TextStyle from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2, Users } from "lucide-react";
 import { useState } from "react";
 import { EditorMenu } from "@/components/custom/editor-menu";
 import { EmailPreview } from "@/components/custom/email-preview";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 type EmailEditorProps = {
@@ -27,6 +43,9 @@ type EmailEditorProps = {
 export function EmailEditor({ emailList }: EmailEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [subject, setSubject] = useState("");
+  const [selectedRecipients, setSelectedRecipients] =
+    useState<Array<{ email: string; name: string }>>(emailList);
+  const [isRecipientsDialogOpen, setIsRecipientsDialogOpen] = useState(false);
   const { success, error: errorToast } = useToast();
 
   const sendNewsletter = api.subscribedEmails.sendNewsletter.useMutation({
@@ -74,7 +93,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       // Image handling with better configuration
       TipTapImage.configure({
         inline: false,
-        allowBase64: true,
         HTMLAttributes: {
           class: "max-w-full h-auto rounded-md block",
           style: "max-height: 400px; object-fit: contain;",
@@ -121,11 +139,16 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       return;
     }
 
+    if (selectedRecipients.length === 0) {
+      errorToast("يرجى اختيار مستلمين على الأقل");
+      return;
+    }
+
     try {
       await sendNewsletter.mutateAsync({
         subject: subject.trim(),
         content,
-        recipients: emailList,
+        recipients: selectedRecipients,
       });
 
       // Reset form after successful send
@@ -136,6 +159,17 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     }
   };
 
+  const toggleRecipient = (recipient: { email: string; name: string }) => {
+    setSelectedRecipients(prev => {
+      const isSelected = prev.some(r => r.email === recipient.email);
+      if (isSelected) {
+        return prev.filter(r => r.email !== recipient.email);
+      } else {
+        return [...prev, recipient];
+      }
+    });
+  };
+
   const SUBJECT_MIN_LENGTH = 5;
   const SUBJECT_MAX_LENGTH = 100;
 
@@ -143,19 +177,19 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   const isFormValid =
     subject.trim().length > SUBJECT_MIN_LENGTH &&
     subject.trim().length < SUBJECT_MAX_LENGTH &&
-    editor?.getText().trim();
+    editor?.getText().trim() &&
+    selectedRecipients.length > 0;
 
   if (!editor) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="size-10 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6 rtl">
-      {/* Header Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex-1 w-full">
           <label htmlFor="newsletter-subject" className="block text-sm font-medium mb-2">
@@ -180,6 +214,51 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Dialog open={isRecipientsDialogOpen} onOpenChange={setIsRecipientsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="min-w-[120px]">
+                <Users className="size-4 ml-2" />
+                المستلمين ({selectedRecipients.length})
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>اختر المستلمين</DialogTitle>
+              </DialogHeader>
+              <Command className="rounded-lg border shadow-md">
+                <CommandInput placeholder="ابحث عن مستلم..." />
+                <CommandList>
+                  <CommandEmpty>لا يوجد مستلمين</CommandEmpty>
+                  <CommandGroup>
+                    {emailList.map(recipient => {
+                      const isSelected = selectedRecipients.some(r => r.email === recipient.email);
+                      return (
+                        <CommandItem
+                          key={recipient.email}
+                          onSelect={() => toggleRecipient(recipient)}
+                          className="flex items-center justify-between px-4 py-2 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                "size-4 rounded border flex items-center justify-center",
+                                isSelected && "bg-primary border-primary",
+                              )}
+                            >
+                              {isSelected && <Check className="size-3 text-primary-foreground" />}
+                            </div>
+                            <span>{recipient.name}</span>
+                          </div>
+                          <span className="text-muted-foreground text-sm">{recipient.email}</span>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </DialogContent>
+          </Dialog>
+
           <Button
             onClick={() => setIsPreview(!isPreview)}
             variant={isPreview ? "destructive" : "outline"}
@@ -208,12 +287,10 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         </div>
       </div>
 
-      {/* Recipients Info */}
       <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-        سيتم إرسال النشرة إلى {emailList.length} مشترك
+        سيتم إرسال النشرة إلى {selectedRecipients.length} مشترك
       </div>
 
-      {/* Editor or Preview */}
       {isPreview ? (
         <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="mb-4 pb-4 border-b">
@@ -233,19 +310,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           <div className="min-h-[400px]">
             <EditorContent editor={editor} />
           </div>
-        </div>
-      )}
-
-      {/* Footer Tips */}
-      {!isPreview && (
-        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 text-sm">
-          <h4 className="font-medium mb-2">نصائح لكتابة نشرة بريدية فعالة:</h4>
-          <ul className="space-y-1 text-muted-foreground">
-            <li>• استخدم عنواناً جذاباً ومختصراً</li>
-            <li>• اجعل المحتوى مفيداً وذا قيمة للقارئ</li>
-            <li>• استخدم الصور لجعل النشرة أكثر جاذبية</li>
-            <li>• اجعل النص سهل القراءة باستخدام فقرات قصيرة</li>
-          </ul>
         </div>
       )}
     </div>
