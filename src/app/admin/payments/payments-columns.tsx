@@ -1,13 +1,34 @@
+import { IconBrandMastercard, IconBrandVisa } from "@tabler/icons-react";
 import clsx from "clsx";
-import { ArrowUpDown, CreditCard } from "lucide-react";
+import { ArrowUpDown, Calendar, CreditCard, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/format-date";
 import { formatPrice } from "@/lib/format-price";
 import { translateSring } from "@/lib/translate-string";
 import type { Payment } from "./payments-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import type Stripe from "stripe";
 
 export const paymentsColumns: ColumnDef<Payment>[] = [
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        اسم المستخدم
+        <ArrowUpDown className="w-4 h-4 ml-2" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const name = row.original.name;
+      return (
+        <div className="flex items-center gap-2">
+          <User className="size-4" />
+          <span>{name}</span>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "type",
     header: ({ column }) => (
@@ -54,25 +75,56 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
     },
   },
   {
-    accessorKey: "source_types",
+    accessorKey: "paymentDetails.paymentMethod",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        المصدر
+        طريقة الدفع
         <ArrowUpDown className="w-4 h-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
-      const sourceTypes = row.original.source_types;
-      if (!sourceTypes) return "-";
+      const source = row.original.source;
+      if (!source || typeof source === "string") return "-";
 
-      return Object.entries(sourceTypes).map(([key]) => {
-        return (
-          <span key={key} className="flex items-center justify-center gap-1">
-            <CreditCard className="size-4" />
-            {translateSring(key)}
+      const charge = source as unknown as { source: Stripe.Charge };
+      const cardDetails = charge.source.payment_method_details?.card;
+
+      if (!cardDetails) return "-";
+
+      return (
+        <div className="flex items-center gap-2">
+          <CreditCard className="size-6" />
+          <span className="flex items-center gap-1">
+            {cardDetails.brand === "visa" ? (
+              <IconBrandVisa className="size-6" />
+            ) : cardDetails.brand === "mastercard" ? (
+              <IconBrandMastercard className="size-6" />
+            ) : (
+              cardDetails.brand?.toUpperCase()
+            )}{" "}
+            •••• {cardDetails.last4}
           </span>
-        );
-      });
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "created",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        تاريخ الدفع
+        <ArrowUpDown className="size-4 ml-2" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const created = row.original.created;
+
+      return (
+        <div className="flex items-center gap-2">
+          <Calendar className="size-4" />
+          <span>{formatDate(new Date(created * 1000).toString(), true, true)}</span>
+        </div>
+      );
     },
   },
 ];

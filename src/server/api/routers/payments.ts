@@ -263,6 +263,69 @@ export const paymentsRouter = createTRPCRouter({
 
     const balanceTransactions = await stripe.balanceTransactions.list({ expand: ["data.source"] });
 
-    return { balance, balanceTransactions };
+    // Get all unique user emails from transactions
+    const userEmails = balanceTransactions.data
+      .filter(
+        tx =>
+          tx.source &&
+          typeof tx.source === "object" &&
+          "object" in tx.source &&
+          tx.source.object === "charge" &&
+          "billing_details" in tx.source &&
+          tx.source.billing_details?.email,
+      )
+      .map(tx => (tx.source as Stripe.Charge).billing_details.email)
+      .filter((email): email is string => email !== null);
+
+    // Get user details from our database
+    const users = await db.query.users.findMany({
+      where: (users, { inArray }) => inArray(users.email, userEmails),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        displayName: true,
+      },
+    });
+
+    // Create a map of email to user details
+    const userMap = new Map(users.map(user => [user.email, user]));
+
+    // Enhance transactions with user details
+    const enhancedTransactions = balanceTransactions.data.map(tx => {
+      const source = tx.source as Stripe.Charge;
+      const userEmail = source?.billing_details?.email;
+      const userDetails = userEmail ? userMap.get(userEmail) : null;
+
+      return {
+        id: tx.id,
+        amount: tx.amount,
+        currency: tx.currency,
+        created: tx.created,
+        status: tx.status,
+        type: tx.type,
+        source: tx,
+        description: tx.description,
+        paymentDetails: {
+          email: source?.billing_details?.email,
+          name: source?.billing_details?.name,
+          cardLast4: source?.payment_method_details?.card?.last4,
+          cardBrand: source?.payment_method_details?.card?.brand,
+        },
+        user: userDetails
+          ? {
+              id: userDetails.id,
+              name: userDetails.name,
+              displayName: userDetails.displayName,
+              email: userDetails.email,
+            }
+          : null,
+      };
+    });
+
+    return {
+      balance,
+      balanceTransactions: enhancedTransactions,
+    };
   }),
 });

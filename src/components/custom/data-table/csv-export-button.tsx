@@ -3,9 +3,10 @@ import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { exportToCSV } from "@/lib/csv-export";
+import type { BaseEntity } from "./base-columns";
 import type { ColumnDef } from "@tanstack/react-table";
 
-interface CSVExportButtonProps<T extends Record<string, any>> {
+interface CSVExportButtonProps<T extends BaseEntity> {
   data: T[];
   columns: ColumnDef<T>[];
   filename?: string;
@@ -15,7 +16,7 @@ interface CSVExportButtonProps<T extends Record<string, any>> {
   disabled?: boolean;
 }
 
-export function CSVExportButton<T extends Record<string, any>>({
+export function CSVExportButton<T extends BaseEntity>({
   data,
   columns,
   filename = "export",
@@ -36,7 +37,38 @@ export function CSVExportButton<T extends Record<string, any>>({
     try {
       // Add small delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 200));
-      exportToCSV(data, columns, filename);
+      // Convert data to a format that exportToCSV can handle
+      const isExportableValue = (value: unknown): value is string | number | Date | null => {
+        return (
+          typeof value === "string" ||
+          typeof value === "number" ||
+          value === null ||
+          (typeof value === "object" && value !== null && value instanceof Date)
+        );
+      };
+
+      const exportData = data.map(item => {
+        const record: Record<string, string | number | Date | null> = {};
+        for (const [key, value] of Object.entries(item)) {
+          if (key === "created" && typeof value === "number") {
+            record[key] = new Date(value * 1000);
+          } else if (key === "paymentDetails" && typeof value === "object" && value !== null) {
+            Object.entries(value).forEach(([detailKey, detailValue]) => {
+              if (isExportableValue(detailValue)) {
+                record[`payment_${detailKey}`] = detailValue;
+              }
+            });
+          } else if (isExportableValue(value)) {
+            record[key] = value;
+          }
+        }
+        return record;
+      });
+      exportToCSV(
+        exportData,
+        columns as unknown as ColumnDef<Record<string, string | number | Date | null>>[],
+        filename,
+      );
     } catch (error) {
       console.error("Export failed:", error);
     } finally {

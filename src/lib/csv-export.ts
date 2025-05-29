@@ -8,10 +8,10 @@ import type { ColumnDef } from "@tanstack/react-table";
  * @param columns - Column definitions to determine which fields to export and their headers
  * @param filename - Name of the downloaded file (without .csv extension)
  */
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, string | number | Date | null | undefined>>(
   data: T[],
   columns: ColumnDef<T>[],
-  filename: string = "export",
+  filename = "export",
 ): void {
   if (!data || data.length === 0) {
     console.warn("No data to export");
@@ -52,12 +52,12 @@ export function exportToCSV<T extends Record<string, any>>(
       const accessorKey = (col as { accessorKey?: string }).accessorKey;
       if (!accessorKey) return "";
 
-      let value = row[accessorKey as keyof T];
+      const value = row[accessorKey as keyof T];
       let stringValue: string;
 
       // Handle special formatting for common data types
-      if (value && typeof value === "object" && (value as any) instanceof Date) {
-        stringValue = (value as Date).toLocaleDateString();
+      if (value && typeof value === "object" && (value as unknown as Date) instanceof Date) {
+        stringValue = (value as unknown as Date).toLocaleDateString();
       } else if (value === null || value === undefined) {
         stringValue = "";
       } else if (typeof value === "object") {
@@ -119,10 +119,10 @@ function formatHeader(key: string): string {
  * @param defaultFilename - Default filename
  * @returns Object with export function and loading state
  */
-export function useCSVExport<T extends Record<string, any>>(
+export function useCSVExport<T extends Record<string, string | number | Date | null | undefined>>(
   data: T[],
   columns: ColumnDef<T>[],
-  defaultFilename: string = "export",
+  defaultFilename = "export",
 ) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -131,7 +131,7 @@ export function useCSVExport<T extends Record<string, any>>(
     try {
       // Add small delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 100));
-      exportToCSV(data, columns, filename || defaultFilename);
+      exportToCSV(data, columns, filename ?? defaultFilename);
     } catch (error) {
       console.error("Export failed:", error);
     } finally {
