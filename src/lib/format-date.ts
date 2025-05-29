@@ -68,3 +68,19 @@ export function formatDate(date: string, isNormalDate?: boolean, withTime = fals
       return `${days} days ago${timeSuffix}`;
   }
 }
+
+/**
+ *
+ * @param date the date to be formatted, defaults to the current date
+ * @returns a compact date string in the format dd-mm-yy-hh-min
+ * Example: 2022-03-28T00:00:00.000Z => '28-03-22-00-00'
+ */
+export function formatCompactDate(date = new Date()): string {
+  const d = new Date(date);
+  const dd = d.getDate().toString().padStart(2, "0");
+  const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+  const yy = d.getFullYear().toString().slice(-2);
+  const hh = d.getHours().toString().padStart(2, "0");
+  const min = d.getMinutes().toString().padStart(2, "0");
+  return `${dd}-${mm}-${yy}-${hh}-${min}`;
+}

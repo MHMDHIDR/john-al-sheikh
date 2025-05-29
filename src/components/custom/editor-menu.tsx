@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { formatCompactDate } from "@/lib/format-date";
 import { api } from "@/trpc/react";
 import type { Editor } from "@tiptap/core";
 
@@ -179,7 +180,7 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       // Upload to S3
       const uploadedUrls = await uploadFilesMutation.mutateAsync({
-        entityId: `newsletter-images/${new Date().toLocaleDateString("en-GB")}`,
+        entityId: `newsletter-images/${formatCompactDate()}`,
         fileData,
       });
 
