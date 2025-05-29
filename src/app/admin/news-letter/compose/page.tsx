@@ -35,7 +35,7 @@ async function EmailList() {
     },
     {
       email: "mr.hamood277+1@gmail.com",
-      name: "مثال 1",
+      name: "مثال ٢",
     },
     {
       email: "mr.hamood277+2@gmail.com",

@@ -5,6 +5,7 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
     const [_open, _setOpen] = React.useState(defaultOpen); // Initialize with defaultOpen for SSR
+    const pathname = usePathname();
 
     // Initialize with cookie value if exists
     React.useEffect(() => {
@@ -119,6 +121,7 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
       function handleKeyDown(event: KeyboardEvent) {
         if (
+          !pathname.includes("/news-letter") && // Exclude news-letter pages
           event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.altKey || event.metaKey) &&
           !event.ctrlKey &&
@@ -134,7 +137,7 @@ const SidebarProvider = React.forwardRef<
 
       // Cleanup function to remove event listener
       return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [toggleSidebar]);
+    }, [pathname, toggleSidebar]);
 
     const state = open ? "expanded" : "collapsed";
 
