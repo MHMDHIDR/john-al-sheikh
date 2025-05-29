@@ -13,6 +13,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Check, Loader2, Users } from "lucide-react";
 import { useState } from "react";
+import ImageResize from "tiptap-extension-resize-image";
 import { EditorMenu } from "@/components/custom/editor-menu";
 import { EmailPreview } from "@/components/custom/email-preview";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,13 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         },
       }),
 
+      // Add image resize extension
+      ImageResize.configure({
+        HTMLAttributes: {
+          class: "resizable-image",
+        },
+      }),
+
       // Link configuration
       Link.configure({
         openOnClick: false,
@@ -111,6 +119,39 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       ListItem,
     ],
     content: `
+      <style>
+        .resizable-image {
+          position: relative;
+          display: inline-block;
+          transition: box-shadow 0.2s ease;
+        }
+
+        .resizable-image:hover {
+          box-shadow: 0 0 0 2px #4a9eff;
+        }
+
+        .resizable-image .resize-handle {
+          background: #4a9eff !important;
+          border: 2px solid white !important;
+          border-radius: 50% !important;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .resizable-image:hover .resize-handle {
+          opacity: 1;
+        }
+
+        .resizable-image.resizing {
+          user-select: none;
+          box-shadow: 0 0 0 2px #4a9eff;
+        }
+
+        .resizable-image.resizing .resize-handle {
+          opacity: 1;
+          background: #2563eb !important;
+        }
+      </style>
       <h2>مرحباً بكم في نشرتنا البريدية</h2>
       <p>ابدأ بكتابة محتوى نشرتك البريدية هنا...</p>
     `,
@@ -222,9 +263,25 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
+              <DialogHeader className="text-center! select-none">
                 <DialogTitle>اختر المستلمين</DialogTitle>
               </DialogHeader>
+              <div className="flex gap-2 text-muted-foreground">
+                <Button
+                  variant="secondary"
+                  className="w-full mb-2"
+                  onClick={() => setSelectedRecipients(emailList)}
+                >
+                  تحديد الكل
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full mb-2"
+                  onClick={() => setSelectedRecipients([])}
+                >
+                  إلغاء التحديد
+                </Button>
+              </div>
               <Command className="rounded-lg border shadow-md">
                 <CommandInput placeholder="ابحث عن مستلم..." />
                 <CommandList>
