@@ -18,6 +18,7 @@ export default function TestUsersTable({
       columns={columns as ColumnDef<SpeakingTest & BaseEntity>[]}
       data={testUsers}
       emptyStateMessage="Sorry, No Test Users Found."
+      exportFilename="test_users_export"
     />
   );
 }

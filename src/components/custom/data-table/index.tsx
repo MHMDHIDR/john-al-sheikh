@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { UserRole } from "@/server/db/schema";
+import { CSVExportButton } from "./csv-export-button";
 import { LoadingCard } from "./loading";
 import type { BaseEntity } from "./base-columns";
 import type { Users } from "@/server/db/schema";
@@ -34,6 +35,7 @@ type DataTableProps<TData extends BaseEntity> = {
   emptyStateMessage?: string;
   isLoading?: boolean;
   count?: number;
+  exportFilename: string;
 };
 
 export function DataTable<TData extends BaseEntity>({
@@ -43,6 +45,7 @@ export function DataTable<TData extends BaseEntity>({
   count = 7,
   emptyStateMessage = "Sorry we couldn't find any data.",
   onRowSelection,
+  exportFilename = "data_export",
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const { data: session } = useSession();
@@ -80,13 +83,13 @@ export function DataTable<TData extends BaseEntity>({
     enableHiding: false,
   };
 
-  const allColumns = [
+  const showSelectionColumn =
     checkRoleAccess(session?.user?.role, ALLOWED_ROLES) &&
-    MANAGING_PATHS.some(path => pathname.includes(path))
-      ? selectionColumn
-      : null,
-    ...columns,
-  ].filter(Boolean) as ColumnDef<TData>[];
+    MANAGING_PATHS.some(path => pathname.includes(path));
+
+  const allColumns = [showSelectionColumn ? selectionColumn : null, ...columns].filter(
+    Boolean,
+  ) as ColumnDef<TData>[];
 
   const table = useReactTable({
     data,
@@ -134,58 +137,80 @@ export function DataTable<TData extends BaseEntity>({
     default: "",
   };
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  const hasSelectedRows = selectedRows.length > 0;
+
   return (
-    <div className="border rounded-md overflow-auto">
-      <Table>
-        <TableHeader className="select-none">
-          {table.getHeaderGroups().map(headerGroup => (
-            <TableRow key={headerGroup.id} className="bg-muted/50">
-              {headerGroup.headers.map(header => (
-                <TableHead key={header.id} className="text-center">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map(row =>
-              isLoading ? (
-                <TableRow key={row.id}>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    <LoadingCard renderedSkeletons={count} />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={statusStyles[getRowStatus(row)]}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="whitespace-nowrap text-center">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    <div className="space-y-3 relative">
+      {hasSelectedRows && (
+        <div className="flex select-none items-center sticky mx-auto top-14 max-w-xl z-50 dark:bg-black/30 backdrop-blur-md justify-between p-4 bg-muted/30 rounded-xl shadow-xl border">
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <span className="text-sm font-medium">
+              تم تحديد {selectedRows.length} من {data.length} عنصر
+            </span>
+          </div>
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <CSVExportButton
+              data={selectedRows}
+              columns={columns}
+              filename={`${exportFilename}_selected_${new Date().toISOString().split("T")[0]}`}
+              variant="default"
+            />
+          </div>
+        </div>
+      )}
+      <div className="border rounded-md overflow-auto">
+        <Table>
+          <TableHeader className="select-none">
+            {table.getHeaderGroups().map(headerGroup => (
+              <TableRow key={headerGroup.id} className="bg-muted/50">
+                {headerGroup.headers.map(header => (
+                  <TableHead key={header.id} className="text-center">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map(row =>
+                isLoading ? (
+                  <TableRow key={row.id}>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      <LoadingCard renderedSkeletons={count} />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ),
-            )
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
-                <EmptyState>
-                  <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
-                    {emptyStateMessage}
-                  </p>
-                </EmptyState>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                  </TableRow>
+                ) : (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={statusStyles[getRowStatus(row)]}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className="whitespace-nowrap text-center">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ),
+              )
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+                  <EmptyState>
+                    <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
+                      {emptyStateMessage}
+                    </p>
+                  </EmptyState>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

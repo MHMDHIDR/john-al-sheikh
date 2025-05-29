@@ -15,6 +15,7 @@ export default function UsersTable({ users }: { users: (Users & BaseEntity)[] })
       columns={columns as ColumnDef<Users & BaseEntity>[]}
       data={users}
       emptyStateMessage="Sorry, No Users Found."
+      exportFilename="users_export"
     />
   );
 }

@@ -14,6 +14,7 @@ export default function SubscribersTable({ subscribers }: { subscribers: Subscri
       columns={columns as ColumnDef<SubscribedEmail & BaseEntity>[]}
       data={subscribers}
       emptyStateMessage="Sorry, No Subscribers Found."
+      exportFilename="subscribers_export"
     />
   );
 }

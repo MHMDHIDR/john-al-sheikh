@@ -4,18 +4,20 @@ import { api } from "@/trpc/server";
 import PaymentsTable from "./payments-table";
 
 export default async function Payments() {
-  const { balance: accountBalance } = await api.payments.getAccountBalance();
+  const { balance, balanceTransactions } = await api.payments.getAccountBalance();
+
+  console.log(JSON.stringify(balanceTransactions, null, 2));
 
   // Combining available and pending payments with a type indicator
   const allPayments = [
-    ...accountBalance.available.map((payment, index) => ({
+    ...balance.available.map((payment, index) => ({
       ...payment,
       type: "available",
       id: `available-${index}`,
       name: `Payment ${index + 1}`,
       source_types: { card: payment.source_types?.card },
     })),
-    ...accountBalance.pending.map((payment, index) => ({
+    ...balance.pending.map((payment, index) => ({
       ...payment,
       type: "pending",
       id: `pending-${index}`,

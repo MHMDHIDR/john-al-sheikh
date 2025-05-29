@@ -261,6 +261,8 @@ export const paymentsRouter = createTRPCRouter({
       expand: ["pending", "available", "instant_available"],
     });
 
-    return { balance };
+    const balanceTransactions = await stripe.balanceTransactions.list({ expand: ["data.source"] });
+
+    return { balance, balanceTransactions };
   }),
 });

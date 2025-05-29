@@ -17,6 +17,7 @@ export default function PaymentsTable({ payments }: { payments: Payment[] }) {
       columns={paymentsColumns}
       data={payments}
       emptyStateMessage="No payments found."
+      exportFilename="payments_export"
     />
   );
 }
