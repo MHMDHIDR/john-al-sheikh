@@ -95,8 +95,8 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       TipTapImage.configure({
         inline: false,
         HTMLAttributes: {
-          class: "max-w-full h-auto rounded-md block",
-          style: "max-height: 400px; object-fit: contain;",
+          class: "max-w-96 h-auto rounded-md block",
+          style: "max-height: 300px; object-fit: contain;",
         },
       }),
 
@@ -169,8 +169,8 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   });
 
   const handleSend = async () => {
-    if (!editor || !subject.trim()) {
-      errorToast("يرجى إدخال عنوان النشرة البريدية");
+    if (!editor || !subject.trim() || subject.length <= 5) {
+      errorToast("يرجى إدخال عنوان النشرة البريدية بشكل صحيح");
       return;
     }
 
@@ -344,8 +344,8 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         </div>
       </div>
 
-      <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-        سيتم إرسال النشرة إلى {selectedRecipients.length} مشترك
+      <div className="bg-muted/50 border select-none rounded-lg p-3 text-sm text-red-500">
+        سيتم إرسال النشرة إلى <strong>{selectedRecipients.length}</strong> مشترك
       </div>
 
       {isPreview ? (

@@ -40,24 +40,34 @@ export function WelcomeEmailTemplate({
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
-            <Heading as="h1" style={logo}>
-              <Img
-                src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
-                width="40"
-                height="40"
-                alt={env.NEXT_PUBLIC_APP_NAME}
-                className="rounded-full"
-              />
-              {env.NEXT_PUBLIC_APP_NAME}
-            </Heading>
+            <table width="100%" cellPadding="0" cellSpacing="0" style={{ textAlign: "center" }}>
+              <tr>
+                <td style={{ textAlign: "center" }}>
+                  <table cellPadding="0" cellSpacing="0" style={{ display: "inline-table" }}>
+                    <tr>
+                      <td style={{ verticalAlign: "middle", paddingLeft: "14px" }}>
+                        <Img
+                          src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
+                          width="40"
+                          height="40"
+                          alt={env.NEXT_PUBLIC_APP_NAME}
+                          style={{ display: "block", borderRadius: "50%" }}
+                        />
+                      </td>
+                      <td style={{ verticalAlign: "middle", userSelect: "none" }}>
+                        <span style={logoText}>{env.NEXT_PUBLIC_APP_NAME}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
             <small style={smallText}>منصتك لتعلم وممارسة المحادثة باللغة الإنجليزية</small>
           </Section>
-
           <Section style={contentSection}>
             <Heading as="h2" style={greeting}>
               مرحباً {name}،
             </Heading>
-
             {customContent ? (
               <div dangerouslySetInnerHTML={{ __html: customContent }} />
             ) : (
@@ -69,38 +79,31 @@ export function WelcomeEmailTemplate({
                     : `شكراً على اشتراكك في النشرة البريدية الخاصة بتعليم المحادثة باللغة الإنجليزية. يسعدنا
                   انضمامك إلى مجتمعنا!`}
                 </Text>
-
                 {ieltsGoal && (
                   <Text style={paragraph}>
                     هدفك هو الوصول إلى درجة {ieltsGoal} في الايلتس، ونحن هنا لمساعدتك على تحقيق ذلك
                     خطوة بخطوة.
                   </Text>
                 )}
-
                 <Text style={paragraph}>
                   سنرسل لك نصائح وإرشادات منتظمة، إضافة إلى موارد مفيدة ستساعدك في رحلتك التعليمية.
                 </Text>
-
                 <Section style={ctaContainer}>
                   <Button href={signupUrl} style={ctaButton}>
                     {ctaButtonLabel}
                   </Button>
                 </Section>
-
                 {!ctaButtonLabel && ( // this is for the subscribers who did not create an account, so we encourage them to do so
                   <Text style={paragraph}>
                     قم بإنشاء حساب للوصول إلى مزيد من الميزات والموارد المخصصة لتعلم الايلتس وتحقيق
                     درجة أعلى.
                   </Text>
                 )}
-
                 <Text style={paragraph}>نتطلع إلى مساعدتك في تحقيق أهدافك التعليمية!</Text>
               </>
             )}
           </Section>
-
           <Hr style={divider} />
-
           <Section style={footer}>
             <Text style={footerText}>
               © {year} {env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
@@ -139,14 +142,12 @@ const headerSection: CSSProperties = {
   borderBottom: "1px solid #eeeeee",
 };
 
-const logo: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "10px",
+const logoText: CSSProperties = {
   fontSize: "24px",
   color: "#333333",
   fontWeight: "bold",
+  textDecoration: "none",
+  display: "inline-block",
 };
 
 const contentSection: CSSProperties = {

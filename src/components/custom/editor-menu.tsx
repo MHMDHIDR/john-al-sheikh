@@ -459,20 +459,6 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <div className="flex items-center gap-1">
         <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          isActive={editor.isActive({ textAlign: "left" })}
-          tooltip="محاذاة يسار"
-        >
-          <AlignLeft className="size-4" />
-        </EditorButton>
-        <EditorButton
-          onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          isActive={editor.isActive({ textAlign: "center" })}
-          tooltip="محاذاة وسط"
-        >
-          <AlignCenter className="size-4" />
-        </EditorButton>
-        <EditorButton
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
           isActive={editor.isActive({ textAlign: "right" })}
           tooltip="محاذاة يمين"
@@ -485,6 +471,20 @@ export function EditorMenu({ editor }: EditorMenuProps) {
           tooltip="ضبط"
         >
           <AlignJustify className="size-4" />
+        </EditorButton>
+        <EditorButton
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          isActive={editor.isActive({ textAlign: "left" })}
+          tooltip="محاذاة يسار"
+        >
+          <AlignLeft className="size-4" />
+        </EditorButton>
+        <EditorButton
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          isActive={editor.isActive({ textAlign: "center" })}
+          tooltip="محاذاة وسط"
+        >
+          <AlignCenter className="size-4" />
         </EditorButton>
       </div>
 
