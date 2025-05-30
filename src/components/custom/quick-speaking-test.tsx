@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 import { ButtonRecord } from "@/components/custom/button-record";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
@@ -76,6 +77,9 @@ export function QuickSpeakingTest() {
   };
 
   const handleToggleRecording = async () => {
+    // Capture PostHog event for starting/stopping recording
+    posthog.capture("A Quick Test Started", { property: "quick-test-started" });
+
     if (isRecording) {
       stopRecording();
     } else {

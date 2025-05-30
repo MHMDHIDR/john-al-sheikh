@@ -19,15 +19,21 @@ const config = {
   async rewrites() {
     return [
       {
-        source: "/js/script.js",
-        destination: "https://datafa.st/js/script.js",
+        source: "/ingest/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/api/events",
-        destination: "https://datafa.st/api/events",
+        source: "/ingest/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+      },
+      {
+        source: "/ingest/decide",
+        destination: "https://eu.i.posthog.com/decide",
       },
     ];
   },
+  // This is required to support PostHog trailing slash API requests
+  skipTrailingSlashRedirect: true,
   devIndicators: false,
 };
 

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
+import posthog from "posthog-js";
 import { Resend as ResendEmail } from "resend";
 import { WelcomeEmailTemplate } from "@/components/custom/welcome-email";
 import { env } from "@/env";
@@ -203,6 +204,9 @@ export const authConfig = {
           return false;
         }
       }
+
+      // Capture sign-in event with PostHog
+      posthog.identify();
 
       return true;
     },

@@ -24,6 +24,8 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PRICE_ID_5: z.string().min(1),
     NEXT_PUBLIC_STRIPE_PRICE_ID_15: z.string().min(1),
     NEXT_PUBLIC_STRIPE_PRICE_ID_20: z.string().min(1),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
   },
   runtimeEnv: {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL,
@@ -45,6 +47,8 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PRICE_ID_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_5,
     NEXT_PUBLIC_STRIPE_PRICE_ID_15: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_15,
     NEXT_PUBLIC_STRIPE_PRICE_ID_20: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_20,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
