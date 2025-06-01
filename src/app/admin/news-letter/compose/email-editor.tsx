@@ -14,6 +14,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Check, Loader2, Users } from "lucide-react";
 import { useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
+import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { EditorMenu } from "@/components/custom/editor-menu";
 import { EmailPreview } from "@/components/custom/email-preview";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,8 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   const [selectedRecipients, setSelectedRecipients] =
     useState<Array<{ email: string; name: string }>>(emailList);
   const [isRecipientsDialogOpen, setIsRecipientsDialogOpen] = useState(false);
+  const [confirmSendDialog, setConfirmSendDialog] = useState(false);
+
   const { success, error: errorToast } = useToast();
 
   const sendNewsletter = api.subscribedEmails.sendNewsletter.useMutation({
@@ -326,7 +329,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
 
           {!isPreview && (
             <Button
-              onClick={handleSend}
+              onClick={() => setConfirmSendDialog(true)}
               disabled={sendNewsletter.isPending || !isFormValid}
               variant="default"
               className="min-w-[120px]"
@@ -369,6 +372,26 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           </div>
         </div>
       )}
+
+      <ConfirmationDialog
+        open={confirmSendDialog}
+        onOpenChange={setConfirmSendDialog}
+        title="إرسال النشرة البريدية"
+        description={
+          <div className="flex flex-col text-right">
+            <p>
+              سيتم إرسال النشرة البريدية إلى{" "}
+              <strong className="text-black">{selectedRecipients.length}</strong> مشترك
+            </p>
+            <strong className="text-pretty text-black mt-3">
+              هل أنت متأكد من إرسال النشرة البريدية؟
+            </strong>
+          </div>
+        }
+        buttonText="إرسال النشرة"
+        buttonClass="bg-green-600 hover:bg-green-700"
+        onConfirm={handleSend}
+      />
     </div>
   );
 }

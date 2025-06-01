@@ -37,10 +37,19 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { formatCompactDate } from "@/lib/format-date";
 import { api } from "@/trpc/react";
+import type { ButtonProps } from "@/components/ui/button";
 import type { Editor } from "@tiptap/core";
 
 interface EditorMenuProps {
   editor: Editor;
+}
+
+interface EditorButtonProps extends ButtonProps {
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+  tooltip?: string;
 }
 
 // Reusable button component for editor actions
@@ -50,13 +59,8 @@ const EditorButton = ({
   disabled,
   children,
   tooltip,
-}: {
-  onClick: () => void;
-  isActive?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  tooltip?: string;
-}) => (
+  ...props
+}: EditorButtonProps) => (
   <Button
     variant="ghost"
     size="sm"
@@ -68,6 +72,7 @@ const EditorButton = ({
     disabled={disabled}
     title={tooltip}
     type="button"
+    {...props}
   >
     {children}
   </Button>
@@ -582,8 +587,13 @@ export function EditorMenu({ editor }: EditorMenuProps) {
       <EditorButton
         onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
         tooltip="مسح التنسيق"
+        variant={"destructive"}
+        className="w-fit"
       >
-        <Trash2 className="size-4" />
+        <span className="inline-flex w-fit items-center gap-1">
+          مسح التنسيق
+          <Trash2 className="size-4" />
+        </span>
       </EditorButton>
     </div>
   );
