@@ -2,9 +2,9 @@
 
 import { IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
-import { Fingerprint } from "lucide-react";
+// import { Fingerprint } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { signIn as signInWithPasskey } from "next-auth/webauthn";
+// import { signIn as signInWithPasskey } from "next-auth/webauthn";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState, useState } from "react";
@@ -40,31 +40,31 @@ export default function SiginForm() {
     await signIn("google", { callbackUrl });
   };
 
-  const handlePasskeySignIn = async () => {
-    try {
-      setIsPasskeyLoading(true);
-      setPasskeyError(null);
-      await signInWithPasskey("passkey", {
-        callbackUrl,
-        redirect: true,
-      });
-    } catch (error) {
-      console.error("Passkey authentication error:", error);
-      if (error instanceof Error) {
-        if (error.name === "NotAllowedError") {
-          setPasskeyError("تم إلغاء عملية المصادقة أو انتهت مهلة الوقت");
-        } else if (error.name === "NotSupportedError") {
-          setPasskeyError("متصفحك لا يدعم مفتاح المرور");
-        } else if (error.name === "SecurityError") {
-          setPasskeyError("يرجى التأكد من استخدام HTTPS");
-        } else {
-          setPasskeyError("حدث خطأ أثناء المصادقة. يرجى المحاولة مرة أخرى");
-        }
-      }
-    } finally {
-      setIsPasskeyLoading(false);
-    }
-  };
+  // const handlePasskeySignIn = async () => {
+  //   try {
+  //     setIsPasskeyLoading(true);
+  //     setPasskeyError(null);
+  //     await signInWithPasskey("passkey", {
+  //       callbackUrl,
+  //       redirect: true,
+  //     });
+  //   } catch (error) {
+  //     console.error("Passkey authentication error:", error);
+  //     if (error instanceof Error) {
+  //       if (error.name === "NotAllowedError") {
+  //         setPasskeyError("تم إلغاء عملية المصادقة أو انتهت مهلة الوقت");
+  //       } else if (error.name === "NotSupportedError") {
+  //         setPasskeyError("متصفحك لا يدعم مفتاح المرور");
+  //       } else if (error.name === "SecurityError") {
+  //         setPasskeyError("يرجى التأكد من استخدام HTTPS");
+  //       } else {
+  //         setPasskeyError("حدث خطأ أثناء المصادقة. يرجى المحاولة مرة أخرى");
+  //       }
+  //     }
+  //   } finally {
+  //     setIsPasskeyLoading(false);
+  //   }
+  // };
 
   return (
     <div className="flex flex-col items-center gap-y-2">
@@ -84,7 +84,7 @@ export default function SiginForm() {
             <GoogleIcon className="mx-1" />
             المتابعة بإستخدام Google
           </Button>
-          <Button
+          {/*<Button
             onClick={handlePasskeySignIn}
             variant={"outline"}
             className="w-full cursor-pointer h-10"
@@ -96,7 +96,7 @@ export default function SiginForm() {
               <Fingerprint className="mx-1" />
             )}
             المتابعة بإستخدام مفتاح المرور
-          </Button>
+          </Button> */}
           {passkeyError && <p className="text-sm text-red-500 text-center mt-2">{passkeyError}</p>}
 
           <Divider className="my-5" textClassName="bg-card!">
