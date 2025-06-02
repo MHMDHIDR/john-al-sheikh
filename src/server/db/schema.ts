@@ -262,11 +262,32 @@ export const subscribedEmails = createTable("subscribed_emails", {
 
 export type SubscribedEmail = typeof subscribedEmails.$inferSelect;
 
+// Authenticator table for Passkeys
+export const authenticators = createTable("authenticator", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  credentialID: varchar("credential_id", { length: 255 }).notNull().unique(),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+  credentialPublicKey: text("credential_public_key").notNull(),
+  counter: integer("counter").notNull(),
+  credentialDeviceType: varchar("credential_device_type", { length: 255 }).notNull(),
+  credentialBackedUp: boolean("credential_backed_up").notNull(),
+  transports: varchar("transports", { length: 255 }),
+});
+
+export type Authenticator = typeof authenticators.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   speakingTests: many(speakingTests),
   creditTransactions: many(creditTransactions),
+  authenticators: many(authenticators),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -295,4 +316,8 @@ export const creditTransactionsRelations = relations(creditTransactions, ({ one 
     fields: [creditTransactions.speakingTestId],
     references: [speakingTests.id],
   }),
+}));
+
+export const authenticatorsRelations = relations(authenticators, ({ one }) => ({
+  user: one(users, { fields: [authenticators.userId], references: [users.id] }),
 }));

@@ -4,11 +4,13 @@ import OnboardingForm from "./onboarding-form";
 
 export default async function OnboardingPage() {
   const session = await auth();
+  const profileCompleted = session?.user?.profileCompleted;
+
   if (!session) {
     redirect("/signin?callbackUrl=/onboarding");
   }
 
-  if (session.user.profileCompleted) {
+  if (profileCompleted) {
     redirect("/account");
   }
 

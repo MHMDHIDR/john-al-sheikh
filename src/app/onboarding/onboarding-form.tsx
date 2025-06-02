@@ -62,13 +62,12 @@ export default function OnboardingForm({ session }: { session: Session }) {
   // Create proper default values with all required fields
   const getDefaultValues = useCallback(() => {
     const displayName = session?.user?.name ?? "";
-    const generatedUsername = displayName
-      ? generateUsername(displayName)
-      : (session?.user.email?.split("@")[0] ?? "");
+    const emailFirstPart = session?.user?.email?.split("@")[0];
+    const generatedUsername = displayName ? generateUsername(displayName) : emailFirstPart;
 
     return {
       displayName,
-      username: generatedUsername || "user", // Ensure we have at least 3 chars
+      username: generatedUsername ?? "user", // Ensure we have at least 3 chars
       gender: undefined as "male" | "female" | undefined,
       goalBand: 5.0,
       hobbies: [] as string[],

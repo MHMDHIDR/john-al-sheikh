@@ -2,10 +2,12 @@
 
 import { IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
+import { Fingerprint } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { signIn as signInWithPasskey } from "next-auth/webauthn";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { GoogleIcon } from "@/components/custom/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -31,13 +33,38 @@ export default function SiginForm() {
     },
   );
 
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+
   const handleGoogleSignIn = async () => {
     await signIn("google", { callbackUrl });
   };
 
-  // const handleTwitterSignIn = async () => {
-  //   await signIn("twitter", { callbackUrl });
-  // };
+  const handlePasskeySignIn = async () => {
+    try {
+      setIsPasskeyLoading(true);
+      setPasskeyError(null);
+      await signInWithPasskey("passkey", {
+        callbackUrl,
+        redirect: true,
+      });
+    } catch (error) {
+      console.error("Passkey authentication error:", error);
+      if (error instanceof Error) {
+        if (error.name === "NotAllowedError") {
+          setPasskeyError("تم إلغاء عملية المصادقة أو انتهت مهلة الوقت");
+        } else if (error.name === "NotSupportedError") {
+          setPasskeyError("متصفحك لا يدعم مفتاح المرور");
+        } else if (error.name === "SecurityError") {
+          setPasskeyError("يرجى التأكد من استخدام HTTPS");
+        } else {
+          setPasskeyError("حدث خطأ أثناء المصادقة. يرجى المحاولة مرة أخرى");
+        }
+      }
+    } finally {
+      setIsPasskeyLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center gap-y-2">
@@ -55,16 +82,22 @@ export default function SiginForm() {
             className="w-full cursor-pointer h-10"
           >
             <GoogleIcon className="mx-1" />
-            المتابعة عن طريق حساب Google
+            المتابعة بإستخدام Google
           </Button>
-          {/* <Button
-            onClick={handleTwitterSignIn}
+          <Button
+            onClick={handlePasskeySignIn}
             variant={"outline"}
             className="w-full cursor-pointer h-10"
+            disabled={isPasskeyLoading}
           >
-            <IconBrandX className="mx-1" />
-            المتابعة عن طريق حساب Twitter
-          </Button> */}
+            {isPasskeyLoading ? (
+              <IconLoader className="mx-1 animate-spin" />
+            ) : (
+              <Fingerprint className="mx-1" />
+            )}
+            المتابعة بإستخدام مفتاح المرور
+          </Button>
+          {passkeyError && <p className="text-sm text-red-500 text-center mt-2">{passkeyError}</p>}
 
           <Divider className="my-5" textClassName="bg-card!">
             أو

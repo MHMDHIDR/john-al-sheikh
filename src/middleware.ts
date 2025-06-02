@@ -1,8 +1,5 @@
-import { eq } from "drizzle-orm";
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
-import { db } from "@/server/db";
-import { users } from "@/server/db/schema";
 import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
@@ -25,21 +22,6 @@ export async function middleware(req: NextRequest) {
   // Skip middleware for non-authenticated users or public paths
   if (!token || isPublicPath) {
     return NextResponse.next();
-  }
-
-  // Check if user profile is complete
-  try {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, token.sub!),
-    });
-
-    // Redirect to onboarding if profile is not complete
-    if (user && !user.profileCompleted) {
-      const url = new URL("/onboarding", req.url);
-      return NextResponse.redirect(url);
-    }
-  } catch (error) {
-    console.error("Error checking profile completion:", error);
   }
 
   return NextResponse.next();
