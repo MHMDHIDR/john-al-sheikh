@@ -69,7 +69,14 @@ export function WelcomeEmailTemplate({
               مرحباً {name}،
             </Heading>
             {customContent ? (
-              <div dangerouslySetInnerHTML={{ __html: customContent }} />
+              <>
+                <div dangerouslySetInnerHTML={{ __html: customContent }} />
+                {ctaButtonLabel && (
+                  <Button href={signupUrl} style={ctaButton}>
+                    {ctaButtonLabel}
+                  </Button>
+                )}
+              </>
             ) : (
               <>
                 <Text style={paragraph}>

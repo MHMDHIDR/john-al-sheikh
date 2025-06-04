@@ -21,22 +21,22 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
 
   const utils = api.useUtils();
 
-  const updateUserMutation = api.users.update.useMutation({
+  const deleteSubscriberMutation = api.subscribedEmails.deleteSubscriber.useMutation({
     onSuccess: async () => {
-      toast.success("تم تحديث حالة المشترك بنجاح");
+      toast.success("تم حذف المشترك بنجاح");
       await utils.subscribedEmails.getSubscribers.invalidate();
       router.refresh();
     },
     onError: error => {
-      toast.error(`فشل تحديث حالة المشترك: ${error.message}`);
+      toast.error(`فشل حذف المشترك: ${error.message}`);
     },
     onMutate: () => {
-      toast.loading("يتم تحديث حالة المشترك...");
+      toast.loading("يتم حذف المشترك من القائمة البريدية...");
     },
   });
 
   const handleDelete = () => {
-    updateUserMutation.mutate({ email: user.email, deletedAt: new Date() });
+    deleteSubscriberMutation.mutate({ name: user.fullname, email: user.email });
   };
 
   return (

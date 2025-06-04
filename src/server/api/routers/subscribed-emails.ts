@@ -105,4 +105,41 @@ export const subscribedEmailsRouter = createTRPCRouter({
       });
     }
   }),
+
+  deleteSubscriber: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        email: z.string().email(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.db
+          .delete(subscribedEmails)
+          .where(eq(subscribedEmails.email, input.email))
+          .returning({ email: subscribedEmails.email });
+        // Optionally, you can send a confirmation email or log the deletion
+        const resend = new Resend(env.AUTH_RESEND_KEY);
+        await resend.emails.send({
+          from: env.ADMIN_EMAIL,
+          to: input.email,
+          subject: "تم حذف اشتراكك",
+          react: WelcomeEmailTemplate({
+            name: input.name,
+            customContent: `لقد تم حذف اشتراكك من القائمة البريدية من منصة ${env.NEXT_PUBLIC_APP_NAME}. إذا كنت ترغب في إعادة الاشتراك، يمكنك زيارة الرابط أدناه.`,
+            signupUrl: `${env.NEXT_PUBLIC_APP_URL}/subscribe`,
+            ctaButtonLabel: "إعادة الاشتراك",
+          }),
+        });
+
+        return { success: true };
+      } catch (error) {
+        console.error("Delete subscriber error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "حدث خطأ أثناء حذف المشترك",
+        });
+      }
+    }),
 });
