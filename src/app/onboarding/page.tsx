@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
+import { api } from "@/trpc/server";
 import OnboardingForm from "./onboarding-form";
 
 export default async function OnboardingPage() {
@@ -14,5 +15,7 @@ export default async function OnboardingPage() {
     redirect("/account");
   }
 
-  return <OnboardingForm session={session} />;
+  const profileData = await api.users.checkProfileCompletion();
+
+  return <OnboardingForm session={session} profileData={profileData} />;
 }

@@ -32,7 +32,10 @@ import { hobbiesList } from "@/lib/constants";
 import { api } from "@/trpc/react";
 import { onboardingSchema } from "../schemas/onboarding";
 import type { OnboardingForm } from "../schemas/onboarding";
+import type { RouterOutputs } from "@/trpc/react";
 import type { Session } from "next-auth";
+
+type ProfileData = RouterOutputs["users"]["checkProfileCompletion"];
 
 // Generate a username from display name
 function generateUsername(name: string) {
@@ -46,7 +49,13 @@ function generateUsername(name: string) {
     .replace(/[^\w\d_.-]/gi, ""); // Only allow English letters, numbers, and some symbols
 }
 
-export default function OnboardingForm({ session }: { session: Session }) {
+export default function OnboardingForm({
+  session,
+  profileData,
+}: {
+  session: Session;
+  profileData: ProfileData;
+}) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { success: toastSuccess, error: toastError } = useToast();
@@ -56,8 +65,6 @@ export default function OnboardingForm({ session }: { session: Session }) {
   const { mutateAsync: optimizeImage } = api.optimizeImage.optimizeImage.useMutation();
   const { mutateAsync: uploadFiles } = api.S3.uploadFiles.useMutation();
   const { mutateAsync: onboardUser } = api.users.onboardUser.useMutation();
-  const { data: profileData, isLoading: isProfileLoading } =
-    api.users.checkProfileCompletion.useQuery(undefined, { retry: false });
 
   // Create proper default values with all required fields
   const getDefaultValues = useCallback(() => {
@@ -227,17 +234,6 @@ export default function OnboardingForm({ session }: { session: Session }) {
       toastError(error instanceof Error ? error.message : "حدث خطأ أثناء إكمال الملف الشخصي");
     }
   };
-
-  if (isProfileLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-900 border-t-transparent mx-auto"></div>
-          <p className="mt-2">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white p-4">

@@ -445,12 +445,8 @@ const FullSpeakingRecorderButton = forwardRef<
       conversationTimerRef.current = setTimeout(() => {
         // Set the test to completed state which will trigger the end sequence
         setIsTestCompleted(true);
-
-        // End the session after a short delay to allow for final processing
-        setTimeout(() => {
-          endSession();
-        }, 5000); // Wait 5 seconds before ending the session
-      }, GENERAL_ENGLISH_CONVERSATION_TIME - 5000); // End 5 seconds before the limit
+        endSession();
+      }, GENERAL_ENGLISH_CONVERSATION_TIME);
     }
 
     // Cleanup timer on unmount or status change
