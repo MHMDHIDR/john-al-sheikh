@@ -188,7 +188,10 @@ export default function FullSpeakingRecorderWaves({ isConnected }: FullSpeakingR
 
   return (
     <div className="flex relative flex-col items-center">
-      <label className="relative flex size-40 items-center justify-center rounded-full bg-accent-foreground hover:bg-accent-foreground/90 transition-colors shadow-lg cursor-pointer">
+      <label
+        className="relative flex size-40 items-center justify-center rounded-full bg-accent-foreground hover:bg-accent-foreground/90 transition-colors shadow-lg cursor-pointer"
+        htmlFor="start-conversation-button"
+      >
         {isConnected && !isMuted && (
           <div
             className="mt-0 flex h-72 w-88 items-center justify-center absolute -z-10"

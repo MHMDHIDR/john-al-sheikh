@@ -2,7 +2,6 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import Passkey from "next-auth/providers/passkey";
 import Resend from "next-auth/providers/resend";
 import posthog from "posthog-js";
 import { Resend as ResendEmail } from "resend";
@@ -82,10 +81,6 @@ export const authConfig = {
           throw error;
         }
       },
-    }),
-    Passkey({
-      name: "Passkey",
-      id: "passkey",
     }),
   ],
   pages: { signIn: "/signin", error: "/signin" },

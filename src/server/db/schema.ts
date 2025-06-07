@@ -63,7 +63,7 @@ export const users = createTable("user", {
   hobbies: jsonb("hobbies").$type<string[]>(),
   goalBand: decimal("goal_band", { precision: 3, scale: 1 }).$type<number>().default(5),
   currentBand: decimal("current_band", { precision: 3, scale: 1 }).$type<number>().default(0),
-  credits: integer("credits").notNull().default(0),
+  credits: integer("credits").notNull().default(1),
   role: userRoleEnum("role").notNull().default("USER"),
   status: userStatusEnum("status").notNull().default("PENDING"),
   emailVerified: timestamp("email_verified", {

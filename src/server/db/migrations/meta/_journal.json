@@ -29,6 +29,13 @@
       "when": 1748906033912,
       "tag": "0003_fresh_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749323577646,
+      "tag": "0004_military_mathemanic",
+      "breakpoints": true
     }
   ]
 }

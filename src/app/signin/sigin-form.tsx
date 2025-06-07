@@ -2,12 +2,10 @@
 
 import { IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
-// import { Fingerprint } from "lucide-react";
 import { signIn } from "next-auth/react";
-// import { signIn as signInWithPasskey } from "next-auth/webauthn";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { GoogleIcon } from "@/components/custom/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -32,9 +30,6 @@ export default function SiginForm() {
       callbackUrl,
     },
   );
-
-  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
-  const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     await signIn("google", { callbackUrl });
@@ -84,20 +79,6 @@ export default function SiginForm() {
             <GoogleIcon className="mx-1" />
             المتابعة بإستخدام Google
           </Button>
-          {/*<Button
-            onClick={handlePasskeySignIn}
-            variant={"outline"}
-            className="w-full cursor-pointer h-10"
-            disabled={isPasskeyLoading}
-          >
-            {isPasskeyLoading ? (
-              <IconLoader className="mx-1 animate-spin" />
-            ) : (
-              <Fingerprint className="mx-1" />
-            )}
-            المتابعة بإستخدام مفتاح المرور
-          </Button> */}
-          {passkeyError && <p className="text-sm text-red-500 text-center mt-2">{passkeyError}</p>}
 
           <Divider className="my-5" textClassName="bg-card!">
             أو

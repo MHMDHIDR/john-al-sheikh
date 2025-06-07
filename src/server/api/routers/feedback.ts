@@ -55,7 +55,7 @@ export const feedbackRouter = createTRPCRouter({
         to: "ahmed.elsir.khalfalla@gmail.com",
         cc: "mr.hamood277@gmail.com",
         text: "",
-        subject: `New Feedback: ${input.subject}`,
+        subject: `${env.NEXT_PUBLIC_APP_NAME} Feedback: ${input.subject}`,
         react: FeedbackEmailTemplate({
           name: input.name,
           email: input.email,

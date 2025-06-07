@@ -6,6 +6,7 @@ import { Providers } from "./providers";
 import { ThemeProvider } from "./providers/theme-provider";
 import "@/styles/globals.css";
 import { Geist, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { env } from "@/env";
 import type { Metadata } from "next";
 
 const geist = Geist({
@@ -19,12 +20,37 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   variable: "--font-ibm-plex-arabic",
 });
 
-export const metadata: Metadata = {
-  title: "John Al-Shiekh – IELTS Speaking Practice with Instant Feedback",
-  description:
-    "Enhance your IELTS speaking skills with John Al-Shiekh's AI-powered platform. Engage in realistic mock interviews and receive instant, detailed feedback to boost your performance.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const title = env.NEXT_PUBLIC_APP_NAME;
+  const description = env.NEXT_PUBLIC_APP_DESCRIPTION;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: env.NEXT_PUBLIC_APP_URL,
+      siteName: title,
+      images: [
+        {
+          url: `${env.NEXT_PUBLIC_APP_URL}/opengraph-image.png`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`${env.NEXT_PUBLIC_APP_URL}/opengraph-image.png`],
+      creator: "https://www.linkedin.com/in/mohammedhaydar",
+    },
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
