@@ -187,7 +187,6 @@ export const pageContent = createTable("page_content", {
   type: contentTypeEnum("type").notNull(),
   content: text("content").notNull(),
   isPublished: boolean("is_published").notNull().default(false),
-  publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdById: varchar("created_by_id", { length: 255 })

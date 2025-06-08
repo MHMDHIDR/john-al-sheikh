@@ -46,8 +46,8 @@ export const pageContentRouter = createTRPCRouter({
           type: input.type,
           content: input.content,
           isPublished: input.isPublished ?? true,
-          publishedAt: new Date(),
           createdById: ctx.session.user.id,
+          updatedAt: new Date(),
         })
         .where(eq(pageContent.id, latest.id));
     }),

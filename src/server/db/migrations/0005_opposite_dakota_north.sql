@@ -1,0 +1,1 @@
+ALTER TABLE "jas_page_content" DROP COLUMN "published_at";

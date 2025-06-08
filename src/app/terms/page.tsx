@@ -25,6 +25,13 @@ export default async function TermsPage() {
     ? checkRoleAccess(session.user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
     : false;
 
+  const LAST_UPDATED_DATE_OPTIONS = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  } as Intl.DateTimeFormatOptions;
+
   return (
     <div className="container mx-auto px-4 py-8 mb-20 max-w-[800px]" dir="rtl">
       <Link
@@ -36,6 +43,11 @@ export default async function TermsPage() {
       </Link>
 
       <h1 className="text-center text-2xl font-bold my-6">الشروط والأحكام</h1>
+
+      <p className="mb-4" data-page-content-intro>
+        آخر تحديث:{" "}
+        {new Date(content.updatedAt).toLocaleDateString("ar-SA", LAST_UPDATED_DATE_OPTIONS)}
+      </p>
 
       <p className="mb-2" data-page-content-intro>
         مرحبًا بك في <strong>{env.NEXT_PUBLIC_APP_NAME}</strong>! باستخدام خدمتنا، فإنك توافق على
