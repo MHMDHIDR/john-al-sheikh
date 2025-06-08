@@ -42,8 +42,8 @@ export default async function DashboardPage({
   }
 
   const stats = await api.users.getUserTestStats();
-  const credits = await api.payments.getUserCredits();
   const testHistory = await api.users.getUserTestHistory();
+  const credits = await api.payments.getUserCredits();
   const isEnoughCredits = credits > 0;
 
   // Get trend indicator (up, down, or neutral)

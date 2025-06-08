@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
+import { api } from "@/trpc/server";
 
 export default async function Home() {
   const session = await auth();
@@ -16,6 +17,9 @@ export default async function Home() {
   if (session && !isProfileCompleted) {
     redirect("/onboarding");
   }
+
+  const credits = await api.payments.getUserCredits();
+  const isEnoughCredits = credits > 0;
 
   return (
     <main className="relative select-none max-xs:-my-10 -my-20 flex h-screen px-3 flex-col items-center justify-center overflow-hidden">
@@ -40,7 +44,7 @@ export default async function Home() {
           <HomePageInteractiveGridPattern />
           <Card
             className="z-10 w-full border m-4 md:mt-40 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
-            href="/mock-test"
+            href={isEnoughCredits ? "/mock-test" : "/buy-credits"}
             asLink
           >
             <CardHeader className="relative pb-2">
@@ -63,7 +67,7 @@ export default async function Home() {
 
           <Card
             className="z-10 w-full border m-4 md:mt-40 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
-            href="/general-english"
+            href={isEnoughCredits ? "/general-english" : "/buy-credits"}
             asLink
           >
             <CardHeader className="relative pb-2">
