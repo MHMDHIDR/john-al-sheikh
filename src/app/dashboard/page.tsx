@@ -42,8 +42,9 @@ export default async function DashboardPage({
   }
 
   const stats = await api.users.getUserTestStats();
-  const credits = await api.users.getUserCredits();
+  const credits = await api.payments.getUserCredits();
   const testHistory = await api.users.getUserTestHistory();
+  const isEnoughCredits = credits > 0;
 
   // Get trend indicator (up, down, or neutral)
   const getTrendIndicator = () => {
@@ -89,7 +90,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent />
             <CardFooter className="flex gap-2 flex-col">
-              <Link href="/mock-test" className="w-full">
+              <Link href={isEnoughCredits ? "/mock-test" : "/buy-credits"} className="w-full">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
                 </Button>
@@ -97,7 +98,7 @@ export default async function DashboardPage({
               <Divider className="my-1" textClassName="bg-card!">
                 أو
               </Divider>
-              <Link href="/general-english" className="w-full">
+              <Link href={isEnoughCredits ? "/general-english" : "/buy-credits"} className="w-full">
                 <Button variant="outline" className="w-full">
                   محادثة عامة بالإنجليزي
                 </Button>
@@ -246,7 +247,7 @@ export default async function DashboardPage({
             ) : (
               <div className="text-center py-10">
                 <p className="text-gray-500 mb-4">لم تقم بإجراء أي اختبارات محادثة بعد</p>
-                <Link href="/mock-test" className="w-full">
+                <Link href={isEnoughCredits ? "/mock-test" : "/buy-credits"} className="w-full">
                   <Button variant="outline" className="w-full">
                     ابدأ اختبار محادثة جديد
                   </Button>
@@ -254,7 +255,10 @@ export default async function DashboardPage({
                 <Divider className="my-5" textClassName="bg-card!">
                   أو
                 </Divider>
-                <Link href="/general-english" className="w-full">
+                <Link
+                  href={isEnoughCredits ? "/general-english" : "/buy-credits"}
+                  className="w-full"
+                >
                   <Button variant="outline" className="w-full">
                     محادثة عامة بالإنجليزي
                   </Button>
@@ -264,7 +268,7 @@ export default async function DashboardPage({
           </CardContent>
           {testHistory && testHistory.length > 0 && (
             <CardFooter className="flex max-sm:px-2 gap-2 flex-col md:flex-row">
-              <Link href="/mock-test" className="w-full">
+              <Link href={isEnoughCredits ? "/mock-test" : "/buy-credits"} className="w-full">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
                 </Button>
@@ -272,7 +276,7 @@ export default async function DashboardPage({
               <Divider className="my-5" textClassName="bg-card!">
                 أو
               </Divider>
-              <Link href="/general-english" className="w-full">
+              <Link href={isEnoughCredits ? "/general-english" : "/buy-credits"} className="w-full">
                 <Button variant="outline" className="w-full">
                   محادثة عامة بالإنجليزي
                 </Button>

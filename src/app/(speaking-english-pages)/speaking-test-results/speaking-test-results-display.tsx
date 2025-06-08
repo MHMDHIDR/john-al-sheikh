@@ -39,7 +39,7 @@ type Results = {
   improvementTips?: string[];
 };
 
-export default function SpeakingTestResults() {
+export default function SpeakingTestResults({ credits }: { credits: number }) {
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -74,7 +74,8 @@ export default function SpeakingTestResults() {
   const pageTitle = isGeneralEnglish
     ? "نتائج محادثة اللغة الإنجليزية العامة"
     : "نتائج اختبار المحادثة";
-  const returnLink = isGeneralEnglish ? "/general-english" : "/mock-test";
+  const returnLink =
+    credits <= 0 ? "/buy-credits" : isGeneralEnglish ? "/general-english" : "/mock-test";
 
   return (
     <main

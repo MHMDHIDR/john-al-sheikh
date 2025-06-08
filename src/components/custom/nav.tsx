@@ -7,6 +7,7 @@ import AccountNav from "@/components/custom/accunt-nav";
 import { Logo } from "@/components/custom/icons";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
+import { api } from "@/trpc/react";
 import type { Session } from "next-auth";
 
 export default function Nav({
@@ -20,6 +21,7 @@ export default function Nav({
   const pathname = usePathname();
   const { data: session } = useSession();
   const currentUser = session?.user ?? user;
+  const { data: credits } = api.payments.getUserCredits.useQuery();
 
   return pathname.includes("/admin") && isHidden ? null : (
     <header className="w-full border-b border-primary/20 shadow-xs sticky top-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md">
@@ -33,7 +35,7 @@ export default function Nav({
         </Link>
         <nav className="flex items-center gap-4">
           {user ? (
-            <AccountNav user={currentUser!} />
+            <AccountNav user={currentUser!} credits={credits ?? 0} />
           ) : (
             <Link href="/signin">
               <Button className="cursor-pointer select-none" variant="default">

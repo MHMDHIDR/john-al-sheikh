@@ -19,7 +19,6 @@ export type ConversationModeType = "mock-test" | "general-english";
 
 type ConversationUIProps = {
   user: UserProfile;
-  isFreeTrialEnded: boolean;
   mode: ConversationModeType;
   title?: string;
 };
@@ -30,7 +29,6 @@ const LatestMessage = dynamic(() => import("@/components/custom/latest-message")
 
 export default function ConversationUI({
   user,
-  isFreeTrialEnded,
   mode,
   title = "اختبار المحادثة",
 }: ConversationUIProps) {
@@ -93,12 +91,7 @@ export default function ConversationUI({
       <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 dark:bg-black/50 py-2 backdrop-blur-md flex flex-col">
         <LatestMessage message={latestMessage} />
         <div className="flex flex-col items-center gap-4 select-none px-4">
-          <FullSpeakingRecorderButton
-            ref={recorderRef}
-            user={user}
-            isFreeTrialEnded={isFreeTrialEnded}
-            mode={mode}
-          />
+          <FullSpeakingRecorderButton ref={recorderRef} user={user} mode={mode} />
         </div>
       </div>
     </main>

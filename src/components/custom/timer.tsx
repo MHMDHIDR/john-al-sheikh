@@ -3,30 +3,25 @@ import { memo, useEffect, useRef, useState } from "react";
 type TimerProps = {
   isRunning: boolean;
   onTimeUp: () => void;
-  totalSeconds: number;
+  startTime: number; // timestamp in ms
+  duration: number; // duration in ms
   mode: "preparation" | "recording" | "general-english";
 };
 
 // Using memo to prevent unnecessary rerenders
-export const Timer = memo(function Timer({ isRunning, onTimeUp, totalSeconds, mode }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(totalSeconds);
-  const prevRunningRef = useRef(false);
+export const Timer = memo(function Timer({
+  isRunning,
+  onTimeUp,
+  startTime,
+  duration,
+  mode,
+}: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(
+    Math.max(0, Math.ceil((startTime + duration - Date.now()) / 1000)),
+  );
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
-  const initializedRef = useRef(false);
 
-  // Only reset time when isRunning changes from false to true or on first initialization
   useEffect(() => {
-    if (!initializedRef.current || (isRunning && !prevRunningRef.current)) {
-      setTimeLeft(totalSeconds);
-      initializedRef.current = true;
-    }
-
-    prevRunningRef.current = isRunning;
-  }, [isRunning, totalSeconds]);
-
-  // Use a separate effect for the countdown logic
-  useEffect(() => {
-    // Don't set up interval if not running
     if (!isRunning) {
       if (intervalIdRef.current) {
         clearInterval(intervalIdRef.current);
@@ -35,30 +30,29 @@ export const Timer = memo(function Timer({ isRunning, onTimeUp, totalSeconds, mo
       return;
     }
 
-    // Use a simple interval to count down
+    // Update immediately in case of re-mount or prop change
+    setTimeLeft(Math.max(0, Math.ceil((startTime + duration - Date.now()) / 1000)));
+
     intervalIdRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        // Handle reaching zero
-        if (prev <= 1) {
-          if (intervalIdRef.current) {
-            clearInterval(intervalIdRef.current);
-            intervalIdRef.current = null;
-          }
-          setTimeout(onTimeUp, 0); // Use setTimeout to avoid state update issues
-          return 0;
+      const remaining = Math.max(0, Math.ceil((startTime + duration - Date.now()) / 1000));
+      setTimeLeft(remaining);
+
+      if (remaining <= 0) {
+        if (intervalIdRef.current) {
+          clearInterval(intervalIdRef.current);
+          intervalIdRef.current = null;
         }
-        return prev - 1;
-      });
+        setTimeout(onTimeUp, 0);
+      }
     }, 1000);
 
-    // Clean up on unmount or when dependencies change
     return () => {
       if (intervalIdRef.current) {
         clearInterval(intervalIdRef.current);
         intervalIdRef.current = null;
       }
     };
-  }, [isRunning, onTimeUp]);
+  }, [isRunning, startTime, duration, onTimeUp]);
 
   // Format time
   const minutes = Math.floor(timeLeft / 60);

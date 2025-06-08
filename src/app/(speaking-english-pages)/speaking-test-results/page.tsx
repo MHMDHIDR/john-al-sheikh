@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
+import { api } from "@/trpc/server";
 import SpeakingTestResultsDisplay from "./speaking-test-results-display";
 
 export default async function SpeakingTestResults() {
@@ -10,5 +11,7 @@ export default async function SpeakingTestResults() {
     redirect("/signin?callbackUrl=/speaking-test-results");
   }
 
-  return <SpeakingTestResultsDisplay />;
+  const credits = await api.payments.getUserCredits();
+
+  return <SpeakingTestResultsDisplay credits={credits} />;
 }

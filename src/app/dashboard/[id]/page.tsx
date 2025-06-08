@@ -8,6 +8,7 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   const test = await api.users.getTestById({ testId: id });
+  const credits = await api.payments.getUserCredits();
 
   return !test ? (
     <div className="min-h-screen flex items-center justify-center" dir="rtl">
@@ -27,6 +28,6 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
       </Card>
     </div>
   ) : (
-    <TestDetails details={test} />
+    <TestDetails details={test} credits={credits} />
   );
 }

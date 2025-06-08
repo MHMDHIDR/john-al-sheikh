@@ -190,7 +190,7 @@ export function ButtonRecord({ isRecording, onClick, disabled = false }: RecordB
             <div className="absolute top-0 left-0 size-4 animate-ping rounded-full bg-red-600"></div>
           </div>
         ) : (
-          <Mic className="size-5 text-white" />
+          <Mic className="size-7 text-white" />
         )}
       </button>
 

@@ -219,10 +219,9 @@ const FullSpeakingRecorderButton = forwardRef<
   FullSpeakingRecorderButtonRef,
   {
     user: UserProfile;
-    isFreeTrialEnded: boolean;
     mode?: ConversationModeType;
   }
->(({ user, isFreeTrialEnded, mode = "mock-test" }, ref) => {
+>(({ user, mode = "mock-test" }, ref) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -232,6 +231,7 @@ const FullSpeakingRecorderButton = forwardRef<
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
   const conversationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionStartTimeRef = useRef<number | null>(null);
 
   const userProfile = {
     name: user.name,
@@ -246,14 +246,6 @@ const FullSpeakingRecorderButton = forwardRef<
   const { messages, clearTest, addMessage } = useMockTestStore();
   const { callStatus } = useGlobalVapiConversation();
   const { isMuted, startSession, setVolume, endSession } = useVapiConversation({
-    onConnect: () => {
-      console.info("Connected to IELTS Assistant Agent");
-    },
-    onDisconnect: () => {
-      console.info("Disconnected from IELTS Assistant Agent");
-      // We don't need to call processTestResults here as the useEffect will handle it
-      // This was causing duplicate calls and potential infinite loops
-    },
     onMessage: message => {
       const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
       const timestamp = new Date().toLocaleTimeString();
@@ -263,10 +255,7 @@ const FullSpeakingRecorderButton = forwardRef<
       // Check if this message indicates test completion
       if (role === "examiner" && isTestConclusionMessage(message.content)) {
         setIsTestCompleted(true);
-        // Add a small delay to let the message be processed
         setTimeout(() => {
-          // You could use vapi.send() here if needed
-          // Or use vapi.stop() to end the call after the test is concluded
           vapi.stop();
         }, 5000);
       }
@@ -284,6 +273,7 @@ const FullSpeakingRecorderButton = forwardRef<
           : typeof error === "object" && error !== null && "errorMsg" in error
             ? (error as { errorMsg: string }).errorMsg
             : JSON.stringify(error);
+
       setErrorMessage(
         typeof error === "object" && error !== null && "errorMsg" in error
           ? (error as { errorMsg: string }).errorMsg
@@ -310,7 +300,9 @@ const FullSpeakingRecorderButton = forwardRef<
 
   // Process the test results
   const processTestResults = useCallback(async () => {
-    if (isProcessingResults || messages.length < 3) return; // Make sure we have enough messages
+    if (isProcessingResults || messages.length < 3) {
+      return;
+    }
 
     setIsProcessingResults(true);
 
@@ -364,7 +356,7 @@ const FullSpeakingRecorderButton = forwardRef<
           });
 
           // Deduct credits for the completed test
-          if (savedTest?.id && isFreeTrialEnded) {
+          if (savedTest.id) {
             // Create results object from the new structured feedback
             const results = {
               testId: savedTest?.id,
@@ -421,7 +413,6 @@ const FullSpeakingRecorderButton = forwardRef<
     router,
     user.id,
     isProcessingResults,
-    isFreeTrialEnded,
     mode,
   ]);
 
@@ -434,22 +425,28 @@ const FullSpeakingRecorderButton = forwardRef<
 
   // Conversation timer for general-english mode
   useEffect(() => {
-    // Only start timer if in general-english mode and call is active
-    if (mode === "general-english" && callStatus === CallStatus.ACTIVE) {
-      // Clear any existing timer
-      if (conversationTimerRef.current) {
-        clearTimeout(conversationTimerRef.current);
-      }
-
-      // Set new timer based on the conversation time limit
-      conversationTimerRef.current = setTimeout(() => {
-        // Set the test to completed state which will trigger the end sequence
+    if (
+      mode === "general-english" &&
+      callStatus === CallStatus.ACTIVE &&
+      sessionStartTimeRef.current
+    ) {
+      const elapsed = Date.now() - sessionStartTimeRef.current;
+      const remaining = GENERAL_ENGLISH_CONVERSATION_TIME - elapsed;
+      if (remaining > 0) {
+        conversationTimerRef.current = setTimeout(() => {
+          setIsTestCompleted(true);
+          // Add a small delay before ending the session
+          setTimeout(() => {
+            endSession();
+          }, 1000);
+        }, remaining);
+      } else {
+        // Already expired, end session immediately
         setIsTestCompleted(true);
         endSession();
-      }, GENERAL_ENGLISH_CONVERSATION_TIME);
+      }
     }
 
-    // Cleanup timer on unmount or status change
     return () => {
       if (conversationTimerRef.current) {
         clearTimeout(conversationTimerRef.current);
@@ -491,8 +488,10 @@ const FullSpeakingRecorderButton = forwardRef<
     try {
       setErrorMessage("");
       setIsTestCompleted(false);
-
       clearTest();
+
+      // Set the session start time
+      sessionStartTimeRef.current = Date.now();
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
         silenceTimeoutSeconds: 85, // Allow 1.25 minutes of silence,
@@ -531,8 +530,11 @@ const FullSpeakingRecorderButton = forwardRef<
   useImperativeHandle(ref, () => ({
     stopTest: () => {
       if (callStatus === CallStatus.ACTIVE) {
-        endSession();
         setIsTestCompleted(true);
+        // Add a small delay before ending the session
+        setTimeout(() => {
+          endSession();
+        }, 1000);
       }
     },
   }));
@@ -557,7 +559,8 @@ const FullSpeakingRecorderButton = forwardRef<
                       vapi.setMuted(false);
                       setIsOneMinuteToPrepare(false);
                     }}
-                    totalSeconds={59}
+                    startTime={Date.now()}
+                    duration={MINUTES_IN_MS}
                     mode="preparation"
                   />
                 </div>
@@ -611,7 +614,7 @@ const FullSpeakingRecorderButton = forwardRef<
               )}
             </Button> */}
 
-            {isConnected && mode === "general-english" && (
+            {isConnected && mode === "general-english" && sessionStartTimeRef.current && (
               <Timer
                 isRunning={isConnected}
                 onTimeUp={() => {
@@ -619,7 +622,8 @@ const FullSpeakingRecorderButton = forwardRef<
                   vapi.setMuted(false);
                   setIsOneMinuteToPrepare(false);
                 }}
-                totalSeconds={GENERAL_ENGLISH_CONVERSATION_TIME / 1000}
+                startTime={sessionStartTimeRef.current}
+                duration={GENERAL_ENGLISH_CONVERSATION_TIME}
                 mode="general-english"
               />
             )}

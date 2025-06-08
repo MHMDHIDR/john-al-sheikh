@@ -241,7 +241,7 @@ export const paymentsRouter = createTRPCRouter({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    return { credits: user.credits };
+    return user.credits;
   }),
 
   getTransactionHistory: protectedProcedure.query(async ({ ctx }) => {

@@ -67,7 +67,7 @@ export default function SiginForm() {
         <CardHeader className="md:px-10">
           <h1 className="mb-6 text-2xl font-bold text-center">تسجيل الدخول إلى حسابك</h1>
           <CardDescription className="text-center">
-            تسجيل الدخول للاستمرار في {env.NEXT_PUBLIC_APP_NAME}
+            تسجيل الدخول للاستمرار إلى {env.NEXT_PUBLIC_APP_NAME}
           </CardDescription>
         </CardHeader>
         <CardContent className="md:px-10 space-y-1 md:space-y-2">
@@ -77,7 +77,7 @@ export default function SiginForm() {
             className="w-full cursor-pointer h-10"
           >
             <GoogleIcon className="mx-1" />
-            المتابعة بإستخدام Google
+            تسجيل الدخول بإستخدام Google
           </Button>
 
           <Divider className="my-5" textClassName="bg-card!">

@@ -29,15 +29,32 @@ import { checkRoleAccess } from "@/lib/check-role-access";
 import { fallbackUsername, truncateUsername } from "@/lib/fallback-username";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/server/db/schema";
+import type { AppRouter } from "@/server/api/root";
+import type { inferRouterOutputs } from "@trpc/server";
 import type { Session } from "next-auth";
 
-export default function AccountNav({ user }: { user: Session["user"] }) {
+type AccountNavProps = {
+  user: Session["user"];
+  credits: inferRouterOutputs<AppRouter>["payments"]["getUserCredits"];
+};
+
+export default function AccountNav({ user, credits }: AccountNavProps) {
+  const isEnoughCredits = credits > 0;
+
   const NAV_ITEMS = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
     { href: "/account", icon: IconUser, label: "الحساب" },
     { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
-    { href: "/mock-test", icon: IconSpeakerphone, label: "اختبار المحادثة" },
-    { href: "/general-english", icon: IconPhoneCalling, label: "محادثة عامة بالإنجليزي" },
+    {
+      href: isEnoughCredits ? "/mock-test" : "/buy-credits",
+      icon: IconSpeakerphone,
+      label: "اختبار المحادثة",
+    },
+    {
+      href: isEnoughCredits ? "/general-english" : "/buy-credits",
+      icon: IconPhoneCalling,
+      label: "محادثة عامة بالإنجليزي",
+    },
     { href: "/buy-credits", icon: IconCreditCard, label: "شراء نقاط" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])

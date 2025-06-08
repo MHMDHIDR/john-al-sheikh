@@ -21,11 +21,14 @@ export default async function MockTestPage() {
 
   if (!user.profileCompleted) redirect("/onboarding");
 
-  // Check if user has enough credits AFTER verifying payment
-  const { credits } = await api.payments.getUserCredits();
+  // Check if user has enough credits to proceed with the mock test
+  const credits = await api.payments.getUserCredits();
 
   // If user doesn't have enough credits, redirect to buy-credits page
-  if (credits < 1) redirect("/buy-credits");
+  if (credits < 1) {
+    redirect("/buy-credits");
+    return null;
+  }
 
   const userProfile: UserProfile = {
     id: user.id,
@@ -37,12 +40,5 @@ export default async function MockTestPage() {
     goalBand: user.goalBand ?? 0,
   };
 
-  return (
-    <ConversationUI
-      user={userProfile}
-      isFreeTrialEnded={credits <= 0}
-      mode="mock-test"
-      title="اختبار المحادثة التدريبي"
-    />
-  );
+  return <ConversationUI user={userProfile} mode="mock-test" title="اختبار المحادثة التدريبي" />;
 }
