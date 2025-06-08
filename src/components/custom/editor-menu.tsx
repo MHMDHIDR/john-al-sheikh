@@ -42,6 +42,7 @@ import type { Editor } from "@tiptap/core";
 
 interface EditorMenuProps {
   editor: Editor;
+  isSimpleEditor?: boolean;
 }
 
 interface EditorButtonProps extends ButtonProps {
@@ -110,7 +111,7 @@ const HIGHLIGHT_COLORS = [
   "#FEF7CD",
 ];
 
-export function EditorMenu({ editor }: EditorMenuProps) {
+export function EditorMenu({ editor, isSimpleEditor }: EditorMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
 
@@ -514,29 +515,31 @@ export function EditorMenu({ editor }: EditorMenuProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      <div className="flex items-center gap-1">
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          isActive={editor.isActive("code")}
-          tooltip="كود"
-        >
-          <Code className="size-4" />
-        </EditorButton>
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          isActive={editor.isActive("codeBlock")}
-          tooltip="مربع كود"
-        >
-          <Code2 className="size-4" />
-        </EditorButton>
-        <EditorButton
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive("blockquote")}
-          tooltip="اقتباس"
-        >
-          <Quote className="size-4" />
-        </EditorButton>
-      </div>
+      {isSimpleEditor ? null : (
+        <div className="flex items-center gap-1">
+          <EditorButton
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            isActive={editor.isActive("code")}
+            tooltip="كود"
+          >
+            <Code className="size-4" />
+          </EditorButton>
+          <EditorButton
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            isActive={editor.isActive("codeBlock")}
+            tooltip="مربع كود"
+          >
+            <Code2 className="size-4" />
+          </EditorButton>
+          <EditorButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            isActive={editor.isActive("blockquote")}
+            tooltip="اقتباس"
+          >
+            <Quote className="size-4" />
+          </EditorButton>
+        </div>
+      )}
 
       <Separator orientation="vertical" className="h-6" />
 
@@ -555,31 +558,35 @@ export function EditorMenu({ editor }: EditorMenuProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-8 p-0 hover:bg-muted">
-              <ImageIcon className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-              <Upload className="size-4 mr-2" />
-              رفع صورة
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={addImageUrl}>
-              <Link className="size-4 mr-2" />
-              رابط صورة
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isSimpleEditor ? null : (
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="size-8 p-0 hover:bg-muted">
+                  <ImageIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="size-4 mr-2" />
+                  رفع صورة
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={addImageUrl}>
+                  <Link className="size-4 mr-2" />
+                  رابط صورة
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </>
+        )}
       </div>
 
       <Separator orientation="vertical" className="h-6" />

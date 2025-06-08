@@ -53,18 +53,22 @@
       backgroundposition: 0% 50%;
       transform: rotate(-5deg) scale(0.9);
     }
+
     25% {
       backgroundposition: 50% 100%;
       transform: rotate(5deg) scale(1.1);
     }
+
     50% {
       backgroundposition: 100% 50%;
       transform: rotate(-3deg) scale(0.95);
     }
+
     75% {
       backgroundposition: 50% 0%;
       transform: rotate(3deg) scale(1.05);
     }
+
     100% {
       backgroundposition: 0% 50%;
       transform: rotate(-5deg) scale(0.9);
@@ -216,29 +220,44 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground overscroll-none;
   }
+
   .rtl {
     direction: rtl;
   }
+
   .ltr {
     direction: ltr;
+  }
+
+  ul {
+    @apply list-disc
+  }
+
+  ol {
+    @apply list-decimal
   }
 
   @keyframes mustacheFloat {
     0% {
       transform: translateY(0) rotate(0deg) scale(1);
     }
+
     25% {
       transform: translateY(-10px) rotate(-3deg) scale(1.05);
     }
+
     50% {
       transform: translateY(0) rotate(0deg) scale(1);
     }
+
     75% {
       transform: translateY(10px) rotate(3deg) scale(1.05);
     }
+
     100% {
       transform: translateY(0) rotate(0deg) scale(1);
     }
@@ -302,12 +321,15 @@
     0% {
       left: -100px;
     }
+
     30% {
       left: calc(50% - 64px);
     }
+
     70% {
       left: calc(50% - 64px);
     }
+
     100% {
       left: 100%;
     }
@@ -317,6 +339,7 @@
     from {
       transform: rotate(0deg);
     }
+
     to {
       transform: rotate(360deg);
     }

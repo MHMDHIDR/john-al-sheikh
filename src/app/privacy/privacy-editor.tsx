@@ -1,10 +1,19 @@
 "use client";
 
+import { Color } from "@tiptap/extension-color";
+import { FontSize } from "@tiptap/extension-font-size";
+import { Highlight } from "@tiptap/extension-highlight";
+import Link from "@tiptap/extension-link";
+import { ListItem } from "@tiptap/extension-list-item";
+import { TextAlign } from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { EditorMenu } from "@/components/custom/editor-menu";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
@@ -33,20 +42,10 @@ export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin:
   const updatePrivacyContent = api.pageContent.updateContent.useMutation({
     onSuccess: () => {
       success("تم تعديل المحتوى الخاص بالخصوصية");
+      setIsEditing(false);
     },
     onError: error => {
       errorToast(error.message);
-    },
-  });
-
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content,
-    immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        class: "prose prose-lg max-w-none rtl focus:outline-none",
-      },
     },
   });
 
@@ -56,29 +55,98 @@ export function PrivacyContent({ content, isAdmin }: { content: string; isAdmin:
     await updatePrivacyContent.mutateAsync({ content: editor.getHTML(), type: "PRIVACY" });
   };
 
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        // Configure existing extensions
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      // Text styling extensions
+      TextStyle,
+      Color.configure({ types: [TextStyle.name, ListItem.name] }),
+      Highlight.configure({
+        multicolor: true,
+        HTMLAttributes: {
+          class: "highlight",
+        },
+      }),
+      Underline,
+      FontSize.configure({ types: [TextStyle.name, ListItem.name] }),
+
+      // Text alignment
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+        alignments: ["left", "center", "right", "justify"],
+        defaultAlignment: "right", // Default for RTL content
+      }),
+
+      // Link configuration
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-blue-600 underline hover:text-blue-800",
+        },
+      }),
+
+      // List item configuration
+      ListItem,
+    ],
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-lg max-w-fit rtl py-4 px-6 leading-relaxed focus:outline-none min-h-[400px] bg-white prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-bold prose-em:text-gray-700 prose-em:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-blockquote:border-r-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700",
+      },
+    },
+    content,
+    immediatelyRender: false,
+    onCreate: ({ editor }) => {
+      // Set default text alignment for RTL content
+      editor.commands.setTextAlign("right");
+    },
+  });
+
   return (
     <>
-      {isAdmin && (
+      {isAdmin && editor && (
         <div
           className={clsx(
-            "tools-container flex w-fit items-center gap-x-2 transition-all duration-300",
+            "tools-container flex flex-col items-start gap-1 w-fit gap-x-2 transition-all duration-300",
             {
               "sticky top-14 z-10 shadow-md bg-white/20 backdrop-blur-sm p-1 px-0.5 rounded-lg":
                 scrolled,
             },
           )}
         >
-          <Button
-            onClick={() => setIsEditing(!isEditing)}
-            variant={isEditing ? "destructive" : "outline"}
-          >
-            {isEditing ? "إلغاء" : "تعديل"}
-          </Button>
-          {isEditing && (
-            <Button onClick={handleSave} disabled={updatePrivacyContent.isPending} variant="active">
-              {updatePrivacyContent.isPending ? <Loader2 className="size-4 animate-spin" /> : "حفظ"}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "destructive" : "outline"}
+              className="min-h-fit"
+            >
+              {isEditing ? "إلغاء التعديل" : "تعديل"}
             </Button>
-          )}
+            {isEditing && (
+              <Button
+                onClick={handleSave}
+                disabled={updatePrivacyContent.isPending}
+                variant="active"
+              >
+                {updatePrivacyContent.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "حفظ"
+                )}
+              </Button>
+            )}
+          </div>
+          {isEditing && <EditorMenu editor={editor} isSimpleEditor />}
         </div>
       )}
       <div className="flex flex-col justify-between items-center">
