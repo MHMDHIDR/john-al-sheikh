@@ -9,6 +9,7 @@ import {
 import { toPng } from "html-to-image";
 import { Check, Copy, Download, Share2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,13 +216,20 @@ export function ShareTestDialog({
               ) : (
                 <div className="p-4">
                   {snapshotUrl ? (
-                    <Image
-                      src={snapshotUrl}
-                      alt={`${username} - ${band} في اختبار المحادثة`}
-                      width={500}
-                      height={300}
+                    <Link
+                      href={shareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full rounded-md"
-                    />
+                    >
+                      <Image
+                        src={snapshotUrl}
+                        alt={`${username} - ${band} في اختبار المحادثة`}
+                        width={500}
+                        height={300}
+                        className="w-full rounded-md"
+                      />
+                    </Link>
                   ) : (
                     <div
                       id="test-snapshot"
@@ -251,7 +259,7 @@ export function ShareTestDialog({
                         </p>
                         <p className="text-sm inline-flex items-center gap-2 text-primary font-medium">
                           <Logo className="mx-auto size-7 stroke-1 stroke-current" />
-                          {shareUrl}
+                          <strong>john-al-shiekh.live</strong>
                         </p>
                       </div>
                     </div>
