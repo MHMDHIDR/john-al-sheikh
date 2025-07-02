@@ -72,6 +72,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           src="https://analytics.technodevlabs.com/script.js"
           data-website-id="594e98df-99fc-4109-9dd4-01ce8549432d"
         ></script>
+        <script
+          defer
+          data-website-id="6865b8a8ecbc30fedaaff656"
+          data-domain="www.john-al-shiekh.live"
+          src="https://datafa.st/js/script.js"
+        ></script>
         <meta
           name="google-site-verification"
           content="KhZvqrqDjQJS93D-wVNVN55qmqI0C1a93a7lB1V66QA"
