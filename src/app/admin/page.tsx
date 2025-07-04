@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     api.payments.getAccountBalance(),
   ]);
 
-  const totalBalance = accountBalance.available.reduce((acc, item) => acc + item.amount, 0);
+  const totalBalance = accountBalance.total; //.reduce((acc, item) => acc + item.amount, 0);
 
   return (
     <div className="container mx-auto px-4">

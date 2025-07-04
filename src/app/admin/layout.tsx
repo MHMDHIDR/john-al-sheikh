@@ -1,4 +1,12 @@
-import { CircleUser, CreditCard, Home, MailIcon, ShieldUser, UserPlus } from "lucide-react";
+import {
+  CircleUser,
+  CreditCard,
+  Home,
+  MailIcon,
+  ShieldUser,
+  UserPen,
+  UserPlus,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import Nav from "@/components/custom/nav";
 import { AppSidebar } from "@/components/ui/app-sidebar";
@@ -27,6 +35,11 @@ export default async function DashboardLayout({
             icon: <Home className="size-4" />,
           },
           {
+            title: "المستخدمون المميزون",
+            url: "/admin/premium-users",
+            icon: <ShieldUser className="size-4" />,
+          },
+          {
             title: "المستخدمين",
             url: "/admin/users",
             icon: <CircleUser className="size-4" />,
@@ -34,7 +47,7 @@ export default async function DashboardLayout({
           {
             title: "الممتحنين",
             url: "/admin/test-users",
-            icon: <ShieldUser className="size-4" />,
+            icon: <UserPen className="size-5" />,
           },
           {
             title: "المشتركين",

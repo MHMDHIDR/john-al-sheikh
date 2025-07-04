@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { LoadingCard } from "@/components/custom/data-table/loading";
+import { AuroraText } from "@/components/magicui/aurora-text";
 import { api } from "@/trpc/server";
 import PaymentsTable from "./payments-table";
 import type { Payment } from "./payments-table";
@@ -7,6 +8,7 @@ import type Stripe from "stripe";
 
 export default async function Payments() {
   const { balanceTransactions } = await api.payments.getAccountBalance();
+  const { count } = await api.users.getUsers({ getPremium: true });
 
   // Filter out payout transactions and format the data
   const paymentTransactions: Payment[] = balanceTransactions
@@ -41,6 +43,10 @@ export default async function Payments() {
 
   return (
     <div className="container max-w-6xl md:px-3.5 px-2 py-3 mx-auto">
+      <h1 className="text-xl select-none mb-5 font-bold text-center">
+        <AuroraText>يوجد {count} مستخدم مميز</AuroraText>
+      </h1>
+
       <Suspense fallback={<LoadingCard renderedSkeletons={paymentTransactions.length ?? 1} />}>
         <PaymentsTable payments={paymentTransactions} />
       </Suspense>

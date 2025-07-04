@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { z } from "zod";
 import { accountFormSchema } from "@/app/schemas/account";
 import { onboardingSchema } from "@/app/schemas/onboarding";
 import { extractS3FileName } from "@/lib/extract-s3-filename";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { speakingTests, users } from "@/server/db/schema";
+import { creditTransactions, speakingTests, users } from "@/server/db/schema";
 
 const onboardingModifiedSchema = onboardingSchema
   .omit({ profileImage: true })
@@ -18,14 +18,59 @@ export const usersRouter = createTRPCRouter({
     });
   }),
 
-  getUsers: protectedProcedure.query(async ({ ctx }) => {
-    const usersList = await ctx.db.query.users.findMany();
-    const [{ count = 0 } = { count: 0 }] = await ctx.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(users);
+  getUsers: protectedProcedure
+    .input(z.object({ getPremium: z.boolean() }).optional())
+    .query(async ({ ctx, input }) => {
+      const isPremium = input?.getPremium === true;
 
-    return { users: usersList, count };
-  }),
+      if (isPremium) {
+        // Get premium users from credit transactions with PURCHASE type and live Stripe payment IDs
+        const premiumUsersQuery = await ctx.db
+          .select({
+            user: users,
+          })
+          .from(creditTransactions)
+          .innerJoin(users, eq(creditTransactions.userId, users.id))
+          .where(
+            and(
+              eq(creditTransactions.type, "PURCHASE"),
+              like(creditTransactions.stripePaymentId, "cs_live%"),
+              eq(users.role, "USER"),
+            ),
+          )
+          .groupBy(users.id); // Group by user ID to avoid duplicates
+
+        // Get count of premium users
+        const [{ count = 0 } = { count: 0 }] = await ctx.db
+          .select({ count: sql<number>`count(DISTINCT ${users.id})::int` })
+          .from(creditTransactions)
+          .innerJoin(users, eq(creditTransactions.userId, users.id))
+          .where(
+            and(
+              eq(creditTransactions.type, "PURCHASE"),
+              like(creditTransactions.stripePaymentId, "cs_live%"),
+              eq(users.role, "USER"),
+            ),
+          );
+
+        return {
+          users: premiumUsersQuery.map(row => row.user),
+          count,
+        };
+      } else {
+        // Get all regular users
+        const usersList = await ctx.db.query.users.findMany({
+          where: (users, { eq }) => eq(users.role, "USER"),
+        });
+
+        const [{ count = 0 } = { count: 0 }] = await ctx.db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(users)
+          .where(eq(users.role, "USER"));
+
+        return { users: usersList, count };
+      }
+    }),
 
   /** Count unique users who have taken speaking tests */
   getTotalTestUsers: protectedProcedure.query(async ({ ctx }) => {

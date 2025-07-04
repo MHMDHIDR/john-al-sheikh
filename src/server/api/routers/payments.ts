@@ -3,6 +3,12 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { env } from "@/env";
+import {
+  calculateTotalBalance,
+  createUserMap,
+  enhanceTransactions,
+  extractUserEmails,
+} from "@/lib/payments";
 import { creditPackages, stripe } from "@/lib/stripe";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
@@ -257,74 +263,49 @@ export const paymentsRouter = createTRPCRouter({
   }),
 
   getAccountBalance: protectedProcedure.query(async () => {
+    // Get Stripe balance
     const balance = await stripe.balance.retrieve({
       expand: ["pending", "available", "instant_available"],
     });
 
-    const balanceTransactions = await stripe.balanceTransactions.list({ expand: ["data.source"] });
+    // Calculate simplified total balance (available - pending)
+    const totalBalance = calculateTotalBalance(balance);
 
-    // Get all unique user emails from transactions
-    const userEmails = balanceTransactions.data
-      .filter(
-        tx =>
-          tx.source &&
-          typeof tx.source === "object" &&
-          "object" in tx.source &&
-          tx.source.object === "charge" &&
-          "billing_details" in tx.source &&
-          tx.source.billing_details?.email,
-      )
-      .map(tx => (tx.source as Stripe.Charge).billing_details.email)
-      .filter((email): email is string => email !== null);
+    // Get balance transactions
+    const balanceTransactions = await stripe.balanceTransactions.list({
+      expand: ["data.source"],
+    });
 
-    // Get user details from our database
+    // Extract user emails from transactions
+    const userEmails = extractUserEmails(balanceTransactions.data);
+
+    // Get user details from database
     const users = await db.query.users.findMany({
-      where: (users, { inArray }) => inArray(users.email, userEmails),
+      where: (users, { inArray, and }) =>
+        and(inArray(users.email, userEmails), eq(users.role, "USER")),
       columns: {
         id: true,
         name: true,
         email: true,
         displayName: true,
+        credits: true,
+        role: true,
       },
     });
 
-    // Create a map of email to user details
-    const userMap = new Map(users.map(user => [user.email, user]));
+    // Create user lookup map
+    const userMap = createUserMap(users);
 
     // Enhance transactions with user details
-    const enhancedTransactions = balanceTransactions.data.map(tx => {
-      const source = tx.source as Stripe.Charge;
-      const userEmail = source?.billing_details?.email;
-      const userDetails = userEmail ? userMap.get(userEmail) : null;
-
-      return {
-        id: tx.id,
-        amount: tx.amount,
-        currency: tx.currency,
-        created: tx.created,
-        status: tx.status,
-        type: tx.type,
-        source: tx,
-        description: tx.description,
-        paymentDetails: {
-          email: source?.billing_details?.email,
-          name: source?.billing_details?.name,
-          cardLast4: source?.payment_method_details?.card?.last4,
-          cardBrand: source?.payment_method_details?.card?.brand,
-        },
-        user: userDetails
-          ? {
-              id: userDetails.id,
-              name: userDetails.name,
-              displayName: userDetails.displayName,
-              email: userDetails.email,
-            }
-          : null,
-      };
-    });
+    const enhancedTransactions = enhanceTransactions(balanceTransactions.data, userMap);
 
     return {
-      balance,
+      balance: {
+        total: totalBalance,
+        available: balance.available,
+        pending: balance.pending,
+        livemode: balance.livemode,
+      },
       balanceTransactions: enhancedTransactions,
     };
   }),
