@@ -42,16 +42,8 @@ const PremiumUsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
     updateUserMutation.mutate({ email: user.email, status: "ACTIVE" });
   };
 
-  const handleSuspend = () => {
-    updateUserMutation.mutate({ email: user.email, status: "SUSPENDED" });
-  };
-
   const handleUnsuspend = () => {
     updateUserMutation.mutate({ email: user.email, status: "ACTIVE" });
-  };
-
-  const handleDelete = () => {
-    updateUserMutation.mutate({ email: user.email, deletedAt: new Date() });
   };
 
   return (

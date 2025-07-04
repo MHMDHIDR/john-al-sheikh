@@ -11,6 +11,7 @@ import TextStyle from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import clsx from "clsx";
 import { Check, Loader2, Users } from "lucide-react";
 import { useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
@@ -330,9 +331,12 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           {!isPreview && (
             <Button
               onClick={() => setConfirmSendDialog(true)}
-              disabled={sendNewsletter.isPending || !isFormValid}
               variant="default"
-              className="min-w-[120px]"
+              className={clsx("min-w-[120px]", {
+                "opacity-50 cursor-not-allowed disabled:pointer-events-auto":
+                  sendNewsletter.isPending || !isFormValid,
+              })}
+              disabled={sendNewsletter.isPending || !isFormValid}
             >
               {sendNewsletter.isPending ? (
                 <>

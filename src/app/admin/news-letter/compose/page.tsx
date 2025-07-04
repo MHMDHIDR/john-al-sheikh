@@ -31,15 +31,7 @@ async function EmailList() {
   // const testingEmailList = [
   //   {
   //     email: "mr.hamood277@gmail.com",
-  //     name: "حمود العتيبي",
-  //   },
-  //   {
-  //     email: "mr.hamood277+1@gmail.com",
-  //     name: "مثال ٢",
-  //   },
-  //   {
-  //     email: "mr.hamood277+2@gmail.com",
-  //     name: "مثال 1",
+  //     name: "محمد حيدر",
   //   },
   // ];
 
