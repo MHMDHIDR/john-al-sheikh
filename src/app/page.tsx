@@ -6,9 +6,10 @@ import { auth } from "@/server/auth";
 
 export default async function Home() {
   const session = await auth();
+  const hasPhone = session?.user?.phone;
   const isProfileCompleted = session?.user?.profileCompleted;
 
-  if (session && !isProfileCompleted) {
+  if (session && (!isProfileCompleted || !hasPhone)) {
     redirect("/onboarding");
   }
 

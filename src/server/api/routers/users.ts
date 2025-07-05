@@ -130,7 +130,7 @@ export const usersRouter = createTRPCRouter({
   onboardUser: protectedProcedure
     .input(onboardingModifiedSchema)
     .mutation(async ({ ctx, input }) => {
-      const { displayName, username, gender, goalBand, hobbies, profileImage } = input;
+      const { displayName, username, gender, goalBand, phone, hobbies, profileImage } = input;
 
       // Check if username is already taken
       const usernameExists = await ctx.db.query.users.findFirst({
@@ -152,6 +152,7 @@ export const usersRouter = createTRPCRouter({
           username,
           gender,
           goalBand,
+          phone,
           hobbies,
           ...(profileImage && { image: profileImage }),
           profileCompleted: true,

@@ -13,12 +13,13 @@ export default async function Account() {
   const session = await auth();
   const user = session?.user;
   const isProfileCompleted = session?.user?.profileCompleted;
+  const hasPhone = session?.user?.phone;
 
   if (!user) {
     redirect("/signin?callbackUrl=/account");
   }
 
-  if (session && !isProfileCompleted) redirect("/onboarding");
+  if (session && (!isProfileCompleted || !hasPhone)) redirect("/onboarding");
 
   return (
     <section className="container px-6 py-10 mx-auto">

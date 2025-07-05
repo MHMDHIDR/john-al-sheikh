@@ -14,12 +14,16 @@ export const metadata: Metadata = {
 export default async function MockTestPage() {
   const session = await auth();
   const user = session?.user;
+  const hasPhone = session?.user?.phone;
+  const isProfileCompleted = session?.user?.profileCompleted;
 
   if (!user) {
     redirect("/signin?callbackUrl=/mock-test");
   }
 
-  if (!user.profileCompleted) redirect("/onboarding");
+  if (session && (!isProfileCompleted || !hasPhone)) {
+    redirect("/onboarding");
+  }
 
   // Check if user has enough credits to proceed with the mock test
   const credits = await api.payments.getUserCredits();

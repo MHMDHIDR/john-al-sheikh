@@ -1,4 +1,4 @@
-// import { isValidPhoneNumber } from "libphonenumber-js";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 
 export const onboardingSchema = z.object({
@@ -20,6 +20,16 @@ export const onboardingSchema = z.object({
     })
     .min(1, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9")
     .max(9, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9"),
+  phone: z
+    .string()
+    // .optional()
+    .refine(
+      value => {
+        // if (!value) return true; // Skip validation if value is empty/undefined
+        return isValidPhoneNumber(value);
+      },
+      { message: "يرجى تقديم رقم هاتف صالح" },
+    ),
 
   // age: z
   //   .number({
@@ -28,16 +38,7 @@ export const onboardingSchema = z.object({
   //   .min(10, "يجب أن يكون عمرك 10 عامًا على الأقل")
   //   .max(100, "يجب أن يكون عمرك 100 عامًا على الأكثر"),
   // nationality: z.string().min(1, "يرجى اختيار الجنسية"),
-  // phone: z
-  //   .string()
-  //   // .optional()
-  //   .refine(
-  //     value => {
-  //       // if (!value) return true; // Skip validation if value is empty/undefined
-  //       return isValidPhoneNumber(value);
-  //     },
-  //     { message: "يرجى تقديم رقم هاتف صالح" },
-  //   ),
+
   hobbies: z.array(z.string()).min(1, "يرجى اختيار هواية واحدة على الأقل"),
   profileImage: z.instanceof(File).optional(),
 });

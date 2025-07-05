@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -77,6 +78,7 @@ export default function OnboardingForm({
       username: generatedUsername ?? "user", // Ensure we have at least 3 chars
       gender: undefined as "male" | "female" | undefined,
       goalBand: 5.0,
+      phone: "",
       hobbies: [] as string[],
       profileImage: undefined as File | undefined,
     };
@@ -123,7 +125,7 @@ export default function OnboardingForm({
   // Handle profile data when available and reset form properly
   useEffect(() => {
     if (profileData) {
-      if (profileData.isComplete) {
+      if (profileData.isComplete && session.user.phone) {
         return;
       }
 
@@ -137,6 +139,7 @@ export default function OnboardingForm({
           username: user.username ?? generateUsername(session?.user?.name ?? "") ?? "user",
           gender: user.gender as "male" | "female" | undefined,
           goalBand: user.goalBand ?? 5.0,
+          phone: user.phone ?? "",
           hobbies: user.hobbies ?? [],
           profileImage: undefined, // File object can't be restored
         });
@@ -222,6 +225,7 @@ export default function OnboardingForm({
         username: data.username,
         gender: data.gender,
         goalBand: data.goalBand,
+        phone: data.phone,
         hobbies: data.hobbies,
         ...(profileImageUrl && { profileImage: profileImageUrl }),
       });
@@ -408,6 +412,20 @@ export default function OnboardingForm({
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="flex flex-col items-start">
+                  <FormLabel className="text-right">رقم الهاتف</FormLabel>
+                  <FormControl className="relative w-full">
+                    <PhoneInput placeholder="رقم الهاتف الخاص بك" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
