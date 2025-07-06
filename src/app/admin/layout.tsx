@@ -50,7 +50,7 @@ export default async function DashboardLayout({
             icon: <UserPen className="size-5" />,
           },
           {
-            title: "المشتركين",
+            title: "مشترين النشرة البريدية",
             url: "/admin/subscribers",
             icon: <UserPlus className="size-4" />,
           },
