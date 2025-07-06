@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
@@ -11,8 +9,6 @@ export default async function Image({ params }: { params: { username: string; te
   console.log("OpenGraph image generation started for:", params);
 
   let testData = null;
-  let logoSrc: string | undefined = undefined;
-
   try {
     console.log("Fetching test data...");
     testData = await api.users.getPublicTestById({ testId: params.testId });
@@ -21,14 +17,8 @@ export default async function Image({ params }: { params: { username: string; te
     console.error("Error fetching test data:", e);
   }
 
-  try {
-    console.log("Loading logo...");
-    const logoData = await readFile(join(process.cwd(), "public/logo.svg"));
-    logoSrc = `data:image/svg+xml;base64,${Buffer.from(logoData).toString("base64")}`;
-    console.log("Logo loaded successfully");
-  } catch (e) {
-    console.error("Error loading logo:", e);
-  }
+  // Use public URL for logo
+  const logoSrc = "https://www.john-al-shiekh.live/logo.svg";
 
   // Fallbacks
   const band = testData?.band ?? 0;
@@ -144,9 +134,16 @@ export default async function Image({ params }: { params: { username: string; te
                 fontSize: 18,
                 color: "#1f2937",
                 textAlign: "center",
+                marginBottom: 20,
               }}
             >
               {appName}
+            </div>
+
+            <div
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}
+            >
+              <img src={logoSrc} width={56} height={56} style={{ borderRadius: 12 }} alt="Logo" />
             </div>
           </div>
         </div>
