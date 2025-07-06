@@ -4,31 +4,61 @@ import { ImageResponse } from "next/og";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 
-export const size = {
-  width: 1200,
-  height: 630,
-};
+export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image({ params }: { params: { username: string; testId: string } }) {
-  // Fetch test data
-  const testData = await api.users.getPublicTestById({ testId: params.testId });
+  let testData = null;
+  let logoSrc: string | undefined = undefined;
+
+  try {
+    testData = await api.users.getPublicTestById({ testId: params.testId });
+  } catch (e) {
+    // log error if needed
+  }
+
+  try {
+    const logoData = await readFile(join(process.cwd(), "public/logo.svg"));
+    logoSrc = `data:image/svg+xml;base64,${Buffer.from(logoData).toString("base64")}`;
+  } catch (e) {
+    // logo is optional, don't throw
+  }
 
   // Fallbacks
   const band = testData?.band ?? 0;
   const username = testData?.user?.displayName ?? params.username;
   const appName = env.NEXT_PUBLIC_APP_NAME ?? "john-al-shiekh.live";
-
-  // Load SVG logo
-  let logoSrc = undefined;
-  try {
-    const logoData = await readFile(join(process.cwd(), "public/logo.svg"));
-    logoSrc = `data:image/svg+xml;base64,${Buffer.from(logoData).toString("base64")}`;
-  } catch {}
-
-  // Badge color
   const badgeColor = band >= 6 ? "#10b981" : "#6366f1";
 
+  // If testData is missing, show a fallback image
+  if (!testData) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#fff",
+            fontSize: 48,
+            color: "#222",
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: "bold", marginBottom: 20 }}>
+              نتيجة اختبار اللغة الإنجليزية
+            </div>
+            <div>{appName}</div>
+          </div>
+        </div>
+      ),
+      { ...size },
+    );
+  }
+
+  // Normal OG image
   return new ImageResponse(
     (
       <div
@@ -110,8 +140,6 @@ export default async function Image({ params }: { params: { username: string; te
         </div>
       </div>
     ),
-    {
-      ...size,
-    },
+    { ...size },
   );
 }
