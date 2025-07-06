@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/format-date";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
 
-type TestResultProps = {
+export type TestResultProps = {
   params: Promise<{ username: string; testId: string }>;
 };
 
@@ -25,15 +25,15 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
   try {
     const testData = await api.users.getPublicTestById({ testId });
 
-    if (!testData) {
-      return {
-        title: `نتيجة اختبار اللغة الإنجليزية | ${username ?? env.NEXT_PUBLIC_APP_NAME}`,
-        description: `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`,
-      };
-    }
-
-    const title = `نتيجة اختبار اللغة الإنجليزية | ${testData.user.displayName ?? username}`;
-    const description = `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${testData.band}`;
+    const siteUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+    const user = testData?.user?.displayName ?? username;
+    const band = testData?.band;
+    const title = `نتيجة اختبار اللغة الإنجليزية | ${user}`;
+    const description = testData
+      ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
+      : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
+    // Build the dynamic OpenGraph image URL
+    const ogImage = `${siteUrl}/@${encodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
 
     return {
       title,
@@ -42,11 +42,22 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         title,
         description,
         type: "website",
+        url: `${siteUrl}/@${encodeURIComponent(username)}/english-test-results/${testId}`,
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: "نتيجة اختبار اللغة الإنجليزية",
+            type: "image/png",
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
+        images: [ogImage],
       },
     };
   } catch (error) {
