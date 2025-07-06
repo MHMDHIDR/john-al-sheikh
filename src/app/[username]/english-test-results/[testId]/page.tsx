@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
     // Build the dynamic OpenGraph image URL
-    const ogImage = `${siteUrl}/@${encodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
+    const ogImage = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
 
     return {
       title,
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         title,
         description,
         type: "website",
-        url: `${siteUrl}/@${encodeURIComponent(username)}/english-test-results/${testId}`,
+        url: `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`,
         images: [
           {
             url: ogImage,
