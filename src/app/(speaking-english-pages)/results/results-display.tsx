@@ -87,7 +87,7 @@ export function ResultsDisplay({ user }: { user: Session["user"] | undefined }) 
           >
             {result.band}
           </h1>
-          <p className="mb-8 text-2xl text-gray-600">نتيجة IELTS الخاصة بك</p>
+          <p className="mb-8 text-2xl text-gray-600">نتيجة المحادثة بالإنجليزية الخاصة بك</p>
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 mb-8">
