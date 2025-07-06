@@ -115,7 +115,7 @@ export default async function Image({ params }: { params: { username: string; te
                 fontWeight: 700,
                 color: "#22223b",
                 marginBottom: 8,
-                fontFamily: "Cairo, Arial, sans-serif",
+                fontFamily: "Arial, sans-serif",
                 whiteSpace: "nowrap",
               }}
             >
