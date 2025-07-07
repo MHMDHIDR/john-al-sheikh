@@ -40,6 +40,10 @@ export async function GET(req: NextRequest) {
 
     const styles = getTypeStyles(type);
 
+    const arabicFont = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.john-al-shiekh.live"}/fonts/NotoSansArabic-Regular.ttf`,
+    ).then(res => res.arrayBuffer());
+
     return new ImageResponse(
       (
         <div
@@ -54,7 +58,7 @@ export async function GET(req: NextRequest) {
             backgroundSize: "cover",
             backgroundPosition: "center",
             padding: "60px",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: '"Noto Sans Arabic", system-ui, sans-serif',
           }}
         >
           {/* Overlay for better text readability when using background images */}
@@ -148,6 +152,14 @@ export async function GET(req: NextRequest) {
       {
         width: 1200,
         height: 630,
+        fonts: [
+          {
+            name: "Noto Sans Arabic",
+            data: arabicFont,
+            style: "normal",
+            weight: 400,
+          },
+        ],
       },
     );
   } catch (error) {

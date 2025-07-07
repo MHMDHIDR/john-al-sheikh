@@ -34,13 +34,17 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
 
+    // Use real Arabic values for OG image
+    const ogTitle = title;
+    const ogSubtitle = description;
+
     return generateOgMetadata({
       title,
       description,
       ogImageParams: {
         type: "service",
-        title: truncateText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 60), // Ensure it fits nicely
-        subtitle: truncateText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 120),
+        title: truncateText(ogTitle, 60),
+        subtitle: truncateText(ogSubtitle, 120),
         image: "opengraph-image",
       },
     });
