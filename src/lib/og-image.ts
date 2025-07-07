@@ -19,7 +19,7 @@ export function getOgImageUrl({
   subtitle,
   image,
 }: OgImageParams): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://yourdomain.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.john-al-shiekh.live";
   const endpoint = `${baseUrl}/api/og`;
 
   const params = new URLSearchParams({

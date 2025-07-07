@@ -34,8 +34,6 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
 
-    const pageUrl = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`;
-
     return generateOgMetadata({
       title,
       description,
