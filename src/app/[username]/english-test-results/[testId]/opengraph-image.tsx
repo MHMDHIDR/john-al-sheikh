@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { api } from "@/trpc/server";
 import type { RouterOutputs } from "@/trpc/react";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const alt = "نتيجة اختبار اللغة الإنجليزية";
 export const size = {
   width: 1200,
