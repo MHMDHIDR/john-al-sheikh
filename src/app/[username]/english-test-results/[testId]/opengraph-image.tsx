@@ -4,7 +4,6 @@ import { api } from "@/trpc/server";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const runtime = "edge";
 
 // Add type for params
 // Next.js 15+ passes params as a Promise
