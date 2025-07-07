@@ -57,9 +57,6 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
   }
 }
 
-export const dynamic = "force-static";
-export const revalidate = 86400;
-
 export default async function TestResultPage({ params }: TestResultProps) {
   const { username, testId } = await params;
 
