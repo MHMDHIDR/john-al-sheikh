@@ -153,12 +153,10 @@ export async function GET(req: NextRequest) {
           {
             name: "Inter",
             data: await fetch(
-              new URL(
-                "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap",
-              ),
+              `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.john-al-shiekh.live"}/fonts/Inter-Bold.ttf`,
             ).then(res => res.arrayBuffer()),
             style: "normal",
-            weight: 400,
+            weight: 700,
           },
         ],
       },
