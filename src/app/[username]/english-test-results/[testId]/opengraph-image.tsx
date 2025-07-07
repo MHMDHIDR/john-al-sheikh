@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
 import { api } from "@/trpc/server";
 
-export const runtime = "edge";
 export const alt = "نتيجة اختبار اللغة الإنجليزية";
 export const size = {
   width: 1200,
