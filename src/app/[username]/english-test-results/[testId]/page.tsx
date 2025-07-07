@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
     const description = testData
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
+    const imageUrl = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
 
     return {
       title,
@@ -41,11 +42,13 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         description,
         type: "website",
         url: `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`,
+        images: [imageUrl],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
+        images: [imageUrl],
       },
     };
   } catch (error) {
