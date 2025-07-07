@@ -4,32 +4,39 @@ import { api } from "@/trpc/server";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const runtime = "edge";
 
-export default async function Image({ params }: { params: { username: string; testId: string } }) {
-  console.log("OpenGraph image generation started for:", params);
+// Add type for params
+// Next.js 15+ passes params as a Promise
+type PageProps = {
+  params: Promise<{ username: string; testId: string }>;
+};
+
+export default async function Image({ params }: PageProps) {
+  // Await the params since they're now a Promise in Next.js 15+
+  const { username, testId } = await params;
+
+  console.log("OpenGraph image generation started for:", { username, testId });
 
   let testData = null;
   try {
     console.log("Fetching test data...");
-    testData = await api.users.getPublicTestById({ testId: params.testId });
+    testData = await api.users.getPublicTestById({ testId });
     console.log("Test data fetched successfully:", testData?.band);
   } catch (e) {
     console.error("Error fetching test data:", e);
   }
 
-  // Use public URL for logo
-  const logoSrc = "https://www.john-al-shiekh.live/logo.svg";
-
   // Fallbacks
   const band = testData?.band ?? 0;
-  const username = testData?.user?.displayName ?? params.username;
+  const displayName = testData?.user?.displayName ?? username.replace("@", "");
   const appName = env.NEXT_PUBLIC_APP_NAME ?? "john-al-shiekh.live";
   const badgeColor = band >= 6 ? "#10b981" : "#6366f1";
 
-  console.log("Generating image with data:", { band, username, appName });
+  console.log("Generating image with data:", { band, username: displayName, appName });
 
   try {
-    // Very simple fallback image to test
+    // Simple fallback image if no test data
     if (!testData) {
       console.log("Generating fallback image");
       return new ImageResponse(
@@ -41,10 +48,11 @@ export default async function Image({ params }: { params: { username: string; te
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#f3f4f6",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               fontSize: 32,
-              color: "#1f2937",
+              color: "#ffffff",
               fontWeight: "bold",
+              fontFamily: "Inter, Arial, sans-serif",
             }}
           >
             <div style={{ textAlign: "center" }}>
@@ -58,6 +66,7 @@ export default async function Image({ params }: { params: { username: string; te
     }
 
     console.log("Generating main image");
+    // Main image generation
     return new ImageResponse(
       (
         <div
@@ -68,8 +77,9 @@ export default async function Image({ params }: { params: { username: string; te
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            background: "#ffffff",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             padding: 40,
+            fontFamily: "Inter, Arial, sans-serif",
           }}
         >
           <div
@@ -77,37 +87,39 @@ export default async function Image({ params }: { params: { username: string; te
               width: "90%",
               height: "80%",
               borderRadius: 24,
-              border: `4px solid ${badgeColor}`,
-              background: "#f9fafb",
+              background: "#ffffff",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               padding: 40,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
             }}
           >
-            {/* Simple score display */}
+            {/* Score circle */}
             <div
               style={{
                 background: badgeColor,
-                color: "#fff",
+                color: "#ffffff",
                 borderRadius: "50%",
-                width: 120,
-                height: 120,
+                width: 140,
+                height: 140,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 48,
-                fontWeight: 700,
+                fontSize: 52,
+                fontWeight: 800,
                 marginBottom: 30,
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
               }}
             >
               {Number(band)}
             </div>
 
+            {/* Title */}
             <div
               style={{
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: 700,
                 color: "#1f2937",
                 marginBottom: 16,
@@ -117,33 +129,44 @@ export default async function Image({ params }: { params: { username: string; te
               English Test Result
             </div>
 
+            {/* Username */}
             <div
               style={{
                 color: "#6b7280",
-                fontSize: 20,
-                fontWeight: 500,
+                fontSize: 24,
+                fontWeight: 600,
                 textAlign: "center",
                 marginBottom: 30,
               }}
             >
-              @{username}
+              {displayName}
             </div>
 
+            {/* App name */}
             <div
               style={{
-                fontSize: 18,
-                color: "#1f2937",
+                fontSize: 20,
+                color: "#9ca3af",
                 textAlign: "center",
-                marginBottom: 20,
+                fontWeight: 500,
               }}
             >
               {appName}
             </div>
 
+            {/* Performance indicator */}
             <div
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}
+              style={{
+                marginTop: 20,
+                padding: "8px 16px",
+                background: band >= 6 ? "#dcfce7" : "#f3f4f6",
+                color: band >= 6 ? "#166534" : "#374151",
+                borderRadius: 20,
+                fontSize: 16,
+                fontWeight: 600,
+              }}
             >
-              <img src={logoSrc} width={56} height={56} style={{ borderRadius: 12 }} alt="Logo" />
+              {band >= 6 ? "Excellent Performance" : "Good Effort"}
             </div>
           </div>
         </div>
@@ -153,7 +176,7 @@ export default async function Image({ params }: { params: { username: string; te
   } catch (error) {
     console.error("Error generating ImageResponse:", error);
 
-    // Return a very basic fallback
+    // Return a very basic fallback that should always work
     return new ImageResponse(
       (
         <div
@@ -165,11 +188,17 @@ export default async function Image({ params }: { params: { username: string; te
             justifyContent: "center",
             background: "#ef4444",
             fontSize: 24,
-            color: "#fff",
+            color: "#ffffff",
             fontWeight: "bold",
+            fontFamily: "Inter, Arial, sans-serif",
           }}
         >
-          Error generating image
+          <div style={{ textAlign: "center" }}>
+            <div>Error generating image</div>
+            <div style={{ fontSize: 16, marginTop: 10 }}>
+              {displayName} - Band {band}
+            </div>
+          </div>
         </div>
       ),
       { ...size },
