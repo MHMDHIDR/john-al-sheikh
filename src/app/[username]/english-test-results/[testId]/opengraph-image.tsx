@@ -1,8 +1,7 @@
-import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
-import { api } from "@/trpc/server";
+import { env } from "@/env";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const alt = "نتيجة اختبار اللغة الإنجليزية";
 export const size = {
   width: 1200,
@@ -18,11 +17,15 @@ export default async function OpenGraphImage({ params }: Props) {
   const { username, testId } = await params;
 
   try {
-    const testData = await api.users.getPublicTestById({ testId });
+    // Fetch data from our API route instead of using tRPC directly
+    const baseUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/test-data/${testId}`);
 
-    if (!testData) {
-      return notFound();
+    if (!response.ok) {
+      throw new Error("Failed to fetch test data");
     }
+
+    const testData = await response.json();
 
     const userName = testData.user.displayName ?? `@${username}`;
     const band = testData.band;
