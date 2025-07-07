@@ -1,6 +1,8 @@
-import { notFound } from "next/navigation";
+// src/app/[username]/english-test-results/[testId]/opengraph-image.tsx
+// Alternative version using Edge Runtime with API route
+
 import { ImageResponse } from "next/og";
-import { api } from "@/trpc/server";
+import { env } from "@/env";
 import type { RouterOutputs } from "@/trpc/react";
 
 export const runtime = "edge";
@@ -15,18 +17,21 @@ type Props = {
   params: Promise<{ username: string; testId: string }>;
 };
 
-// Use the actual tRPC type
 type TestDataResponse = RouterOutputs["users"]["getPublicTestById"];
 
 export default async function OpenGraphImage({ params }: Props) {
   const { username, testId } = await params;
 
   try {
-    const testData: TestDataResponse = await api.users.getPublicTestById({ testId });
+    // Fetch data from our API route instead of using tRPC directly
+    const baseUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/test-data/${testId}`);
 
-    if (!testData) {
-      return notFound();
+    if (!response.ok) {
+      throw new Error("Failed to fetch test data");
     }
+
+    const testData = (await response.json()) as TestDataResponse;
 
     const userName = testData.user.displayName ?? `@${username}`;
     const band = testData.band;
