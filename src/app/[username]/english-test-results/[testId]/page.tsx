@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
   try {
     const testData = await api.users.getPublicTestById({ testId });
-    const siteUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+    // const siteUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
     const user = testData?.user?.displayName ?? username;
     const band = testData?.band;
 
@@ -34,12 +34,14 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
 
+    const decodedTitle = decodeURIComponent(title);
+
     return generateOgMetadata({
       title,
       description,
       ogImageParams: {
         type: "service",
-        title: truncateText(title, 60), // Ensure it fits nicely
+        title: truncateText(decodedTitle, 60), // Ensure it fits nicely
         subtitle: truncateText(description, 120),
         image: "opengraph-image",
       },
