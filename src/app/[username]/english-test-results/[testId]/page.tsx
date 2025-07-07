@@ -22,62 +22,25 @@ type FeedbackAreasToImprove = {
 
 export async function generateMetadata({ params }: TestResultProps): Promise<Metadata> {
   const { username, testId } = await params;
-
   try {
     const testData = await api.users.getPublicTestById({ testId });
-    // const siteUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
     const user = testData?.user?.displayName ?? username;
-    const band = testData?.band;
-
+    const band = testData?.band?.toString() ?? "6.5";
     const title = `نتيجة اختبار اللغة الإنجليزية | ${user}`;
     const description = testData
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
 
-    // Use real Arabic values for OG image
-    const ogTitle = title;
-    const ogSubtitle = description;
-
     return generateOgMetadata({
       title,
       description,
       ogImageParams: {
-        type: "service",
-        title: truncateText(ogTitle, 60),
-        subtitle: truncateText(ogSubtitle, 120),
-        image: "opengraph-image",
+        title: truncateText(title, 60),
+        subtitle: truncateText(description, 120),
+        band: band,
+        username: `@${username}`,
       },
     });
-
-    // return {
-    //   title,
-    //   description,
-    //   openGraph: {
-    //     title,
-    //     description,
-    //     type: "website",
-    //     url: pageUrl,
-    //     images: [
-    //       {
-    //         url: `${pageUrl}/opengraph-image`,
-    //         width: 1200,
-    //         height: 630,
-    //         alt: title,
-    //       },
-    //     ],
-    //   },
-    //   twitter: {
-    //     card: "summary_large_image",
-    //     title,
-    //     description,
-    //     images: [
-    //       {
-    //         url: `${pageUrl}/opengraph-image`,
-    //         alt: title,
-    //       },
-    //     ],
-    //   },
-    // };
   } catch (error) {
     console.error("Error generating metadata for test result page =>  ", error);
     return {

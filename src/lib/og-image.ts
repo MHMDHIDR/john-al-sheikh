@@ -1,11 +1,9 @@
-// Define supported page types
-export type PageType = "homepage" | "service" | "blog" | "blogArticle" | "about" | "contact";
-
 export interface OgImageParams {
-  type?: PageType;
   title: string;
   subtitle?: string;
   image?: string; // filename relative to public folder
+  band?: string; // For test results
+  username?: string; // For test results
 }
 
 /**
@@ -13,26 +11,30 @@ export interface OgImageParams {
  * @param params - Configuration for the OG image
  * @returns Complete URL for the OG image endpoint
  */
-export function getOgImageUrl({
-  type = "homepage",
-  title,
-  subtitle,
-  image,
-}: OgImageParams): string {
+export function getOgImageUrl({ title, subtitle, image, band, username }: OgImageParams): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.john-al-shiekh.live";
   const endpoint = `${baseUrl}/api/og`;
+  const ogTitle = decodeURIComponent(title.trim());
+  const ogSubtitle = subtitle ? decodeURIComponent(subtitle.trim()) : "";
 
   const params = new URLSearchParams({
-    type: type.toString(),
-    title: title.trim(),
+    title: ogTitle,
   });
 
   if (subtitle?.trim()) {
-    params.append("subtitle", subtitle.trim());
+    params.append("subtitle", ogSubtitle);
   }
 
   if (image?.trim()) {
     params.append("image", image.trim());
+  }
+
+  if (band?.trim()) {
+    params.append("band", band.trim());
+  }
+
+  if (username?.trim()) {
+    params.append("username", username.trim());
   }
 
   return `${endpoint}?${params.toString()}`;
