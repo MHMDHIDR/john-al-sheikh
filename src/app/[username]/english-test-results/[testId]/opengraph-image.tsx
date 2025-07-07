@@ -45,12 +45,8 @@ export default async function OpenGraphImage({ params }: Props) {
     const bandColor = band >= 6 ? "#10b981" : "#6b7280";
     const bandBg = band >= 6 ? "#d1fae5" : "#f3f4f6";
 
-    // Load IBM Plex Sans Arabic Regular (weight 400) from Fontsource CDN
     const fontData = await fetch(
-      new URL(
-        "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans-arabic@latest/arabic-400-normal.woff2",
-        import.meta.url,
-      ),
+      new URL("/fonts/ibm-plex-sans-arabic-400-normal.woff2", import.meta.url),
     ).then(res => res.arrayBuffer());
 
     return new ImageResponse(
