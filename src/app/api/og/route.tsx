@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
             backgroundSize: "cover",
             backgroundPosition: "center",
             padding: "60px",
-            fontFamily: '"Inter", system-ui, sans-serif',
+            fontFamily: "system-ui, sans-serif",
           }}
         >
           {/* Overlay for better text readability when using background images */}
@@ -148,17 +148,6 @@ export async function GET(req: NextRequest) {
       {
         width: 1200,
         height: 630,
-        // Add fonts for better typography (optional but recommended)
-        fonts: [
-          {
-            name: "Inter",
-            data: await fetch(
-              `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.john-al-shiekh.live"}/fonts/Inter-Bold.ttf`,
-            ).then(res => res.arrayBuffer()),
-            style: "normal",
-            weight: 700,
-          },
-        ],
       },
     );
   } catch (error) {
