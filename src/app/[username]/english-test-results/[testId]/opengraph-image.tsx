@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
 import { api } from "@/trpc/server";
 
+export const runtime = "nodejs";
 export const alt = "نتيجة اختبار اللغة الإنجليزية";
 export const size = {
   width: 1200,
@@ -13,7 +14,6 @@ type Props = {
   params: Promise<{ username: string; testId: string }>;
 };
 
-// Type for the tRPC response - adjust based on your actual tRPC schema
 type TestDataResponse = {
   user: {
     displayName: string | null;
@@ -34,19 +34,10 @@ export default async function OpenGraphImage({ params }: Props) {
 
     const userName = testData.user.displayName ?? `@${username}`;
     const band = testData.band;
-    const testDate = new Date(testData.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
 
     // Determine band color
     const bandColor = band >= 6 ? "#10b981" : "#6b7280";
     const bandBg = band >= 6 ? "#d1fae5" : "#f3f4f6";
-
-    const fontData = await fetch(new URL("/fonts/IBMPlexSansArabic-Regular.ttf")).then(res =>
-      res.arrayBuffer(),
-    );
 
     return new ImageResponse(
       (
@@ -55,11 +46,10 @@ export default async function OpenGraphImage({ params }: Props) {
             height: "100%",
             width: "100%",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            fontFamily: "IBM Plex Sans Arabic",
+            fontFamily: "system-ui",
           }}
         >
           {/* Main Card */}
@@ -70,32 +60,30 @@ export default async function OpenGraphImage({ params }: Props) {
               alignItems: "center",
               justifyContent: "center",
               background: "white",
-              borderRadius: "24px",
-              padding: "60px",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              width: "900px",
-              height: "450px",
+              borderRadius: "20px",
+              padding: "80px",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
+              textAlign: "center",
             }}
           >
-            {/* Band Score Circle */}
+            {/* Band Score */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "120px",
-                height: "120px",
+                width: "100px",
+                height: "100px",
                 borderRadius: "50%",
-                background: bandBg,
-                border: `4px solid ${bandColor}`,
-                marginBottom: "20px",
+                background: bandColor,
+                marginBottom: "30px",
               }}
             >
               <span
                 style={{
-                  fontSize: "48px",
+                  fontSize: "40px",
                   fontWeight: "bold",
-                  color: bandColor,
+                  color: "white",
                 }}
               >
                 {band}
@@ -105,11 +93,11 @@ export default async function OpenGraphImage({ params }: Props) {
             {/* Title */}
             <h1
               style={{
-                fontSize: "42px",
+                fontSize: "36px",
                 fontWeight: "bold",
                 color: "#1f2937",
-                marginBottom: "16px",
-                textAlign: "center",
+                marginBottom: "20px",
+                margin: 0,
               }}
             >
               English Test Result
@@ -118,62 +106,35 @@ export default async function OpenGraphImage({ params }: Props) {
             {/* User Info */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                color: "#6b7280",
                 fontSize: "24px",
-                textAlign: "center",
+                color: "#6b7280",
+                marginBottom: "20px",
               }}
             >
-              <div style={{ marginBottom: "8px" }}>
-                Tested by <strong style={{ color: "#374151" }}>{userName}</strong>
-              </div>
-              <div>{testDate}</div>
+              {userName}
             </div>
 
-            {/* Performance Indicator */}
+            {/* Performance Badge */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                marginTop: "24px",
-                padding: "12px 24px",
+                justifyContent: "center",
+                padding: "10px 20px",
                 background: bandBg,
-                borderRadius: "12px",
+                borderRadius: "10px",
                 border: `2px solid ${bandColor}`,
               }}
             >
-              <span style={{ fontSize: "20px", color: bandColor, fontWeight: "600" }}>
-                {band >= 6 ? "Excellent Performance" : "Room for Improvement"}
+              <span style={{ fontSize: "18px", color: bandColor, fontWeight: "600" }}>
+                Band {band}
               </span>
             </div>
-          </div>
-
-          {/* App Name Footer */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "30px",
-              right: "30px",
-              color: "white",
-              fontSize: "18px",
-              opacity: 0.8,
-            }}
-          >
-            English Test Platform
           </div>
         </div>
       ),
       {
         ...size,
-        fonts: [
-          {
-            name: "IBM Plex Sans Arabic",
-            data: fontData,
-            style: "normal",
-          },
-        ],
       },
     );
   } catch (error) {
@@ -187,12 +148,10 @@ export default async function OpenGraphImage({ params }: Props) {
             height: "100%",
             width: "100%",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             fontFamily: "system-ui",
-            direction: "rtl",
           }}
         >
           <div
@@ -202,31 +161,21 @@ export default async function OpenGraphImage({ params }: Props) {
               alignItems: "center",
               justifyContent: "center",
               background: "white",
-              borderRadius: "24px",
+              borderRadius: "20px",
               padding: "60px",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              textAlign: "center",
             }}
           >
             <h1
               style={{
-                fontSize: "48px",
+                fontSize: "36px",
                 fontWeight: "bold",
                 color: "#1f2937",
-                textAlign: "center",
+                margin: 0,
               }}
             >
-              نتيجة اختبار اللغة الإنجليزية
+              English Test Result
             </h1>
-            <p
-              style={{
-                fontSize: "24px",
-                color: "#6b7280",
-                marginTop: "16px",
-                textAlign: "center",
-              }}
-            >
-              مشاركة نتائج اختبار المحادثة
-            </p>
           </div>
         </div>
       ),

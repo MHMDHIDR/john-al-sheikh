@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { api } from "@/trpc/server";
+import type { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
