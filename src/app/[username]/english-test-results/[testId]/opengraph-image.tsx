@@ -1,9 +1,6 @@
-// src/app/[username]/english-test-results/[testId]/opengraph-image.tsx
-// Alternative version using Edge Runtime with API route
-
+import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
-import { env } from "@/env";
-import type { RouterOutputs } from "@/trpc/react";
+import { api } from "@/trpc/server";
 
 export const runtime = "edge";
 export const alt = "نتيجة اختبار اللغة الإنجليزية";
@@ -17,25 +14,28 @@ type Props = {
   params: Promise<{ username: string; testId: string }>;
 };
 
-type TestDataResponse = RouterOutputs["users"]["getPublicTestById"];
+// Type for the tRPC response - adjust based on your actual tRPC schema
+type TestDataResponse = {
+  user: {
+    displayName: string | null;
+  };
+  band: number;
+  createdAt: Date;
+};
 
 export default async function OpenGraphImage({ params }: Props) {
   const { username, testId } = await params;
 
   try {
-    // Fetch data from our API route instead of using tRPC directly
-    const baseUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/test-data/${testId}`);
+    const testData: TestDataResponse | null = await api.users.getPublicTestById({ testId });
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch test data");
+    if (!testData) {
+      return notFound();
     }
-
-    const testData = (await response.json()) as TestDataResponse;
 
     const userName = testData.user.displayName ?? `@${username}`;
     const band = testData.band;
-    const testDate = new Date(testData.createdAt).toLocaleDateString("ar-EG", {
+    const testDate = new Date(testData.createdAt).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -44,6 +44,14 @@ export default async function OpenGraphImage({ params }: Props) {
     // Determine band color
     const bandColor = band >= 6 ? "#10b981" : "#6b7280";
     const bandBg = band >= 6 ? "#d1fae5" : "#f3f4f6";
+
+    // Load IBM Plex Sans Arabic Regular (weight 400) from Fontsource CDN
+    const fontData = await fetch(
+      new URL(
+        "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans-arabic@latest/arabic-400-normal.woff2",
+        import.meta.url,
+      ),
+    ).then(res => res.arrayBuffer());
 
     return new ImageResponse(
       (
@@ -56,6 +64,7 @@ export default async function OpenGraphImage({ params }: Props) {
             alignItems: "center",
             justifyContent: "center",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            fontFamily: "IBM Plex Sans Arabic",
           }}
         >
           {/* Main Card */}
@@ -108,7 +117,7 @@ export default async function OpenGraphImage({ params }: Props) {
                 textAlign: "center",
               }}
             >
-              نتيجة اختبار المحادثة
+              English Test Result
             </h1>
 
             {/* User Info */}
@@ -123,7 +132,7 @@ export default async function OpenGraphImage({ params }: Props) {
               }}
             >
               <div style={{ marginBottom: "8px" }}>
-                تم الاختبار بواسطة <strong style={{ color: "#374151" }}>{userName}</strong>
+                Tested by <strong style={{ color: "#374151" }}>{userName}</strong>
               </div>
               <div>{testDate}</div>
             </div>
@@ -141,7 +150,7 @@ export default async function OpenGraphImage({ params }: Props) {
               }}
             >
               <span style={{ fontSize: "20px", color: bandColor, fontWeight: "600" }}>
-                {band >= 6 ? "أداء ممتاز" : "يمكن التحسين"}
+                {band >= 6 ? "Excellent Performance" : "Room for Improvement"}
               </span>
             </div>
           </div>
@@ -157,12 +166,19 @@ export default async function OpenGraphImage({ params }: Props) {
               opacity: 0.8,
             }}
           >
-            اختبار اللغة الإنجليزية
+            English Test Platform
           </div>
         </div>
       ),
       {
         ...size,
+        fonts: [
+          {
+            name: "IBM Plex Sans Arabic",
+            data: fontData,
+            style: "normal",
+          },
+        ],
       },
     );
   } catch (error) {
@@ -180,6 +196,8 @@ export default async function OpenGraphImage({ params }: Props) {
             alignItems: "center",
             justifyContent: "center",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            fontFamily: "system-ui",
+            direction: "rtl",
           }}
         >
           <div
