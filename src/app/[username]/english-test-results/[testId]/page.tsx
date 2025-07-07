@@ -24,15 +24,16 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
   try {
     const testData = await api.users.getPublicTestById({ testId });
-
     const siteUrl = env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
     const user = testData?.user?.displayName ?? username;
     const band = testData?.band;
+
     const title = `نتيجة اختبار اللغة الإنجليزية | ${user}`;
     const description = testData
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
-    const imageUrl = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
+
+    const pageUrl = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`;
 
     return {
       title,
@@ -41,14 +42,26 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         title,
         description,
         type: "website",
-        url: `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`,
-        images: [imageUrl],
+        url: pageUrl,
+        images: [
+          {
+            url: `${pageUrl}/opengraph-image`,
+            width: 1200,
+            height: 630,
+            alt: title,
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [imageUrl],
+        images: [
+          {
+            url: `${pageUrl}/opengraph-image`,
+            alt: title,
+          },
+        ],
       },
     };
   } catch (error) {
