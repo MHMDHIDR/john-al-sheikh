@@ -3,25 +3,21 @@ import { env } from "@/env";
 import { formatTestType } from "@/lib/format-test-type";
 import { api } from "@/trpc/server";
 
-export const alt = `نتيجة المحادثة باللغة الإنجليزية ${env.NEXT_PUBLIC_APP_NAME}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export type TestResultProps = {
+// Next.js 15+ passes params as a Promise
+type PageProps = {
   params: Promise<{ username: string; testId: string }>;
 };
 
-export default async function Image({ params }: TestResultProps) {
+export default async function Image({ params }: PageProps) {
   // Await the params since they're now a Promise in Next.js 15+
   const { username, testId } = await params;
 
-  console.log("OpenGraph image generation started for:", { username, testId });
-
   let testData = null;
   try {
-    console.log("Fetching test data...");
     testData = await api.users.getPublicTestById({ testId });
-    console.log("Test data fetched successfully:", testData?.band);
   } catch (e) {
     console.error("Error fetching test data:", e);
   }
@@ -33,12 +29,10 @@ export default async function Image({ params }: TestResultProps) {
   const testType = testData?.type ?? "MOCK";
   const badgeColor = band >= 6 ? "#10b981" : "#6366f1";
 
-  console.log("Generating image with data:", { band, username: displayName, appName, testType });
-
   try {
     // Simple fallback image if no test data
     if (!testData) {
-      console.log("Generating fallback image");
+      console.log("Generating fallback Twitter image");
       return new ImageResponse(
         (
           <div
@@ -65,8 +59,8 @@ export default async function Image({ params }: TestResultProps) {
       );
     }
 
-    console.log("Generating main image");
-    // Main image generation - matching the share dialog design
+    console.log("Generating main Twitter image");
+    // Main Twitter image generation - optimized for Twitter's requirements
     return new ImageResponse(
       (
         <div
@@ -204,7 +198,7 @@ export default async function Image({ params }: TestResultProps) {
       { ...size },
     );
   } catch (error) {
-    console.error("Error generating ImageResponse:", error);
+    console.error("Error generating Twitter ImageResponse:", error);
 
     // Return a very basic fallback that should always work
     return new ImageResponse(
@@ -224,7 +218,7 @@ export default async function Image({ params }: TestResultProps) {
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <div>Error generating image</div>
+            <div>Error generating Twitter image</div>
             <div style={{ fontSize: 16, marginTop: 10 }}>
               {displayName} - Band {band}
             </div>

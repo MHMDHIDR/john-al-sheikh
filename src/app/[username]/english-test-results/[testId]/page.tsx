@@ -32,8 +32,6 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
     const description = testData
       ? `نتائج اختبار المحادثة باللغة الإنجليزية - تم الحصول على درجة ${band}`
       : `نتائج اختبار المحادثة باللغة الإنجليزية | ${env.NEXT_PUBLIC_APP_NAME}`;
-    // Build the dynamic OpenGraph image URL
-    const ogImage = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}/opengraph-image`;
 
     return {
       title,
@@ -43,21 +41,11 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         description,
         type: "website",
         url: `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`,
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-            alt: "نتيجة اختبار اللغة الإنجليزية",
-            type: "image/png",
-          },
-        ],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [ogImage],
       },
     };
   } catch (error) {
