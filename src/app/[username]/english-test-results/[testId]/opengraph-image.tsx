@@ -45,9 +45,9 @@ export default async function OpenGraphImage({ params }: Props) {
     const bandColor = band >= 6 ? "#10b981" : "#6b7280";
     const bandBg = band >= 6 ? "#d1fae5" : "#f3f4f6";
 
-    const fontData = await fetch(
-      new URL("/fonts/ibm-plex-sans-arabic-400-normal.woff2", import.meta.url),
-    ).then(res => res.arrayBuffer());
+    const fontData = await fetch(new URL("/fonts/IBMPlexSansArabic-Regular.ttf")).then(res =>
+      res.arrayBuffer(),
+    );
 
     return new ImageResponse(
       (
