@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
+import { generateOgMetadata, truncateText } from "@/lib/og-image";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
 
@@ -35,35 +36,46 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
 
     const pageUrl = `${siteUrl}/${decodeURIComponent(username)}/english-test-results/${testId}`;
 
-    return {
+    return generateOgMetadata({
       title,
       description,
-      openGraph: {
-        title,
-        description,
-        type: "website",
-        url: pageUrl,
-        images: [
-          {
-            url: `${pageUrl}/opengraph-image`,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
+      ogImageParams: {
+        type: "service",
+        title: truncateText(title, 60), // Ensure it fits nicely
+        subtitle: truncateText(description, 120),
+        image: "opengraph-image",
       },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-        images: [
-          {
-            url: `${pageUrl}/opengraph-image`,
-            alt: title,
-          },
-        ],
-      },
-    };
+    });
+
+    // return {
+    //   title,
+    //   description,
+    //   openGraph: {
+    //     title,
+    //     description,
+    //     type: "website",
+    //     url: pageUrl,
+    //     images: [
+    //       {
+    //         url: `${pageUrl}/opengraph-image`,
+    //         width: 1200,
+    //         height: 630,
+    //         alt: title,
+    //       },
+    //     ],
+    //   },
+    //   twitter: {
+    //     card: "summary_large_image",
+    //     title,
+    //     description,
+    //     images: [
+    //       {
+    //         url: `${pageUrl}/opengraph-image`,
+    //         alt: title,
+    //       },
+    //     ],
+    //   },
+    // };
   } catch (error) {
     console.error("Error generating metadata for test result page =>  ", error);
     return {
