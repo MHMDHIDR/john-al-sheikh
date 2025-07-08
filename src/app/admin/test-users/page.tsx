@@ -5,7 +5,13 @@ import { api } from "@/trpc/server";
 import TestUsersTable from "./test-users-table";
 
 export default async function Users() {
-  const { speakingTestUser, count } = await api.users.getTotalTestUsers();
+  const { uniqueTestUsers, count } = await api.users.getTotalTestUsers();
+
+  const tableRows = uniqueTestUsers.map((row: any) => ({
+    ...row,
+    latestTestDate: row.latestTestDate ? new Date(row.latestTestDate) : null,
+    testCount: Number(row.testCount),
+  }));
 
   return (
     <div className="container max-w-6xl md:px-3.5 px-2 py-3 mx-auto">
@@ -13,7 +19,7 @@ export default async function Users() {
         <AuroraText>يوجد {count} ممتحن</AuroraText>
       </h1>
       <Suspense fallback={<LoadingCard renderedSkeletons={count} />}>
-        <TestUsersTable testUsers={speakingTestUser} />
+        <TestUsersTable testUsers={tableRows} />
       </Suspense>
     </div>
   );

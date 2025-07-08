@@ -13,7 +13,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import clsx from "clsx";
-import { Check, ChevronDownIcon, Loader2, Users } from "lucide-react";
+import { Check, Loader2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
@@ -243,7 +243,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   useEffect(() => {
     if (isPreview) {
       setIsRendering(true);
-      renderEmail(
+      void renderEmail(
         <NewsletterEmailTemplate
           senderName="فريق المنصة"
           sendingDate={new Date().toLocaleDateString("ar-EG", {
@@ -252,7 +252,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
             day: "numeric",
           })}
           name="عزيزي المشترك"
-          subject={subject || "نشرة جديدة"}
+          subject={subject ?? "نشرة جديدة"}
           customContent={previewContent}
           ctaUrl={ctaUrl}
           ctaButtonLabel={ctaButtonLabel}
@@ -442,7 +442,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           ) : (
             <iframe
               title="معاينة البريد"
-              srcDoc={newsletterHtml || ""}
+              srcDoc={newsletterHtml ?? ""}
               className="w-full min-h-[600px] border rounded"
               style={{ background: "#fff" }}
             />

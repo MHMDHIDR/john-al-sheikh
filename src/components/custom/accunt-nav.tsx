@@ -86,11 +86,11 @@ export default function AccountNav({ user, credits }: AccountNavProps) {
           </div>
 
           <div className="flex flex-col gap-y-1.5">
-            {NAV_ITEMS.map(item => {
+            {NAV_ITEMS.map((item, index) => {
               if (!item) return null;
               const Icon = item.icon;
               return (
-                <NavLink key={item.href} href={item.href}>
+                <NavLink key={item.href + index} href={item.href}>
                   <Icon size={20} />
                   <span>{item.label}</span>
                 </NavLink>

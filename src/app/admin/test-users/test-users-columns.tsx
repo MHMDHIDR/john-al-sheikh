@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 import type { SpeakingTest, Users } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
-export const userColumns: ColumnDef<SpeakingTest & { user: Users }>[] = [
+export const userColumns: ColumnDef<
+  SpeakingTest & { user: Users } & {
+    latestTestDate: Date | null;
+    testCount: number;
+  }
+>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "user.name",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الاسم
@@ -16,21 +21,11 @@ export const userColumns: ColumnDef<SpeakingTest & { user: Users }>[] = [
     cell: ({ row }) => {
       const user = row.original.user;
       const name = user?.name;
-
       return <span className="text-muted-foreground select-none">{name}</span>;
     },
   },
   {
-    accessorKey: "band",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        درجة الاختبار
-        <ArrowUpDown className="size-4 ml-2" />
-      </Button>
-    ),
-  },
-  {
-    accessorKey: "phone",
+    accessorKey: "user.phone",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الهاتف
@@ -40,7 +35,6 @@ export const userColumns: ColumnDef<SpeakingTest & { user: Users }>[] = [
     cell: ({ row }) => {
       const user = row.original.user;
       const phone = user?.phone;
-
       return phone ? (
         <Link href={`tel:${phone}`} dir="auto">
           <Button variant={"link"} className="p-0 select-none">
@@ -53,16 +47,26 @@ export const userColumns: ColumnDef<SpeakingTest & { user: Users }>[] = [
     },
   },
   {
-    accessorKey: "createdAt",
+    accessorKey: "latestTestDate",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        تاريخ أخذ الاختبار
+        آخر تاريخ لأخذ الإختبار
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
-      const date = row.getValue("createdAt");
-      return new Date(String(date)).toLocaleDateString();
+      const date = row.original.latestTestDate;
+      return date ? new Date(date).toLocaleDateString() : "-";
     },
+  },
+  {
+    accessorKey: "testCount",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        عدد مرات آخذ الإختبار
+        <ArrowUpDown className="size-4 ml-2" />
+      </Button>
+    ),
+    cell: ({ row }) => row.original.testCount,
   },
 ];

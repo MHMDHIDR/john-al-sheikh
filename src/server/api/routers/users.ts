@@ -76,11 +76,22 @@ export const usersRouter = createTRPCRouter({
   getTotalTestUsers: protectedProcedure.query(async ({ ctx }) => {
     const speakingTestUser = await ctx.db.query.speakingTests.findMany({ with: { user: true } });
 
+    // Get unique users who took the test, with their latest test date and test count
+    const uniqueTestUsers = await ctx.db
+      .select({
+        user: users,
+        latestTestDate: sql`max(${speakingTests.createdAt})`,
+        testCount: sql`count(${speakingTests.id})::int`,
+      })
+      .from(speakingTests)
+      .innerJoin(users, eq(speakingTests.userId, users.id))
+      .groupBy(users.id);
+
     const [{ count = 0 } = { count: 0 }] = await ctx.db
       .select({ count: sql<number>`count(distinct ${speakingTests.userId})::int` })
       .from(speakingTests);
 
-    return { speakingTestUser, count };
+    return { speakingTestUser, uniqueTestUsers, count };
   }),
 
   update: protectedProcedure.input(accountFormSchema).mutation(async ({ ctx, input }) => {

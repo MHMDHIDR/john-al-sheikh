@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/custom/data-table";
 import { userColumns } from "./test-users-columns";
 import type { BaseEntity } from "@/components/custom/data-table/base-columns";
-import type { SpeakingTest } from "@/server/db/schema";
+import type { SpeakingTest, Users } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export default function TestUsersTable({
