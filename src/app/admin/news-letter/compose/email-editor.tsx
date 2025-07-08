@@ -13,12 +13,17 @@ import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import clsx from "clsx";
-import { Check, Loader2, Users } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronDownIcon, Loader2, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { EditorMenu } from "@/components/custom/editor-menu";
-import { EmailPreview } from "@/components/custom/email-preview";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -35,6 +40,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +59,10 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     useState<Array<{ email: string; name: string }>>(emailList);
   const [isRecipientsDialogOpen, setIsRecipientsDialogOpen] = useState(false);
   const [confirmSendDialog, setConfirmSendDialog] = useState(false);
+  const [newsletterHtml, setNewsletterHtml] = useState<string | null>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const [ctaUrl, setCtaUrl] = useState<string>(`${env.NEXT_PUBLIC_APP_URL}/signin`);
+  const [ctaButtonLabel, setCtaButtonLabel] = useState<string>("زيارة المنصة");
 
   const { success, error: errorToast } = useToast();
 
@@ -196,6 +207,8 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         subject: subject.trim(),
         content,
         recipients: selectedRecipients,
+        ctaUrl,
+        ctaButtonLabel,
       });
 
       // Reset form after successful send
@@ -226,6 +239,30 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     subject.trim().length < SUBJECT_MAX_LENGTH &&
     editor?.getText().trim() &&
     selectedRecipients.length > 0;
+
+  useEffect(() => {
+    if (isPreview) {
+      setIsRendering(true);
+      renderEmail(
+        <NewsletterEmailTemplate
+          senderName="فريق المنصة"
+          sendingDate={new Date().toLocaleDateString("ar-EG", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+          name="عزيزي المشترك"
+          subject={subject || "نشرة جديدة"}
+          customContent={previewContent}
+          ctaUrl={ctaUrl}
+          ctaButtonLabel={ctaButtonLabel}
+        />,
+      ).then(html => {
+        setNewsletterHtml(html);
+        setIsRendering(false);
+      });
+    }
+  }, [isPreview, subject, previewContent, ctaUrl, ctaButtonLabel]);
 
   if (!editor) {
     return (
@@ -353,6 +390,41 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         </div>
       </div>
 
+      {/* Accordion for optional CTA fields */}
+      <Accordion type="single" collapsible className="w-full" defaultValue="">
+        <AccordionItem value="cta-options">
+          <AccordionTrigger className="justify-baseline">خيارات متقدمة</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="cta-url" className="block text-sm font-medium mb-1">
+                رابط الزر (CTA URL)
+                <small className="text-primary/50 mx-2">(إختياري)</small>
+              </label>
+              <Input
+                id="cta-url"
+                type="url"
+                placeholder={`مثال: ${env.NEXT_PUBLIC_APP_URL}`}
+                value={ctaUrl}
+                onChange={e => setCtaUrl(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="cta-label" className="block text-sm font-medium mb-1">
+                نص الزر (CTA Button Label)
+                <small className="text-primary/50 mx-2">(إختياري)</small>
+              </Label>
+              <Input
+                id="cta-label"
+                type="text"
+                placeholder="مثال: زيارة المنصة"
+                value={ctaButtonLabel}
+                onChange={e => setCtaButtonLabel(e.target.value)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
       <div className="bg-muted/50 border select-none rounded-lg p-3 text-sm text-red-500">
         سيتم إرسال النشرة إلى <strong>{selectedRecipients.length}</strong> مشترك
       </div>
@@ -363,19 +435,18 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
             <h3 className="text-lg font-semibold">معاينة النشرة البريدية</h3>
             <p className="text-sm text-muted-foreground">العنوان: {subject || "بدون عنوان"}</p>
           </div>
-          <NewsletterEmailTemplate
-            senderName="فريق المنصة"
-            sendingDate={new Date().toLocaleDateString("ar-EG", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-            name="عزيزي المشترك"
-            subject={subject || "نشرة جديدة"}
-            customContent={previewContent}
-            ctaUrl={`${env.NEXT_PUBLIC_APP_URL}/signin`}
-            ctaButtonLabel="زيارة المنصة"
-          />
+          {isRendering ? (
+            <div className="flex items-center justify-center min-h-[300px]">
+              <Loader2 className="size-10 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <iframe
+              title="معاينة البريد"
+              srcDoc={newsletterHtml || ""}
+              className="w-full min-h-[600px] border rounded"
+              style={{ background: "#fff" }}
+            />
+          )}
         </div>
       ) : (
         <div className="rounded-lg border bg-white shadow-sm overflow-hidden">

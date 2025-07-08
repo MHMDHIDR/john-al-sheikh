@@ -86,7 +86,7 @@ export default function NewsletterEmailTemplate({
           <Section style={contentSection}>
             <div style={contentWrapper}>
               <Heading as="h1" style={mainHeading}>
-                نشرة {process.env.NEXT_PUBLIC_APP_NAME ?? "جون آل-شيخ"}
+                {subject ?? `نشرة ${process.env.NEXT_PUBLIC_APP_NAME}`}
               </Heading>
 
               <div style={greetingContainer}>
