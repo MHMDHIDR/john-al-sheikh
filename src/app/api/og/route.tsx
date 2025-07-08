@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
     // Extract parameters with defaults
     const band = searchParams.get("band") ?? "6.5";
-    const username = searchParams.get("username") ?? "@username";
+    const username = searchParams.get("username") ?? "John-Al-Shiekh.live User";
 
     // Load Arabic font (still used for fallback, but text is English)
     const arabicFont = await fetch(

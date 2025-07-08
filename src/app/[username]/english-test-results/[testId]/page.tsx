@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
         title: truncateText(title, 60),
         subtitle: truncateText(description, 120),
         band: band,
-        username: `@${username}`,
+        username,
       },
     });
   } catch (error) {
