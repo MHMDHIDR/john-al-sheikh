@@ -80,8 +80,8 @@ export const usersRouter = createTRPCRouter({
     const uniqueTestUsers = await ctx.db
       .select({
         user: users,
-        latestTestDate: sql`max(${speakingTests.createdAt})`,
-        testCount: sql`count(${speakingTests.id})::int`,
+        latestTestDate: sql<string>`max(${speakingTests.createdAt})::text`,
+        testCount: sql<number>`count(${speakingTests.id})::int`,
       })
       .from(speakingTests)
       .innerJoin(users, eq(speakingTests.userId, users.id))

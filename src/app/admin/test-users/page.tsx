@@ -3,14 +3,24 @@ import { LoadingCard } from "@/components/custom/data-table/loading";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { api } from "@/trpc/server";
 import TestUsersTable from "./test-users-table";
+import type { RouterOutputs } from "@/trpc/react";
+
+export type UniqueTestUser = RouterOutputs["users"]["getTotalTestUsers"]["uniqueTestUsers"][number];
+
+// Create a modified type for the table rows
+export type TableTestUser = Omit<UniqueTestUser, "latestTestDate"> & {
+  id: string;
+  latestTestDate: Date | null;
+};
 
 export default async function Users() {
   const { uniqueTestUsers, count } = await api.users.getTotalTestUsers();
 
-  const tableRows = uniqueTestUsers.map((row: any) => ({
-    ...row,
-    latestTestDate: row.latestTestDate ? new Date(row.latestTestDate) : null,
-    testCount: Number(row.testCount),
+  const tableRows: TableTestUser[] = uniqueTestUsers.map((uniqueUsers: UniqueTestUser) => ({
+    ...uniqueUsers,
+    id: uniqueUsers.user.id,
+    latestTestDate: uniqueUsers.latestTestDate ? new Date(uniqueUsers.latestTestDate) : null,
+    testCount: Number(uniqueUsers.testCount),
   }));
 
   return (
