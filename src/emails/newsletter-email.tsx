@@ -1,0 +1,397 @@
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Heading,
+  Html,
+  Img,
+  Preview,
+  Section,
+  Text,
+} from "@react-email/components";
+import type { CSSProperties } from "react";
+
+export type NewsletterEmailProps = {
+  name: string | null | undefined;
+  senderName: string;
+  sendingDate: string;
+  subject: string;
+  customContent: string;
+  ctaUrl: string;
+  ctaButtonLabel?: string;
+};
+
+export default function NewsletterEmailTemplate({
+  senderName = "فريق المنصة",
+  sendingDate,
+  name = "مشتركنا العزيز",
+  subject,
+  customContent,
+  ctaUrl,
+  ctaButtonLabel = "زيارة المنصة",
+}: NewsletterEmailProps) {
+  const year = new Date().getFullYear();
+
+  return (
+    <Html dir="rtl" lang="ar">
+      <Head>
+        <title>{subject}</title>
+      </Head>
+      <Preview>{subject}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          {/* Header with gradient background */}
+          <Section style={headerSection}>
+            <div style={gradientOverlay}>
+              <table width="100%" cellPadding="0" cellSpacing="0" style={{ textAlign: "center" }}>
+                <tr>
+                  <td style={{ textAlign: "center", paddingBottom: "20px" }}>
+                    <table cellPadding="0" cellSpacing="0" style={{ display: "inline-table" }}>
+                      <tr>
+                        <td style={{ verticalAlign: "middle", paddingLeft: "16px" }}>
+                          <div style={logoContainer}>
+                            <Img
+                              src={process.env.NEXT_PUBLIC_APP_URL + "/logo.png"}
+                              width="50"
+                              height="50"
+                              alt={process.env.NEXT_PUBLIC_APP_NAME}
+                              style={logoImage}
+                            />
+                          </div>
+                        </td>
+                        <td style={{ verticalAlign: "middle" }}>
+                          <span style={logoText}>{process.env.NEXT_PUBLIC_APP_NAME}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <Text style={taglineText}>منصتك لكسر حاجز المحادثة باللغة الإنجليزية</Text>
+            </div>
+          </Section>
+
+          {/* Heading with Sender Name & Sending Date */}
+          <Section style={headingSectionOuter}>
+            <div style={headingSectionInner}>
+              <Text style={senderText}>من: {senderName}</Text>
+              <Text style={dateText}>
+                {sendingDate ? `تاريخ الإرسال: ${sendingDate}` : "تاريخ الإرسال: اليوم"}
+              </Text>
+            </div>
+          </Section>
+
+          {/* Main content section */}
+          <Section style={contentSection}>
+            <div style={contentWrapper}>
+              <Heading as="h1" style={mainHeading}>
+                نشرة {process.env.NEXT_PUBLIC_APP_NAME ?? "جون آل-شيخ"}
+              </Heading>
+
+              <div style={greetingContainer}>
+                <Text style={greeting}>مرحباً {name}،</Text>
+              </div>
+
+              {/* Custom content with better styling */}
+              <div style={contentArea}>
+                <div dangerouslySetInnerHTML={{ __html: customContent }} />
+              </div>
+
+              {/* CTA Section */}
+              {ctaButtonLabel && (
+                <Section style={ctaSection}>
+                  <div style={ctaContainer}>
+                    {/* <Button href={ctaUrl} style={ctaButton}>
+                      <span style={ctaButtonText}>{ctaButtonLabel}</span>
+                    </Button> */}
+                    <style
+                      dangerouslySetInnerHTML={{
+                        __html: `
+                        .cta-button {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: #ffffff;
+                          padding: 1.2em 2.4em;
+                          border-radius: 50px;
+                          text-decoration: none;
+                          font-weight: 600;
+                          font-size: 16px;
+                          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                          border: none;
+                          display: inline-block;
+                          text-align: center;
+                          min-width: 200px;
+                          position: relative;
+                          overflow: hidden;
+                          transition: all 0.3s ease;
+                          transform: translateY(0);
+                          cursor: pointer;
+                        }
+
+                        .cta-button:hover {
+                          transform: translateY(-2px);
+                          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+                          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+                        }
+
+                        .cta-button:before {
+                          content: '';
+                          position: absolute;
+                          top: 0;
+                          left: -100%;
+                          width: 100%;
+                          height: 100%;
+                          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+                          transition: left 0.5s;
+                        }
+
+                        .cta-button:hover:before {
+                          left: 100%;
+                        }
+
+                        .cta-button:active {
+                          transform: translateY(0);
+                          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                        }
+
+                        .cta-glow {
+                          position: relative;
+                          display: inline-block;
+                        }
+
+                        .cta-glow:before {
+                          content: '';
+                          position: absolute;
+                          top: -2px;
+                          left: -2px;
+                          right: -2px;
+                          bottom: -2px;
+                          background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);
+                          border-radius: 50px;
+                          opacity: 0;
+                          z-index: -1;
+                          transition: opacity 0.3s ease;
+                          animation: rotate 2s linear infinite;
+                        }
+
+                        .cta-glow:hover:before {
+                          opacity: 1;
+                        }
+
+                        @keyframes rotate {
+                          0% { transform: rotate(0deg); }
+                          100% { transform: rotate(360deg); }
+                        }
+                      `,
+                      }}
+                    />
+                    <div className="cta-glow">
+                      <Button href={ctaUrl} className="cta-button" style={ctaButton}>
+                        <span style={ctaButtonText}>{ctaButtonLabel}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </Section>
+              )}
+            </div>
+          </Section>
+
+          {/* Footer */}
+          <Section style={footerSection}>
+            <div style={footerContent}>
+              <Text style={footerText}>
+                © {year} {process.env.NEXT_PUBLIC_APP_NAME} ● جميع الحقوق محفوظة.
+              </Text>
+              <Text style={footerSubtext}>شكراً لكونك جزءاً من مجتمعنا المتميز</Text>
+            </div>
+          </Section>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+// Enhanced Styles
+const main: CSSProperties = {
+  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  backgroundColor: "#f8fafc",
+  margin: 0,
+  padding: 0,
+  color: "#1a202c",
+  direction: "rtl",
+  textAlign: "right",
+  lineHeight: "1.6",
+};
+
+const container: CSSProperties = {
+  maxWidth: "640px",
+  margin: "0 auto",
+  backgroundColor: "#ffffff",
+  borderRadius: "16px",
+  overflow: "hidden",
+  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+};
+
+const headerSection: CSSProperties = {
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  padding: "40px 30px",
+  textAlign: "center",
+  position: "relative",
+};
+
+const gradientOverlay: CSSProperties = {
+  position: "relative",
+  zIndex: 1,
+};
+
+const logoContainer: CSSProperties = {
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderRadius: "50%",
+  padding: "8px",
+  backdropFilter: "blur(10px)",
+  border: "2px solid rgba(255, 255, 255, 0.3)",
+};
+
+const logoImage: CSSProperties = {
+  display: "block",
+  borderRadius: "50%",
+  border: "2px solid #ffffff",
+};
+
+const logoText: CSSProperties = {
+  fontSize: "28px",
+  color: "#ffffff",
+  fontWeight: "700",
+  textDecoration: "none",
+  display: "inline-block",
+  textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+  letterSpacing: "0.5px",
+};
+
+const taglineText: CSSProperties = {
+  fontSize: "14px",
+  color: "rgba(255, 255, 255, 0.9)",
+  margin: "12px 0 0 0",
+  fontWeight: "400",
+  textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+};
+
+const contentSection: CSSProperties = {
+  padding: "0",
+  backgroundColor: "#ffffff",
+};
+
+const contentWrapper: CSSProperties = {
+  padding: "40px 30px",
+};
+
+const mainHeading: CSSProperties = {
+  fontSize: "32px",
+  fontWeight: "800",
+  color: "#2d3748",
+  margin: "0 0 30px 0",
+  textAlign: "center",
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+  letterSpacing: "-0.5px",
+};
+
+const greetingContainer: CSSProperties = {
+  backgroundColor: "#f7fafc",
+  padding: "20px",
+  borderRadius: "12px",
+  borderLeft: "4px solid #667eea",
+  marginBottom: "30px",
+};
+
+const greeting: CSSProperties = {
+  fontSize: "18px",
+  color: "#4a5568",
+  fontWeight: "600",
+  margin: "0",
+  lineHeight: "1.5",
+};
+
+const contentArea: CSSProperties = {
+  fontSize: "16px",
+  lineHeight: "1.7",
+  color: "#2d3748",
+  marginBottom: "40px",
+};
+
+const ctaSection: CSSProperties = {
+  textAlign: "center",
+  margin: "40px 0",
+};
+
+const ctaContainer: CSSProperties = {
+  display: "inline-block",
+};
+
+const ctaButton: CSSProperties = {
+  padding: "16px 32px",
+};
+
+const ctaButtonText: CSSProperties = {
+  color: "#ffffff",
+  textDecoration: "none",
+  fontWeight: "600",
+  position: "relative",
+  zIndex: 1,
+};
+
+const footerSection: CSSProperties = {
+  backgroundColor: "#f8fafc",
+  borderTop: "1px solid #e2e8f0",
+};
+
+const footerContent: CSSProperties = {
+  padding: "30px",
+  textAlign: "center",
+};
+
+const footerText: CSSProperties = {
+  fontSize: "14px",
+  color: "#718096",
+  margin: "0 0 8px 0",
+  fontWeight: "500",
+};
+
+const footerSubtext: CSSProperties = {
+  fontSize: "12px",
+  color: "#a0aec0",
+  margin: "0",
+  fontStyle: "italic",
+};
+
+const headingSectionOuter: CSSProperties = {
+  padding: "20px 30px",
+  backgroundColor: "#f8fafc",
+  borderBottom: "1px solid #e2e8f0",
+  fontSize: "14px",
+  fontWeight: "500",
+};
+
+const headingSectionInner: CSSProperties = {
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+};
+
+const senderText: CSSProperties = {
+  color: "#4a5568",
+  fontSize: "14px",
+  fontWeight: "600",
+  margin: "0",
+};
+
+const dateText: CSSProperties = {
+  color: "#718096",
+  fontSize: "14px",
+  fontWeight: "400",
+  margin: "0",
+};

@@ -11,21 +11,20 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { env } from "@/env";
 import type { CSSProperties } from "react";
 
 export type WelcomeEmailProps = {
   name: string | null | undefined;
   ieltsGoal?: string;
-  signupUrl: string;
+  ctaUrl: string;
   ctaButtonLabel?: string;
   customContent?: string;
 };
 
-export function WelcomeEmailTemplate({
-  name = `في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+export default function WelcomeEmailTemplate({
+  name = `في منصة ${process.env.NEXT_PUBLIC_APP_NAME}`,
   ieltsGoal,
-  signupUrl,
+  ctaUrl,
   ctaButtonLabel = "إنشاء حساب الآن",
   customContent,
 }: WelcomeEmailProps) {
@@ -34,7 +33,7 @@ export function WelcomeEmailTemplate({
   return (
     <Html dir="rtl" lang="ar">
       <Head>
-        <title>مرحباً بك في منصة {env.NEXT_PUBLIC_APP_NAME} للايلتس</title>
+        <title>مرحباً بك في منصة {process.env.NEXT_PUBLIC_APP_NAME} للايلتس</title>
       </Head>
       <Preview>نرحب بك في رحلتك نحو النجاح في اختبار الايلتس!</Preview>
       <Body style={main}>
@@ -47,22 +46,22 @@ export function WelcomeEmailTemplate({
                     <tr>
                       <td style={{ verticalAlign: "middle", paddingLeft: "14px" }}>
                         <Img
-                          src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
+                          src={process.env.NEXT_PUBLIC_APP_URL + "/logo.png"}
                           width="40"
                           height="40"
-                          alt={env.NEXT_PUBLIC_APP_NAME}
+                          alt={process.env.NEXT_PUBLIC_APP_NAME}
                           style={{ display: "block", borderRadius: "50%" }}
                         />
                       </td>
                       <td style={{ verticalAlign: "middle", userSelect: "none" }}>
-                        <span style={logoText}>{env.NEXT_PUBLIC_APP_NAME}</span>
+                        <span style={logoText}>{process.env.NEXT_PUBLIC_APP_NAME}</span>
                       </td>
                     </tr>
                   </table>
                 </td>
               </tr>
             </table>
-            <small style={smallText}>منصتك لتعلم وممارسة المحادثة باللغة الإنجليزية</small>
+            <small style={smallText}>منصتك لكسر حاجز المحادثة باللغة الإنجليزية</small>
           </Section>
           <Section style={contentSection}>
             <Heading as="h2" style={greeting}>
@@ -72,7 +71,7 @@ export function WelcomeEmailTemplate({
               <>
                 <div dangerouslySetInnerHTML={{ __html: customContent }} />
                 {ctaButtonLabel && (
-                  <Button href={signupUrl} style={ctaButton}>
+                  <Button href={ctaUrl} style={ctaButton}>
                     {ctaButtonLabel}
                   </Button>
                 )}
@@ -81,7 +80,7 @@ export function WelcomeEmailTemplate({
               <>
                 <Text style={paragraph}>
                   {ctaButtonLabel // if ctaButtonLabel is provided, it means the user has created an account so we welcome them, otherwise they're just a subscriber
-                    ? `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME} للمحادثة باللغة الإنجليزية! حيث نساعدك على تحقيق أهدافك
+                    ? `مرحباً بك في منصة ${process.env.NEXT_PUBLIC_APP_NAME} للمحادثة باللغة الإنجليزية! حيث نساعدك على تحقيق أهدافك
                   في اختبار الايلتس والمحادثة الإنجليزية. نحن متحمسون لانضمامك إلينا!`
                     : `شكراً على اشتراكك في النشرة البريدية الخاصة بتعليم المحادثة باللغة الإنجليزية. يسعدنا
                   انضمامك إلى مجتمعنا!`}
@@ -96,7 +95,7 @@ export function WelcomeEmailTemplate({
                   سنرسل لك نصائح وإرشادات منتظمة، إضافة إلى موارد مفيدة ستساعدك في رحلتك التعليمية.
                 </Text>
                 <Section style={ctaContainer}>
-                  <Button href={signupUrl} style={ctaButton}>
+                  <Button href={ctaUrl} style={ctaButton}>
                     {ctaButtonLabel}
                   </Button>
                 </Section>
@@ -113,7 +112,7 @@ export function WelcomeEmailTemplate({
           <Hr style={divider} />
           <Section style={footer}>
             <Text style={footerText}>
-              © {year} {env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
+              © {year} {process.env.NEXT_PUBLIC_APP_NAME}. جميع الحقوق محفوظة.
             </Text>
           </Section>
         </Container>

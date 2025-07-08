@@ -3,8 +3,10 @@ import { eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
 import { z } from "zod";
 import { formSchema } from "@/app/schemas/subscription-from";
-import { WelcomeEmailTemplate } from "@/components/custom/welcome-email";
+import NewsletterEmailTemplate from "@/emails/newsletter-email";
+import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
+import { formatDate } from "@/lib/format-date";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { subscribedEmails } from "@/server/db/schema";
 
@@ -17,6 +19,8 @@ const newsletterSchema = z.object({
       name: z.string().nullable(),
     }),
   ),
+  ctaButtonLabel: z.string().optional(),
+  ctaUrl: z.string().optional(),
 });
 
 export const subscribedEmailsRouter = createTRPCRouter({
@@ -46,11 +50,11 @@ export const subscribedEmailsRouter = createTRPCRouter({
       await resend.emails.send({
         from: env.ADMIN_EMAIL,
         to: input.email,
-        subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
+        subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
         react: WelcomeEmailTemplate({
           name: input.fullname,
-          ieltsGoal: input.ieltsGoal.toString() ?? "5.0",
-          signupUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
+          customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في اختبار الايلتس.</p>`,
+          ctaUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
         }),
       });
 
@@ -75,7 +79,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
     return { subscribers: subscribersList, count };
   }),
 
-  sendNewsletter: protectedProcedure.input(newsletterSchema).mutation(async ({ input }) => {
+  sendNewsletter: protectedProcedure.input(newsletterSchema).mutation(async ({ input, ctx }) => {
     try {
       const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -85,11 +89,14 @@ export const subscribedEmailsRouter = createTRPCRouter({
           from: env.ADMIN_EMAIL,
           to: recipient.email,
           subject: input.subject,
-          react: WelcomeEmailTemplate({
+          react: NewsletterEmailTemplate({
+            senderName: ctx.session?.user?.name ?? "فريق المنصة",
+            sendingDate: formatDate(new Date().toISOString(), true, true),
             name: recipient.name,
-            signupUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
-            ctaButtonLabel: "زيارة المنصة",
+            subject: input.subject,
             customContent: input.content,
+            ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
+            ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
           }),
         }),
       );
@@ -107,31 +114,13 @@ export const subscribedEmailsRouter = createTRPCRouter({
   }),
 
   deleteSubscriber: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        email: z.string().email(),
-      }),
-    )
+    .input(z.object({ name: z.string(), email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       try {
         await ctx.db
           .delete(subscribedEmails)
           .where(eq(subscribedEmails.email, input.email))
           .returning({ email: subscribedEmails.email });
-        // Optionally, you can send a confirmation email or log the deletion
-        const resend = new Resend(env.AUTH_RESEND_KEY);
-        await resend.emails.send({
-          from: env.ADMIN_EMAIL,
-          to: input.email,
-          subject: "تم حذف اشتراكك",
-          react: WelcomeEmailTemplate({
-            name: input.name,
-            customContent: `لقد تم حذف اشتراكك من القائمة البريدية من منصة ${env.NEXT_PUBLIC_APP_NAME}. إذا كنت ترغب في إعادة الاشتراك، يمكنك زيارة الرابط أدناه.`,
-            signupUrl: `${env.NEXT_PUBLIC_APP_URL}/subscribe`,
-            ctaButtonLabel: "إعادة الاشتراك",
-          }),
-        });
 
         return { success: true };
       } catch (error) {

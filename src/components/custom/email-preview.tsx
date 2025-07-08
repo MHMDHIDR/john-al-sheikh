@@ -3,14 +3,14 @@ import { env } from "@/env";
 
 type EmailPreviewProps = {
   name: string;
-  signupUrl: string;
+  ctaUrl: string;
   ctaButtonLabel?: string;
   customContent?: string;
 };
 
 export function EmailPreview({
   name,
-  signupUrl,
+  ctaUrl,
   ctaButtonLabel = "زيارة المنصة",
   customContent,
 }: EmailPreviewProps) {
@@ -53,7 +53,7 @@ export function EmailPreview({
 
               <div className="text-center my-8">
                 <a
-                  href={signupUrl}
+                  href={ctaUrl}
                   className="inline-block bg-black text-white px-6 py-3 rounded-md font-bold hover:bg-gray-800 transition-colors"
                 >
                   {ctaButtonLabel}

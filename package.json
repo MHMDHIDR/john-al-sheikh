@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbo --experimental-https",
+    "email": "email dev --dir ./src/emails",
     "build": "next build",
     "check": "next lint && tsc --noEmit",
     "db:generate": "drizzle-kit generate",
@@ -42,6 +43,7 @@
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-email/components": "^0.0.31",
+    "@react-email/render": "^1.1.3",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tabler/icons-react": "^3.34.0",
     "@tanstack/react-query": "^5.81.5",

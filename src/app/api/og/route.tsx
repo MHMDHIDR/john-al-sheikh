@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ImageResponse } from "next/og";
 import { env } from "@/env";
 import type { NextRequest } from "next/server";
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
                 zIndex: 10,
               }}
             >
-              <img
+              <Image
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
                 width={50}
@@ -339,7 +340,7 @@ export async function GET(req: NextRequest) {
                 border: "3px solid #8B4513",
               }}
             >
-              <img
+              <Image
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
                 width={70}

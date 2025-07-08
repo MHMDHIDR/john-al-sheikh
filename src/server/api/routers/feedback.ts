@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { Resend } from "resend";
 import { feedbackFormSchema, MAX_FILE_SIZE } from "@/app/schemas/feedback-form";
-import { FeedbackEmailTemplate } from "@/components/custom/feedback-email";
+import FeedbackEmailTemplate from "@/emails/feedback-email";
 import { env } from "@/env";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import type { CreateEmailOptions } from "resend";

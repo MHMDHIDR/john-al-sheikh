@@ -5,7 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import posthog from "posthog-js";
 import { Resend as ResendEmail } from "resend";
-import { WelcomeEmailTemplate } from "@/components/custom/welcome-email";
+import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
@@ -62,7 +62,7 @@ export const authConfig = {
         const { identifier: email, url } = params;
 
         try {
-          const { SignInEmailTemplate } = await import("@/components/custom/signin-email");
+          const { SignInEmailTemplate } = await import("@/emails/signin-email");
 
           // Send the email using Resend
           const result = await resendEmail.emails.send({
@@ -253,7 +253,7 @@ async function sendWelcomeEmail({ name, email, ctaButtonLabel }: sendWelcomeEmai
     subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
     react: WelcomeEmailTemplate({
       name: name,
-      signupUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
+      ctaUrl: `${env.NEXT_PUBLIC_APP_URL}/mock-test`,
       ctaButtonLabel: ctaButtonLabel ?? "إبدأ بتجربة المحادثة",
     }),
   });

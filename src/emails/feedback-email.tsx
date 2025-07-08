@@ -9,7 +9,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { env } from "@/env";
 import type { CSSProperties } from "react";
 
 export type FeedbackEmailProps = {
@@ -19,7 +18,12 @@ export type FeedbackEmailProps = {
   message: string;
 };
 
-export function FeedbackEmailTemplate({ name, email, subject, message }: FeedbackEmailProps) {
+export default function FeedbackEmailTemplate({
+  name,
+  email,
+  subject,
+  message,
+}: FeedbackEmailProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -28,13 +32,13 @@ export function FeedbackEmailTemplate({ name, email, subject, message }: Feedbac
         <title>New Feedback from {name}</title>
       </Head>
       <Preview>
-        New feedback received from {name} on {env.NEXT_PUBLIC_APP_NAME}
+        New feedback received from {name} on {process.env.NEXT_PUBLIC_APP_NAME ?? "جون آل شيخ"}
       </Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
             <Heading as="h1" style={logo}>
-              {env.NEXT_PUBLIC_APP_NAME} - User Feedback
+              {process.env.NEXT_PUBLIC_APP_NAME} - User Feedback
             </Heading>
           </Section>
 
@@ -62,7 +66,7 @@ export function FeedbackEmailTemplate({ name, email, subject, message }: Feedbac
 
           <Section style={footer}>
             <Text style={footerText}>
-              © {year} {env.NEXT_PUBLIC_APP_NAME}. All rights reserved.
+              © {year} {process.env.NEXT_PUBLIC_APP_NAME}. All rights reserved.
             </Text>
           </Section>
         </Container>
