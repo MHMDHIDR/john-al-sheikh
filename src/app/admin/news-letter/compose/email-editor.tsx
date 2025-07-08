@@ -35,7 +35,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import WelcomeEmailTemplate from "@/emails/welcome-email";
+import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -52,9 +52,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     useState<Array<{ email: string; name: string }>>(emailList);
   const [isRecipientsDialogOpen, setIsRecipientsDialogOpen] = useState(false);
   const [confirmSendDialog, setConfirmSendDialog] = useState(false);
-  const [showRawHtml, setShowRawHtml] = useState(false);
-  const [rawHtml, setRawHtml] = useState<string | null>(null);
-  const [isRendering, setIsRendering] = useState(false);
 
   const { success, error: errorToast } = useToast();
 
@@ -238,24 +235,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     );
   }
 
-  async function handleShowRawHtml() {
-    setIsRendering(true);
-    try {
-      const html = await renderEmail(
-        <WelcomeEmailTemplate
-          name="عزيزي المشترك"
-          ctaUrl={`${env.NEXT_PUBLIC_APP_URL}/signin`}
-          ctaButtonLabel="زيارة المنصة"
-          customContent={editor?.getHTML() ?? ""}
-        />,
-      );
-      setRawHtml(html);
-      setShowRawHtml(true);
-    } finally {
-      setIsRendering(false);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6 rtl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -384,15 +363,19 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
             <h3 className="text-lg font-semibold">معاينة النشرة البريدية</h3>
             <p className="text-sm text-muted-foreground">العنوان: {subject || "بدون عنوان"}</p>
           </div>
-          <EmailPreview
+          <NewsletterEmailTemplate
+            senderName="فريق المنصة"
+            sendingDate={new Date().toLocaleDateString("ar-EG", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
             name="عزيزي المشترك"
+            subject={subject || "نشرة جديدة"}
+            customContent={previewContent}
             ctaUrl={`${env.NEXT_PUBLIC_APP_URL}/signin`}
             ctaButtonLabel="زيارة المنصة"
-            customContent={previewContent}
           />
-          <Button onClick={handleShowRawHtml} disabled={isRendering}>
-            {isRendering ? "جاري التحويل..." : "عرض HTML النهائي"}
-          </Button>
         </div>
       ) : (
         <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
@@ -422,17 +405,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         buttonClass="bg-green-600 hover:bg-green-700"
         onConfirm={handleSend}
       />
-
-      <Dialog open={showRawHtml} onOpenChange={setShowRawHtml}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>HTML النهائي للبريد</DialogTitle>
-          </DialogHeader>
-          <pre className="overflow-auto max-h-[60vh] bg-gray-100 p-4 rounded text-xs">
-            {rawHtml}
-          </pre>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
