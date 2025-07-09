@@ -113,7 +113,11 @@ export const userColumns: ColumnDef<Users>[] = [
     ),
     cell: ({ row }) => {
       const phone = row.getValue("phone");
-      return phone ? phone : "غير متوفر";
+      return typeof phone === "string" && phone ? (
+        <span className="[direction:rtl]">{phone}</span>
+      ) : (
+        <span>غير متوفر</span>
+      );
     },
   },
   {

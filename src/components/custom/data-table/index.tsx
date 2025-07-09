@@ -30,7 +30,6 @@ import type { Users } from "@/server/db/schema";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 
 type RowStatus = "inactive" | "suspended" | "pending" | "active" | "default";
-
 type DataTableProps<TData extends BaseEntity> = {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -41,42 +40,40 @@ type DataTableProps<TData extends BaseEntity> = {
   exportFilename: string;
   searchPlaceholder?: string;
 };
-
 // Global filter function that searches across all columns
-function globalFilterFn<TData>(row: any, columnId: string, filterValue: string): boolean {
+function globalFilterFn(row: Row<unknown>, columnId: string, filterValue: string): boolean {
   if (!filterValue) return true;
-
   const searchValue = filterValue.toLowerCase();
-
   // Get all cell values for this row
   const searchableValues: string[] = [];
-
   // Helper function to extract text from any value
-  const extractText = (value: any): string => {
+  const extractText = (value: unknown): string => {
     if (value === null || value === undefined) return "";
     if (typeof value === "string") return value;
     if (typeof value === "number") return value.toString();
     if (typeof value === "boolean") return value.toString();
     if (value instanceof Date) return value.toISOString();
     if (typeof value === "object") {
-      // Handle nested objects by extracting all string values
-      return JSON.stringify(value);
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return "";
+      }
     }
-    return String(value);
+    return "";
   };
-
   // Extract all values from the row's original data
-  const extractAllValues = (obj: any, prefix = ""): void => {
+  const extractAllValues = (obj: unknown, prefix = ""): void => {
     if (obj === null || obj === undefined) return;
-
     if (typeof obj === "object" && !Array.isArray(obj) && !(obj instanceof Date)) {
-      Object.keys(obj).forEach(key => {
-        const value = obj[key];
-        if (value !== null && value !== undefined) {
-          if (typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
-            extractAllValues(value, `${prefix}${key}.`);
+      const record = obj as Record<string, unknown>;
+      Object.keys(record).forEach(key => {
+        const val = record[key];
+        if (val !== null && val !== undefined) {
+          if (typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
+            extractAllValues(val, `${prefix}${key}.`);
           } else {
-            searchableValues.push(extractText(value));
+            searchableValues.push(extractText(val));
           }
         }
       });
@@ -84,13 +81,10 @@ function globalFilterFn<TData>(row: any, columnId: string, filterValue: string):
       searchableValues.push(extractText(obj));
     }
   };
-
   extractAllValues(row.original);
-
   // Check if any value contains the search term
-  return searchableValues.some(value => value.toLowerCase().includes(searchValue));
+  return searchableValues.some(val => val.toLowerCase().includes(searchValue));
 }
-
 export function DataTable<TData extends BaseEntity>({
   columns,
   data,
@@ -107,7 +101,6 @@ export function DataTable<TData extends BaseEntity>({
   const pathname = usePathname();
   const ALLOWED_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN] as const;
   const MANAGING_PATHS = ["/dashboard", "/admin"];
-
   const selectionColumn: ColumnDef<TData> = {
     id: "select",
     header: ({ table }) => (
@@ -137,11 +130,9 @@ export function DataTable<TData extends BaseEntity>({
     enableSorting: false,
     enableHiding: false,
   };
-
   const showSelectionColumn =
     checkRoleAccess(session?.user?.role, ALLOWED_ROLES) &&
     MANAGING_PATHS.some(path => pathname.includes(path));
-
   const allColumns = [showSelectionColumn ? selectionColumn : null, ...columns].filter(
     Boolean,
   ) as ColumnDef<TData>[];
@@ -215,7 +206,6 @@ export function DataTable<TData extends BaseEntity>({
         />
       </div>
 
-      {/* Results Counter */}
       {globalFilter && (
         <div className="text-sm text-muted-foreground">
           {filteredRowCount} من {data.length} نتيجة
