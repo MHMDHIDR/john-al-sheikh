@@ -10,7 +10,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import Link from "next/link";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
@@ -168,12 +167,12 @@ export default function NewsletterEmailTemplate({
             </div>
             <div>
               <Text style={{ textAlign: "center", fontSize: "11px" }}>
-                <Link
+                <a
                   href={`${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${unsubscribeToken ?? ""}`}
                   style={{ color: "#999", textDecoration: "underline" }}
                 >
                   لإلغاء الاشتراك يمكنك الضغط هنا
-                </Link>
+                </a>
               </Text>
             </div>
           </Section>
