@@ -37,6 +37,15 @@ export default function NewsletterEmailTemplate({
     <Html dir="rtl" lang="ar">
       <Head>
         <title>{subject}</title>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap');
+              html, body, * {
+                font-family: 'IBM Plex Sans Arabic', sans-serif !important;
+              }
+            `,
+          }}
+        />
       </Head>
       <Preview>{subject}</Preview>
       <Body style={main}>
@@ -213,7 +222,7 @@ export default function NewsletterEmailTemplate({
 
 // Enhanced Styles
 const main: CSSProperties = {
-  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  fontFamily: "'IBM Plex Sans Arabic', sans-serif",
   backgroundColor: "#f8fafc",
   margin: 0,
   padding: 0,
