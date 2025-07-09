@@ -3,6 +3,7 @@
 import {
   IconBrandFacebook,
   IconBrandInstagram,
+  IconBrandLinkedin,
   IconBrandWhatsapp,
   IconBrandX,
 } from "@tabler/icons-react";
@@ -110,7 +111,9 @@ export function ShareTestDialog({
   };
 
   // Share to social media
-  const shareToSocial = async (platform: "twitter" | "facebook" | "instagram" | "whatsapp") => {
+  const shareToSocial = async (
+    platform: "twitter" | "facebook" | "instagram" | "whatsapp" | "linkedin",
+  ) => {
     const text = `شاهد نتيجة اختبار اللغة الإنجليزية الخاص بي! حصلت على ${band} في اختبار المحادثة.`;
     const isImageTab = activeTab === "image";
 
@@ -147,6 +150,9 @@ export function ShareTestDialog({
       case "facebook":
         // Facebook doesn't support direct image sharing via URL parameters
         shareLink = `https://www.facebook.com/sharer.php?u=${encodeURI(shareUrl)}`;
+        break;
+      case "linkedin":
+        shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
         break;
       case "whatsapp":
         shareLink = `https://wa.me/?text=${encodeURI(text)} - ${encodeURI(shareUrl)}`;
@@ -295,6 +301,15 @@ export function ShareTestDialog({
                 <Button
                   variant="outline"
                   size="icon"
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182]"
+                  onClick={() => shareToSocial("linkedin")}
+                  title="مشاركة في لينكدإن"
+                >
+                  <IconBrandLinkedin className="size-4 stroke-white" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
                   className="rounded-full bg-[#25D366] hover:bg-[#1da748]"
                   onClick={() => shareToSocial("whatsapp")}
                   title="مشاركة في واتساب"
@@ -324,7 +339,7 @@ export function ShareTestDialog({
               </Button>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -334,6 +349,16 @@ export function ShareTestDialog({
               >
                 <IconBrandFacebook className="size-4 stroke-white" />
                 <span className="text-white">فيسبوك</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182]"
+                onClick={() => shareToSocial("linkedin")}
+                title="مشاركة في لينكدإن"
+              >
+                <IconBrandLinkedin className="size-4 stroke-white" />
+                <span className="text-white">لينكدإن</span>
               </Button>
               <Button
                 variant="outline"
