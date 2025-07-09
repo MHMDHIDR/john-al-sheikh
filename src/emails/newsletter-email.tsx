@@ -104,10 +104,22 @@ export default function NewsletterEmailTemplate({
 
           {/* Heading with Sender Name & Sending Date */}
           <Section style={headingSectionOuter}>
-            <div style={headingSectionInner}>
-              <Text style={senderText}>من: {senderName}</Text>
-              <Text style={dateText}>{formatDate(new Date().toDateString(), true)}</Text>
-            </div>
+            <table
+              width="100%"
+              cellPadding="0"
+              cellSpacing="0"
+              role="presentation"
+              style={{ width: "100%" }}
+            >
+              <tr>
+                <td style={{ textAlign: "right", verticalAlign: "middle" }}>
+                  <Text style={senderText}>من: {senderName}</Text>
+                </td>
+                <td style={{ textAlign: "left", verticalAlign: "middle" }}>
+                  <Text style={dateText}>{formatDate(new Date().toDateString(), true)}</Text>
+                </td>
+              </tr>
+            </table>
           </Section>
 
           {/* Main content section */}
@@ -132,91 +144,8 @@ export default function NewsletterEmailTemplate({
               {ctaButtonLabel && (
                 <Section style={ctaSection}>
                   <div style={ctaContainer}>
-                    {/* <Button href={ctaUrl} style={ctaButton}>
-                      <span style={ctaButtonText}>{ctaButtonLabel}</span>
-                    </Button> */}
-                    <style
-                      dangerouslySetInnerHTML={{
-                        __html: `
-                        .cta-button {
-                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: #ffffff;
-                          padding: 1.2em 2.4em;
-                          border-radius: 50px;
-                          text-decoration: none;
-                          font-weight: 600;
-                          font-size: 16px;
-                          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                          border: none;
-                          display: inline-block;
-                          text-align: center;
-                          min-width: 200px;
-                          position: relative;
-                          overflow: hidden;
-                          transition: all 0.3s ease;
-                          transform: translateY(0);
-                          cursor: pointer;
-                        }
-
-                        .cta-button:hover {
-                          transform: translateY(-2px);
-                          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-                          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-                        }
-
-                        .cta-button:before {
-                          content: '';
-                          position: absolute;
-                          top: 0;
-                          left: -100%;
-                          width: 100%;
-                          height: 100%;
-                          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-                          transition: left 0.5s;
-                        }
-
-                        .cta-button:hover:before {
-                          left: 100%;
-                        }
-
-                        .cta-button:active {
-                          transform: translateY(0);
-                          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        }
-
-                        .cta-glow {
-                          position: relative;
-                          display: inline-block;
-                        }
-
-                        .cta-glow:before {
-                          content: '';
-                          position: absolute;
-                          top: -2px;
-                          left: -2px;
-                          right: -2px;
-                          bottom: -2px;
-                          background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);
-                          border-radius: 50px;
-                          opacity: 0;
-                          z-index: -1;
-                          transition: opacity 0.3s ease;
-                          animation: rotate 2s linear infinite;
-                        }
-
-                        .cta-glow:hover:before {
-                          opacity: 1;
-                        }
-
-                        @keyframes rotate {
-                          0% { transform: rotate(0deg); }
-                          100% { transform: rotate(360deg); }
-                        }
-                      `,
-                      }}
-                    />
-                    <div className="cta-glow">
-                      <Button href={ctaUrl} className="cta-button" style={ctaButton}>
+                    <div style={ctaGlow}>
+                      <Button href={ctaUrl} style={ctaButton}>
                         <span style={ctaButtonText}>{ctaButtonLabel}</span>
                       </Button>
                     </div>
@@ -361,7 +290,23 @@ const ctaContainer: CSSProperties = {
 };
 
 const ctaButton: CSSProperties = {
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  color: "#ffffff",
   padding: "16px 32px",
+  borderRadius: "50px",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "16px",
+  boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+  border: "none",
+  transition: "all 0.3s ease",
+  display: "inline-block",
+  textAlign: "center",
+  cursor: "pointer",
+  minWidth: "200px",
+  position: "relative",
+  overflow: "hidden",
+  transform: "translateY(0)",
 };
 
 const ctaButtonText: CSSProperties = {
@@ -370,6 +315,11 @@ const ctaButtonText: CSSProperties = {
   fontWeight: "600",
   position: "relative",
   zIndex: 1,
+};
+
+const ctaGlow: CSSProperties = {
+  position: "relative",
+  display: "inline-block",
 };
 
 const footerSection: CSSProperties = {
