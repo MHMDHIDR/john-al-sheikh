@@ -126,6 +126,7 @@ export async function GET(req: NextRequest) {
                 zIndex: 10,
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
@@ -339,6 +340,7 @@ export async function GET(req: NextRequest) {
                 border: "3px solid #8B4513",
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
