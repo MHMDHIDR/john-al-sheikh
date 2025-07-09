@@ -52,6 +52,7 @@ type UseVapiConversationProps = {
   onError?: (error: VapiError) => void;
   onSpeechStart?: () => void;
   onSpeechEnd?: () => void;
+  onWindDownTriggered?: () => void;
 };
 
 export function useVapiConversation({
@@ -61,19 +62,23 @@ export function useVapiConversation({
   onError,
   onSpeechStart,
   onSpeechEnd,
+  onWindDownTriggered,
 }: UseVapiConversationProps = {}) {
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [windDownTriggered, setWindDownTriggered] = useState(false);
 
   useEffect(() => {
     const handleCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
+      setWindDownTriggered(false);
       onConnect?.();
     };
 
     const handleCallEnd = () => {
       setCallStatus(CallStatus.FINISHED);
+      setWindDownTriggered(false);
       onDisconnect?.();
     };
 
@@ -127,6 +132,8 @@ export function useVapiConversation({
     async (config: CreateAssistantDTO, assistantOverrides: AssistantOverrides) => {
       try {
         setCallStatus(CallStatus.CONNECTING);
+        setWindDownTriggered(false);
+
         // Cast our modified types back to the original types expected by the vapi SDK
         const fullConfig: BaseCreateAssistantDTO = {
           ...config,
@@ -152,6 +159,7 @@ export function useVapiConversation({
   const endSession = useCallback(() => {
     vapi.stop();
     setCallStatus(CallStatus.FINISHED);
+    setWindDownTriggered(false);
   }, []);
 
   const setVolume = useCallback((volume: number) => {
@@ -159,12 +167,50 @@ export function useVapiConversation({
     setIsMuted(!volume);
   }, []);
 
+  const triggerWindDown = useCallback(async () => {
+    if (windDownTriggered || callStatus !== CallStatus.ACTIVE) {
+      return;
+    }
+
+    try {
+      setWindDownTriggered(true);
+      onWindDownTriggered?.();
+
+      // Send a message to the assistant to start winding down
+      vapi.send({
+        type: "add-message",
+        message: {
+          role: "system",
+          content:
+            "We're approaching the end of our conversation time. Please start wrapping up naturally by providing a brief summary of what we discussed and prepare to conclude the conversation gracefully within the next 30 seconds. End with the exact phrase: 'That concludes our English conversation. Thank you for your participation.'",
+        },
+      });
+
+      // Set a fallback timer to force end the conversation if the assistant doesn't conclude naturally
+      setTimeout(() => {
+        if (callStatus === CallStatus.ACTIVE) {
+          endSession();
+        }
+      }, 45000); // 45 seconds fallback
+    } catch (error) {
+      console.error("Error triggering wind down:", error);
+      // Fallback to immediate end if message sending fails
+      setTimeout(() => {
+        if (callStatus === CallStatus.ACTIVE) {
+          endSession();
+        }
+      }, 5000);
+    }
+  }, [windDownTriggered, callStatus, onWindDownTriggered, endSession]);
+
   return {
     callStatus,
     isSpeaking,
     isMuted,
+    windDownTriggered,
     startSession,
     endSession,
     setVolume,
+    triggerWindDown,
   };
 }

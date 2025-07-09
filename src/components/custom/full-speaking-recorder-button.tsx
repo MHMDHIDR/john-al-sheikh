@@ -173,7 +173,16 @@ function IeltsAssistantConfig({
           - Never mock or make the user feel embarrassed about mistakes
           - Focus on communication skills rather than perfect accuracy
 
-          End the conversation naturally when you've asked around 10-15 questions or after about 8-10 minutes. When concluding, provide brief positive feedback on 2-3 specific aspects of their English that were strong, and 1 gentle suggestion for improvement. Then say EXACTLY: "That concludes our English conversation. Thank you for your participation."
+          IMPORTANT TIMING AND WIND-DOWN GUIDELINES:
+          - The conversation has a maximum duration of 5 minutes (300 seconds)
+          - Pay attention to system messages that indicate when to start winding down
+          - When you receive a system message to wind down, immediately begin concluding the conversation naturally
+          - Provide brief positive feedback on 2-3 specific aspects of their English that were strong
+          - Give 1 gentle suggestion for improvement
+          - End with the EXACT phrase: "That concludes our English conversation. Thank you for your participation."
+          - If the conversation naturally reaches 10-15 questions before the wind-down signal, you may conclude on your own
+
+          End the conversation naturally when you receive the wind-down signal or when you've asked around 10-15 questions. When concluding, provide brief positive feedback on 2-3 specific aspects of their English that were strong, and 1 gentle suggestion for improvement. Then say EXACTLY: "That concludes our English conversation. Thank you for your participation."
 
           Do not offer any recordings or services outside the scope of this conversation. If the user asks about anything unrelated, politely redirect them back to the conversation.
         `;
@@ -214,6 +223,9 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
   "1 minute to prepare",
 ];
 
+// Wind down timing constants
+const WIND_DOWN_TRIGGER_TIME = 4.5 * MINUTES_IN_MS; // 4.5 minutes (270 seconds)
+
 // Modify component to use forwardRef
 const FullSpeakingRecorderButton = forwardRef<
   FullSpeakingRecorderButtonRef,
@@ -230,8 +242,11 @@ const FullSpeakingRecorderButton = forwardRef<
   const [isOneMinuteToPrepare, setIsOneMinuteToPrepare] = useState(false);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
+  const [isWindingDown, setIsWindingDown] = useState(false);
+
   const conversationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
+  const windDownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const userProfile = {
     name: user.name,
@@ -245,43 +260,49 @@ const FullSpeakingRecorderButton = forwardRef<
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
   const { callStatus } = useGlobalVapiConversation();
-  const { isMuted, startSession, setVolume, endSession } = useVapiConversation({
-    onMessage: message => {
-      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
-      const timestamp = new Date().toLocaleTimeString();
-      const messageContent = { role, content: message.content, timestamp };
-      addMessage(messageContent);
+  const { isMuted, startSession, setVolume, endSession, triggerWindDown, windDownTriggered } =
+    useVapiConversation({
+      onMessage: message => {
+        const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
+        const timestamp = new Date().toLocaleTimeString();
+        const messageContent = { role, content: message.content, timestamp };
+        addMessage(messageContent);
 
-      // Check if this message indicates test completion
-      if (role === "examiner" && isTestConclusionMessage(message.content)) {
-        setIsTestCompleted(true);
-        setTimeout(() => {
-          vapi.stop();
-        }, 5000);
-      }
+        // Check if this message indicates test completion
+        if (role === "examiner" && isTestConclusionMessage(message.content)) {
+          setIsTestCompleted(true);
+          setTimeout(() => {
+            vapi.stop();
+          }, 5000);
+        }
 
-      if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
-        setVolume(0);
-        setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
-        setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
-      }
-    },
-    onError: error => {
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "errorMsg" in error
+        if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
+          setVolume(0);
+          setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
+          setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
+        }
+      },
+      onError: error => {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null && "errorMsg" in error
+              ? (error as { errorMsg: string }).errorMsg
+              : JSON.stringify(error);
+
+        setErrorMessage(
+          typeof error === "object" && error !== null && "errorMsg" in error
             ? (error as { errorMsg: string }).errorMsg
-            : JSON.stringify(error);
-
-      setErrorMessage(
-        typeof error === "object" && error !== null && "errorMsg" in error
-          ? (error as { errorMsg: string }).errorMsg
-          : errorMsg,
-      );
-      console.error("Error:", errorMsg);
-    },
-  });
+            : errorMsg,
+        );
+        console.error("Error:", errorMsg);
+      },
+      onWindDownTriggered: () => {
+        setIsWindingDown(true);
+        setVolume(0);
+        vapi.setMuted(true);
+      },
+    });
 
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
@@ -431,15 +452,28 @@ const FullSpeakingRecorderButton = forwardRef<
       sessionStartTimeRef.current
     ) {
       const elapsed = Date.now() - sessionStartTimeRef.current;
-      const remaining = GENERAL_ENGLISH_CONVERSATION_TIME - elapsed;
-      if (remaining > 0) {
+      const windDownRemaining = WIND_DOWN_TRIGGER_TIME - elapsed;
+      const totalRemaining = GENERAL_ENGLISH_CONVERSATION_TIME - elapsed;
+
+      // Set up wind-down timer
+      if (windDownRemaining > 0 && !windDownTriggered) {
+        windDownTimerRef.current = setTimeout(() => {
+          if (callStatus === CallStatus.ACTIVE && !windDownTriggered) {
+            triggerWindDown();
+          }
+        }, windDownRemaining);
+      }
+
+      // Set up final timer (fallback in case wind-down doesn't work)
+      if (totalRemaining > 0) {
         conversationTimerRef.current = setTimeout(() => {
-          setIsTestCompleted(true);
-          // Add a small delay before ending the session
-          setTimeout(() => {
-            endSession();
-          }, 1000);
-        }, remaining);
+          if (callStatus === CallStatus.ACTIVE) {
+            setIsTestCompleted(true);
+            setTimeout(() => {
+              endSession();
+            }, 1000);
+          }
+        }, totalRemaining);
       } else {
         // Already expired, end session immediately
         setIsTestCompleted(true);
@@ -452,8 +486,12 @@ const FullSpeakingRecorderButton = forwardRef<
         clearTimeout(conversationTimerRef.current);
         conversationTimerRef.current = null;
       }
+      if (windDownTimerRef.current) {
+        clearTimeout(windDownTimerRef.current);
+        windDownTimerRef.current = null;
+      }
     };
-  }, [callStatus, mode, endSession]);
+  }, [callStatus, mode, endSession, triggerWindDown, windDownTriggered]);
 
   const requestMicPermission = async () => {
     try {
@@ -494,8 +532,12 @@ const FullSpeakingRecorderButton = forwardRef<
       sessionStartTimeRef.current = Date.now();
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
-        silenceTimeoutSeconds: 85, // Allow 1.25 minutes of silence,
-        maxDurationSeconds: mode === "mock-test" ? 600 : GENERAL_ENGLISH_CONVERSATION_TIME / 1000,
+        silenceTimeoutSeconds: 100, // Allow 1.66 minutes of silence,
+        maxDurationSeconds: mode === "mock-test" ? 600 : GENERAL_ENGLISH_CONVERSATION_TIME / 1000, // 5 minutes for general-english mode
+        endCallMessage:
+          mode === "general-english"
+            ? "Thank you for our conversation! I hope you enjoyed practicing your English with me. Have a great day!"
+            : undefined,
         messagePlan: {
           idleMessages: [
             "Are you still there?",
@@ -507,7 +549,7 @@ const FullSpeakingRecorderButton = forwardRef<
           silenceTimeoutMessage: "As there is no response, I am ending the call now.",
           idleMessageResetCountOnUserSpeechEnabled: true,
         },
-        startSpeakingPlan: { waitSeconds: 3 },
+        startSpeakingPlan: { waitSeconds: 4 },
         backgroundDenoisingEnabled: true,
       });
     } catch (error) {
@@ -590,30 +632,6 @@ const FullSpeakingRecorderButton = forwardRef<
               "px-10": mode === "general-english" && isConnected,
             })}
           >
-            {/* <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMute}
-              disabled={!isConnected}
-              title={isMuted ? "كتم المحادثة" : "إلغاء كتم المحادثة"}
-              className={clsx("transition-transform duration-300", {
-                "-translate-x-full opacity-0 invisible w-0": !isConnected,
-                "opacity-100 translate-x-0 visible w-full": isConnected,
-              })}
-            >
-              {isMuted ? (
-                <>
-                  <span className="text-xs hidden xs:inline-flex">إلغاء كتم الميكروفون</span>
-                  <VolumeX className="size-4" />
-                </>
-              ) : (
-                <>
-                  <span className="text-xs hidden xs:inline-flex">اكتم الميكروفون</span>
-                  <Volume2 className="size-5" />
-                </>
-              )}
-            </Button> */}
-
             {isConnected && mode === "general-english" && sessionStartTimeRef.current && (
               <Timer
                 isRunning={isConnected}

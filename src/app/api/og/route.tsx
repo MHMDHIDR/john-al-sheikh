@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
                 zIndex: 10,
               }}
             >
-              <Image
+              <img
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
                 width={50}
@@ -340,7 +340,7 @@ export async function GET(req: NextRequest) {
                 border: "3px solid #8B4513",
               }}
             >
-              <Image
+              <img
                 src={`${env.NEXT_PUBLIC_APP_URL}/logo.svg`}
                 alt="John Al-Shiekh Icon"
                 width={70}

@@ -32,7 +32,7 @@ export default function FeedbackEmailTemplate({
         <title>New Feedback from {name}</title>
       </Head>
       <Preview>
-        New feedback received from {name} on {process.env.NEXT_PUBLIC_APP_NAME ?? "جون آل شيخ"}
+        New feedback received from {name} on {process.env.NEXT_PUBLIC_APP_NAME ?? "جون آل-شيخ"}
       </Preview>
       <Body style={main}>
         <Container style={container}>
