@@ -390,7 +390,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       {/* Accordion for optional CTA fields */}
       <Accordion type="single" collapsible className="w-full" defaultValue="">
         <AccordionItem value="cta-options">
-          <AccordionTrigger className="justify-baseline">خيارات متقدمة</AccordionTrigger>
+          <AccordionTrigger className="justify-baseline py-0">خيارات متقدمة</AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4">
             <div>
               <label htmlFor="cta-url" className="block text-sm font-medium mb-1">

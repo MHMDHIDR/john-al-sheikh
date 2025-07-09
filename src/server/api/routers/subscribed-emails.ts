@@ -6,6 +6,7 @@ import { formSchema } from "@/app/schemas/subscription-from";
 import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
+import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { subscribedEmails } from "@/server/db/schema";
 
@@ -83,8 +84,18 @@ export const subscribedEmailsRouter = createTRPCRouter({
       const resend = new Resend(env.AUTH_RESEND_KEY);
 
       // Send to each recipient
-      const sendPromises = input.recipients.map(recipient =>
-        resend.emails.send({
+      const sendPromises = input.recipients.map(async recipient => {
+        // Generate unsubscribe token for this recipient
+        const tokenResult = await ctx.db.query.subscribedEmails.findFirst({
+          where: eq(subscribedEmails.email, recipient.email),
+        });
+
+        let unsubscribeToken = "";
+        if (tokenResult) {
+          unsubscribeToken = generateUnsubscribeToken(tokenResult);
+        }
+
+        return resend.emails.send({
           from: env.ADMIN_EMAIL,
           to: recipient.email,
           subject: input.subject,
@@ -95,9 +106,10 @@ export const subscribedEmailsRouter = createTRPCRouter({
             customContent: input.content,
             ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
             ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
+            unsubscribeToken,
           }),
-        }),
-      );
+        });
+      });
 
       const [data] = await Promise.all(sendPromises);
 
@@ -111,7 +123,115 @@ export const subscribedEmailsRouter = createTRPCRouter({
     }
   }),
 
-  deleteSubscriber: protectedProcedure
+  generateUnsubscribeToken: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const subscriber = await ctx.db.query.subscribedEmails.findFirst({
+          where: eq(subscribedEmails.email, input.email),
+        });
+
+        if (!subscriber) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "البريد الإلكتروني غير موجود في قائمة المشتركين",
+          });
+        }
+
+        // Generate a secure token using subscriber ID and email
+        const token = generateUnsubscribeToken(subscriber);
+
+        return {
+          token,
+          subscriber: {
+            id: subscriber.id,
+            fullname: subscriber.fullname,
+            email: subscriber.email,
+          },
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        console.error("Generate unsubscribe token error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "حدث خطأ أثناء إنشاء رابط إلغاء الاشتراك",
+        });
+      }
+    }),
+
+  verifyUnsubscribeToken: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        // Get all subscribers to verify token
+        const allSubscribers = await ctx.db.query.subscribedEmails.findMany();
+
+        // Find subscriber by token
+        const subscriber = verifyUnsubscribeToken(input.token, allSubscribers);
+
+        if (!subscriber) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "رابط إلغاء الاشتراك غير صحيح أو منتهي الصلاحية",
+          });
+        }
+
+        return {
+          subscriber: {
+            id: subscriber.id,
+            fullname: subscriber.fullname,
+            email: subscriber.email,
+          },
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        console.error("Verify unsubscribe token error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "حدث خطأ أثناء التحقق من رابط إلغاء الاشتراك",
+        });
+      }
+    }),
+
+  deleteSubscriber: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get all subscribers to verify token
+        const allSubscribers = await ctx.db.query.subscribedEmails.findMany();
+
+        // Find subscriber by token
+        const subscriber = verifyUnsubscribeToken(input.token, allSubscribers);
+
+        if (!subscriber) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "رابط إلغاء الاشتراك غير صحيح أو منتهي الصلاحية",
+          });
+        }
+
+        // Delete the subscriber
+        await ctx.db
+          .delete(subscribedEmails)
+          .where(eq(subscribedEmails.id, subscriber.id))
+          .returning({ email: subscribedEmails.email });
+
+        return { success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        console.error("Delete subscriber error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "حدث خطأ أثناء حذف المشترك",
+        });
+      }
+    }),
+
+  // Keep the old method for admin panel compatibility
+  deleteSubscriberByEmail: protectedProcedure
     .input(z.object({ name: z.string(), email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       try {

@@ -21,7 +21,7 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
 
   const utils = api.useUtils();
 
-  const deleteSubscriberMutation = api.subscribedEmails.deleteSubscriber.useMutation({
+  const deleteSubscriberMutation = api.subscribedEmails.deleteSubscriberByEmail.useMutation({
     onSuccess: async () => {
       toast.success("تم حذف المشترك بنجاح");
       await utils.subscribedEmails.getSubscribers.invalidate();

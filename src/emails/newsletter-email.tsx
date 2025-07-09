@@ -10,6 +10,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import Link from "next/link";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
@@ -20,6 +21,7 @@ export type NewsletterEmailProps = {
   customContent: string;
   ctaUrl: string;
   ctaButtonLabel?: string;
+  unsubscribeToken?: string;
 };
 
 export default function NewsletterEmailTemplate({
@@ -29,6 +31,7 @@ export default function NewsletterEmailTemplate({
   customContent,
   ctaUrl,
   ctaButtonLabel = "زيارة المنصة",
+  unsubscribeToken,
 }: NewsletterEmailProps) {
   const year = new Date().getFullYear();
 
@@ -163,6 +166,16 @@ export default function NewsletterEmailTemplate({
               </Text>
               <Text style={footerSubtext}>شكراً لكونك جزءاً من مجتمعنا المتميز</Text>
             </div>
+            <div>
+              <Text style={{ textAlign: "center", fontSize: "11px" }}>
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${unsubscribeToken ?? ""}`}
+                  style={{ color: "#999", textDecoration: "underline" }}
+                >
+                  لإلغاء الاشتراك يمكنك الضغط هنا
+                </Link>
+              </Text>
+            </div>
           </Section>
         </Container>
       </Body>
@@ -245,10 +258,10 @@ const contentWrapper: CSSProperties = {
 };
 
 const mainHeading: CSSProperties = {
-  fontSize: "32px",
-  fontWeight: "800",
+  fontSize: "24px",
+  fontWeight: "700",
   color: "#2d3748",
-  margin: "0 0 30px 0",
+  margin: "0 0 24px 0",
   textAlign: "center",
   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   WebkitBackgroundClip: "text",
