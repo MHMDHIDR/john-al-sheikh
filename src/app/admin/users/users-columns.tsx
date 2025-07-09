@@ -111,6 +111,10 @@ export const userColumns: ColumnDef<Users>[] = [
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
+    cell: ({ row }) => {
+      const phone = row.getValue("phone");
+      return phone ? phone : "غير متوفر";
+    },
   },
   {
     accessorKey: "role",

@@ -1,15 +1,18 @@
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
+import { Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import EmptyState from "@/components/custom/empty-state";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -36,7 +39,57 @@ type DataTableProps<TData extends BaseEntity> = {
   isLoading?: boolean;
   count?: number;
   exportFilename: string;
+  searchPlaceholder?: string;
 };
+
+// Global filter function that searches across all columns
+function globalFilterFn<TData>(row: any, columnId: string, filterValue: string): boolean {
+  if (!filterValue) return true;
+
+  const searchValue = filterValue.toLowerCase();
+
+  // Get all cell values for this row
+  const searchableValues: string[] = [];
+
+  // Helper function to extract text from any value
+  const extractText = (value: any): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return value.toString();
+    if (typeof value === "boolean") return value.toString();
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === "object") {
+      // Handle nested objects by extracting all string values
+      return JSON.stringify(value);
+    }
+    return String(value);
+  };
+
+  // Extract all values from the row's original data
+  const extractAllValues = (obj: any, prefix = ""): void => {
+    if (obj === null || obj === undefined) return;
+
+    if (typeof obj === "object" && !Array.isArray(obj) && !(obj instanceof Date)) {
+      Object.keys(obj).forEach(key => {
+        const value = obj[key];
+        if (value !== null && value !== undefined) {
+          if (typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+            extractAllValues(value, `${prefix}${key}.`);
+          } else {
+            searchableValues.push(extractText(value));
+          }
+        }
+      });
+    } else {
+      searchableValues.push(extractText(obj));
+    }
+  };
+
+  extractAllValues(row.original);
+
+  // Check if any value contains the search term
+  return searchableValues.some(value => value.toLowerCase().includes(searchValue));
+}
 
 export function DataTable<TData extends BaseEntity>({
   columns,
@@ -46,8 +99,10 @@ export function DataTable<TData extends BaseEntity>({
   emptyStateMessage = "Sorry we couldn't find any data.",
   onRowSelection,
   exportFilename = "data_export",
+  searchPlaceholder = "Search all columns...",
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [globalFilter, setGlobalFilter] = useState<string>("");
   const { data: session } = useSession();
   const pathname = usePathname();
   const ALLOWED_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN] as const;
@@ -96,8 +151,14 @@ export function DataTable<TData extends BaseEntity>({
     columns: allColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
-    state: { rowSelection },
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: globalFilterFn,
+    state: {
+      rowSelection,
+      globalFilter,
+    },
   });
 
   useEffect(() => {
@@ -139,14 +200,33 @@ export function DataTable<TData extends BaseEntity>({
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
   const hasSelectedRows = selectedRows.length > 0;
+  const filteredRowCount = table.getFilteredRowModel().rows.length;
 
   return (
     <div className="space-y-3 relative">
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder={searchPlaceholder}
+          value={globalFilter ?? ""}
+          onChange={e => setGlobalFilter(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Results Counter */}
+      {globalFilter && (
+        <div className="text-sm text-muted-foreground">
+          {filteredRowCount} من {data.length} نتيجة
+        </div>
+      )}
+
       {hasSelectedRows && (
         <div className="flex select-none items-center sticky mx-auto top-14 max-w-xl z-50 dark:bg-black/30 backdrop-blur-md justify-between p-4 bg-muted/30 rounded-xl shadow-xl border">
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
             <span className="text-sm font-medium">
-              تم تحديد {selectedRows.length} من {data.length} عنصر
+              تم تحديد {selectedRows.length} من {filteredRowCount} عنصر
             </span>
           </div>
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -159,6 +239,7 @@ export function DataTable<TData extends BaseEntity>({
           </div>
         </div>
       )}
+
       <div className="border rounded-md overflow-auto">
         <Table>
           <TableHeader className="select-none">
@@ -202,7 +283,9 @@ export function DataTable<TData extends BaseEntity>({
                 <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                   <EmptyState>
                     <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
-                      {emptyStateMessage}
+                      {globalFilter
+                        ? `لا توجد نتائج للبحث عن "${globalFilter}"`
+                        : emptyStateMessage}
                     </p>
                   </EmptyState>
                 </TableCell>

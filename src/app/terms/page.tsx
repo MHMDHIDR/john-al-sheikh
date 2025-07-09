@@ -46,7 +46,7 @@ export default async function TermsPage() {
 
       <p className="mb-4" data-page-content-intro>
         آخر تحديث:{" "}
-        {new Date(content.updatedAt).toLocaleDateString("ar-SA", LAST_UPDATED_DATE_OPTIONS)}
+        {new Date(content.updatedAt).toLocaleDateString("ar-EG", LAST_UPDATED_DATE_OPTIONS)}
       </p>
 
       <p className="mb-2" data-page-content-intro>

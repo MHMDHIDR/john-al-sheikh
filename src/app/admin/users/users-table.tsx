@@ -16,6 +16,7 @@ export default function UsersTable({ users }: { users: (Users & BaseEntity)[] })
       data={users}
       emptyStateMessage="Sorry, No Users Found."
       exportFilename="users_export"
+      searchPlaceholder="البحث في بيانات المستخدمين..."
     />
   );
 }

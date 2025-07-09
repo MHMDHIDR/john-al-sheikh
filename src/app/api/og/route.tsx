@@ -392,7 +392,7 @@ export async function GET(req: NextRequest) {
                 }}
               >
                 {processArabicName(
-                  new Date().toLocaleDateString("ar-SA", {
+                  new Date().toLocaleDateString("ar-EG", {
                     day: "numeric",
                     month: "short",
                     year: "2-digit",

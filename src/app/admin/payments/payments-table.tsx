@@ -34,6 +34,7 @@ export default function PaymentsTable({ payments }: { payments: Payment[] }) {
       data={payments}
       emptyStateMessage="No payments found."
       exportFilename="payments_export"
+      searchPlaceholder="البحث في بيانات المدفوعات..."
     />
   );
 }

@@ -16,6 +16,7 @@ export default function PremiumUsersTable({ users }: { users: (Users & BaseEntit
       data={users}
       emptyStateMessage="Sorry, No Premium Users Found."
       exportFilename="users_export"
+      searchPlaceholder="البحث في بيانات المستخدمين المميزون..."
     />
   );
 }

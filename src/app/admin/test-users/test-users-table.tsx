@@ -19,6 +19,7 @@ export default function TestUsersTable({
       data={testUsers}
       emptyStateMessage="Sorry, No Test Users Found."
       exportFilename="test_users_export"
+      searchPlaceholder="البحث في بيانات الممتحنين..."
     />
   );
 }

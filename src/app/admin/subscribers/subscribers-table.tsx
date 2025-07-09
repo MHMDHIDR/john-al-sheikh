@@ -15,6 +15,7 @@ export default function SubscribersTable({ subscribers }: { subscribers: Subscri
       data={subscribers}
       emptyStateMessage="Sorry, No Subscribers Found."
       exportFilename="subscribers_export"
+      searchPlaceholder="البحث في بيانات مشتركي النشرة البريدية..."
     />
   );
 }

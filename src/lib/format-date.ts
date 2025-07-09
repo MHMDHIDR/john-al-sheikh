@@ -13,7 +13,7 @@ export function formatDate(date: string, isNormalDate?: boolean, withTime = fals
       day: "numeric",
       ...(withTime && { hour: "numeric", minute: "numeric", hour12: true }),
     };
-    return new Date(date).toLocaleDateString("ar-SA", dateOptions);
+    return new Date(date).toLocaleDateString("ar-EG", dateOptions);
   }
 
   const now = new Date().getTime();
@@ -22,7 +22,7 @@ export function formatDate(date: string, isNormalDate?: boolean, withTime = fals
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   const timeSuffix = withTime
-    ? ` at ${new Date(givenDate).toLocaleTimeString("ar-SA", {
+    ? ` at ${new Date(givenDate).toLocaleTimeString("ar-EG", {
         hour: "numeric",
         minute: "numeric",
         hour12: true,

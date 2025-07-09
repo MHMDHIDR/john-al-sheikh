@@ -1,6 +1,8 @@
+import { IconMoustache, IconWoman } from "@tabler/icons-react";
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SpeakingTest, Users } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -21,7 +23,19 @@ export const userColumns: ColumnDef<
     cell: ({ row }) => {
       const user = row.original.user;
       const name = user?.name;
-      return <span className="text-muted-foreground select-none">{name}</span>;
+      const gender = user.gender;
+      // return the name and the gender as small icon
+      return (
+        <span className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {gender === "male" ? <IconMoustache /> : <IconWoman />}
+            </TooltipTrigger>
+            <TooltipContent>{gender === "male" ? "ذكر" : "أنثى"}</TooltipContent>
+          </Tooltip>
+          <span className="text-muted-foreground select-none">{name}</span>
+        </span>
+      );
     },
   },
   {
