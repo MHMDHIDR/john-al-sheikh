@@ -91,7 +91,6 @@ export const subscribedEmailsRouter = createTRPCRouter({
           subject: input.subject,
           react: NewsletterEmailTemplate({
             senderName: ctx.session?.user?.name ?? "فريق المنصة",
-            sendingDate: formatDate(new Date().toISOString(), true, true),
             name: recipient.name,
             subject: input.subject,
             customContent: input.content,

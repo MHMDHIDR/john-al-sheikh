@@ -10,12 +10,12 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
 export type NewsletterEmailProps = {
   name: string | null | undefined;
   senderName: string;
-  sendingDate: string;
   subject: string;
   customContent: string;
   ctaUrl: string;
@@ -24,7 +24,6 @@ export type NewsletterEmailProps = {
 
 export default function NewsletterEmailTemplate({
   senderName = "فريق المنصة",
-  sendingDate,
   name = "مشتركنا العزيز",
   subject,
   customContent,
@@ -33,13 +32,35 @@ export default function NewsletterEmailTemplate({
 }: NewsletterEmailProps) {
   const year = new Date().getFullYear();
 
+  const getTimeOfDay = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    if (hours < 12) return "صباح";
+    if (hours < 18) return "مساء";
+    return "مساء";
+  };
+
   return (
     <Html dir="rtl" lang="ar">
       <Head>
         <title>{subject}</title>
         <style
           dangerouslySetInnerHTML={{
-            __html: `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap');
+            __html: `
+              @font-face {
+                font-family: 'IBM Plex Sans Arabic';
+                src: url('/fonts/ibmplexsansarabic-regular.woff2') format('woff2');
+                font-weight: 400;
+                font-style: normal;
+                font-display: swap;
+              }
+              @font-face {
+                font-family: 'IBM Plex Sans Arabic';
+                src: url('/fonts/ibmplexsansarabic-bold.woff2') format('woff2');
+                font-weight: 700;
+                font-style: normal;
+                font-display: swap;
+              }
               html, body, * {
                 font-family: 'IBM Plex Sans Arabic', sans-serif !important;
               }
@@ -48,7 +69,7 @@ export default function NewsletterEmailTemplate({
         />
       </Head>
       <Preview>{subject}</Preview>
-      <Body style={main}>
+      <Body style={{ ...main, fontFamily: "IBM Plex Sans Arabic" }}>
         <Container style={container}>
           {/* Header with gradient background */}
           <Section style={headerSection}>
@@ -85,9 +106,7 @@ export default function NewsletterEmailTemplate({
           <Section style={headingSectionOuter}>
             <div style={headingSectionInner}>
               <Text style={senderText}>من: {senderName}</Text>
-              <Text style={dateText}>
-                {sendingDate ? `تاريخ الإرسال: ${sendingDate}` : "تاريخ الإرسال: اليوم"}
-              </Text>
+              <Text style={dateText}>{formatDate(new Date().toDateString(), true)}</Text>
             </div>
           </Section>
 
@@ -99,7 +118,9 @@ export default function NewsletterEmailTemplate({
               </Heading>
 
               <div style={greetingContainer}>
-                <Text style={greeting}>مرحباً {name}،</Text>
+                <Text style={greeting}>
+                  {getTimeOfDay()} الخير {name} {getTimeOfDay() === "صباح" ? "🌞" : "🌚"}
+                </Text>
               </div>
 
               {/* Custom content with better styling */}
@@ -280,7 +301,7 @@ const logoText: CSSProperties = {
 const taglineText: CSSProperties = {
   fontSize: "14px",
   color: "rgba(255, 255, 255, 0.9)",
-  margin: "12px 0 0 0",
+  margin: "2px 0 0 0",
   fontWeight: "400",
   textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
 };
@@ -316,7 +337,7 @@ const greetingContainer: CSSProperties = {
 };
 
 const greeting: CSSProperties = {
-  fontSize: "18px",
+  fontSize: "15px",
   color: "#4a5568",
   fontWeight: "600",
   margin: "0",
