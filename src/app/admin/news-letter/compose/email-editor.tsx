@@ -246,11 +246,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       void renderEmail(
         <NewsletterEmailTemplate
           senderName="فريق المنصة"
-          sendingDate={new Date().toLocaleDateString("ar-EG", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
           name="عزيزي المشترك"
           subject={subject ?? "نشرة جديدة"}
           customContent={previewContent}

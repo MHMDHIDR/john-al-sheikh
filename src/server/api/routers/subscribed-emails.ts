@@ -6,7 +6,6 @@ import { formSchema } from "@/app/schemas/subscription-from";
 import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
-import { formatDate } from "@/lib/format-date";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { subscribedEmails } from "@/server/db/schema";
 
