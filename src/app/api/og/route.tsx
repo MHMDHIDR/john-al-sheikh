@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { ImageResponse } from "next/og";
 import { env } from "@/env";
 import type { NextRequest } from "next/server";

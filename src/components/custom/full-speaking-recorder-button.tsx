@@ -242,7 +242,6 @@ const FullSpeakingRecorderButton = forwardRef<
   const [isOneMinuteToPrepare, setIsOneMinuteToPrepare] = useState(false);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [isProcessingResults, setIsProcessingResults] = useState(false);
-  const [isWindingDown, setIsWindingDown] = useState(false);
 
   const conversationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
@@ -298,7 +297,6 @@ const FullSpeakingRecorderButton = forwardRef<
         console.error("Error:", errorMsg);
       },
       onWindDownTriggered: () => {
-        setIsWindingDown(true);
         setVolume(0);
         vapi.setMuted(true);
       },
@@ -459,7 +457,7 @@ const FullSpeakingRecorderButton = forwardRef<
       if (windDownRemaining > 0 && !windDownTriggered) {
         windDownTimerRef.current = setTimeout(() => {
           if (callStatus === CallStatus.ACTIVE && !windDownTriggered) {
-            triggerWindDown();
+            void triggerWindDown();
           }
         }, windDownRemaining);
       }
@@ -618,6 +616,7 @@ const FullSpeakingRecorderButton = forwardRef<
       )}
 
       <Card className="w-full max-w-md mx-auto">
+        {/* Maybe remove this from the UI in the future and send errorMessage to Posthog */}
         {errorMessage && (
           <CardHeader className="py-0 text-center">
             <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
