@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { EditorMenu } from "@/components/custom/editor-menu";
+import { CustomButton } from "@/components/custom/tiptap-custom-button";
 import {
   Accordion,
   AccordionContent,
@@ -89,6 +90,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           keepAttributes: false,
         },
       }),
+      CustomButton,
       // Text styling extensions
       TextStyle,
       Color.configure({ types: [TextStyle.name, ListItem.name] }),

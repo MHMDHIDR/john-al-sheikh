@@ -14,6 +14,7 @@ import {
   Link,
   List,
   ListOrdered,
+  MousePointerClick,
   Palette,
   Quote,
   Redo,
@@ -24,8 +25,15 @@ import {
   Undo,
   Upload,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { formatCompactDate } from "@/lib/format-date";
@@ -114,6 +123,12 @@ const HIGHLIGHT_COLORS = [
 export function EditorMenu({ editor, isSimpleEditor }: EditorMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  // State for custom button dialog
+  const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] = useState(false);
+  const [customButtonLabel, setCustomButtonLabel] = useState("زر مخصص");
+  const [customButtonUrl, setCustomButtonUrl] = useState("#");
+  const [customButtonColor, setCustomButtonColor] = useState("#3B82F6");
 
   const optimizeImageMutation = api.optimizeImage.optimizeImage.useMutation();
   const uploadFilesMutation = api.S3.uploadFiles.useMutation({
@@ -248,6 +263,32 @@ export function EditorMenu({ editor, isSimpleEditor }: EditorMenuProps) {
   // Font size handler
   const setFontSize = (size: string) => {
     editor.chain().focus().setFontSize(size).run();
+  };
+
+  // Custom button handlers
+  const handleAddCustomButton = () => {
+    editor
+      .chain()
+      .focus()
+      .setCustomButton({
+        label: customButtonLabel.trim() || "زر مخصص",
+        url: customButtonUrl.trim() || "#",
+        backgroundColor: customButtonColor || "#3B82F6",
+      })
+      .run();
+
+    // Reset form and close dialog
+    setCustomButtonLabel("زر مخصص");
+    setCustomButtonUrl("#");
+    setCustomButtonColor("#3B82F6");
+    setIsCustomButtonDialogOpen(false);
+  };
+
+  const handleCancelCustomButton = () => {
+    setCustomButtonLabel("زر مخصص");
+    setCustomButtonUrl("#");
+    setCustomButtonColor("#3B82F6");
+    setIsCustomButtonDialogOpen(false);
   };
 
   const MIN_FONT_SIZE = 10;
@@ -587,6 +628,73 @@ export function EditorMenu({ editor, isSimpleEditor }: EditorMenuProps) {
             />
           </>
         )}
+
+        {/* Custom Button Integration */}
+        <Dialog open={isCustomButtonDialogOpen} onOpenChange={setIsCustomButtonDialogOpen}>
+          <DialogTrigger asChild>
+            <EditorButton
+              onClick={() => setIsCustomButtonDialogOpen(true)}
+              isActive={editor.isActive("customButton")}
+              tooltip="زر مخصص"
+            >
+              <MousePointerClick className="size-4" />
+            </EditorButton>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>إضافة زر مخصص</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="button-label">نص الزر</Label>
+                <Input
+                  id="button-label"
+                  value={customButtonLabel}
+                  onChange={e => setCustomButtonLabel(e.target.value)}
+                  placeholder="أدخل نص الزر"
+                  className="rtl"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="button-url">رابط الزر</Label>
+                <Input
+                  id="button-url"
+                  type="url"
+                  value={customButtonUrl}
+                  onChange={e => setCustomButtonUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="rtl"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="button-color">لون الخلفية</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="button-color"
+                    type="color"
+                    value={customButtonColor}
+                    onChange={e => setCustomButtonColor(e.target.value)}
+                    className="w-20 h-10"
+                  />
+                  <Input
+                    value={customButtonColor}
+                    onChange={e => setCustomButtonColor(e.target.value)}
+                    placeholder="#3B82F6"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button onClick={handleAddCustomButton} className="flex-1">
+                  إضافة الزر
+                </Button>
+                <Button variant="outline" onClick={handleCancelCustomButton} className="flex-1">
+                  إلغاء
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Separator orientation="vertical" className="h-6" />
