@@ -24,6 +24,12 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
   const { username, testId } = await params;
   try {
     const testData = await api.users.getPublicTestById({ testId });
+    if (!testData) {
+      return {
+        title: "نتيجة اختبار اللغة الإنجليزية",
+        description: "مشاركة نتائج اختبار اللغة الإنجليزية",
+      };
+    }
     const user = testData?.user?.displayName ?? username;
     const band = testData?.band?.toString() ?? "6.5";
     const title = `نتيجة اختبار اللغة الإنجليزية | ${user}`;
@@ -35,8 +41,8 @@ export async function generateMetadata({ params }: TestResultProps): Promise<Met
       title,
       description,
       ogImageParams: {
+        testId,
         title: truncateText(title, 60),
-        subtitle: truncateText(description, 120),
         band: band,
         username,
       },

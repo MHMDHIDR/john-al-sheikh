@@ -328,7 +328,7 @@ export const usersRouter = createTRPCRouter({
         });
 
         if (!test) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
+          return null;
         }
 
         // Return limited data for public sharing

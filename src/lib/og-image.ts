@@ -1,6 +1,6 @@
 export interface OgImageParams {
   title: string;
-  subtitle?: string;
+  testId?: string;
   image?: string; // filename relative to public folder
   band?: string; // For test results
   username?: string; // For test results
@@ -11,18 +11,17 @@ export interface OgImageParams {
  * @param params - Configuration for the OG image
  * @returns Complete URL for the OG image endpoint
  */
-export function getOgImageUrl({ title, subtitle, image, band, username }: OgImageParams): string {
+export function getOgImageUrl({ title, testId, image, band, username }: OgImageParams): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.john-al-shiekh.live";
   const endpoint = `${baseUrl}/api/og`;
   const ogTitle = decodeURIComponent(title.trim());
-  const ogSubtitle = subtitle ? decodeURIComponent(subtitle.trim()) : "";
 
   const params = new URLSearchParams({
     title: ogTitle,
   });
 
-  if (subtitle?.trim()) {
-    params.append("subtitle", ogSubtitle);
+  if (testId?.trim()) {
+    params.append("testId", testId);
   }
 
   if (image?.trim()) {

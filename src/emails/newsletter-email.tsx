@@ -354,14 +354,6 @@ const headingSectionOuter: CSSProperties = {
   fontWeight: "500",
 };
 
-const headingSectionInner: CSSProperties = {
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "100%",
-};
-
 const senderText: CSSProperties = {
   color: "#4a5568",
   fontSize: "14px",

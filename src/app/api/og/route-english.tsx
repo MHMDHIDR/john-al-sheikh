@@ -1,39 +1,21 @@
 import { ImageResponse } from "next/og";
-import QRCode from "qrcode";
 import { env } from "@/env";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
-function processArabicName(str: string): string {
-  const words = str.trim().split(" ");
-
-  const reversedWords = words.reverse().map(word => {
-    if (word.includes("-")) {
-      const parts = word.split("-");
-      return parts.reverse().join("-");
-    }
-    return word;
-  });
-
-  return reversedWords.join(" ");
-}
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
+
     // Extract parameters with defaults
     const band = searchParams.get("band") ?? "6.5";
     const username = searchParams.get("username") ?? "John-Al-Shiekh.live User";
-    const testId = searchParams.get("testId") ?? "test-id-placeholder";
 
-    // Load Arabic font (using the working URL from your original code)
+    // Load Arabic font (still used for fallback, but text is English)
     const arabicFont = await fetch(
       "https://fonts.gstatic.com/s/notosansarabic/v18/nwpxtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlhQ5l3sQWIHPqzCfyGyvu3CBFQLaig.ttf",
     ).then(res => res.arrayBuffer());
-
-    const certificateUrl = `${env.NEXT_PUBLIC_APP_URL}/${username}/english-test-results/${testId}`;
-    const qrDataUrl = await QRCode.toDataURL(certificateUrl, { margin: 1, width: 100 });
 
     return new ImageResponse(
       (
@@ -48,7 +30,6 @@ export async function GET(req: NextRequest) {
             background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
             padding: "40px",
             fontFamily: '"Noto Sans Arabic", system-ui, serif',
-            // Remove direction: "rtl" from here
           }}
         >
           {/* Certificate Container */}
@@ -164,11 +145,10 @@ export async function GET(req: NextRequest) {
                   fontSize: "20px",
                   fontWeight: "bold",
                   color: "#8B4513",
-                  direction: "ltr",
-                  textAlign: "right",
+                  letterSpacing: "1px",
                 }}
               >
-                {processArabicName(env.NEXT_PUBLIC_APP_NAME)}
+                JOHN AL-SHIEKH
               </div>
             </div>
 
@@ -178,32 +158,32 @@ export async function GET(req: NextRequest) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                marginTop: "10px",
                 zIndex: 5,
               }}
             >
               <div
                 style={{
-                  fontSize: "40px",
+                  fontSize: "48px",
                   fontWeight: "bold",
                   color: "#8B4513",
+                  marginBottom: "2px",
+                  letterSpacing: "3px",
                   textAlign: "center",
-                  direction: "rtl",
-                  marginTop: "-20px",
                 }}
               >
-                الشهادة
+                CERTIFICATE
               </div>
               <div
                 style={{
-                  fontSize: "18px",
+                  fontSize: "20px",
                   color: "#DAA520",
                   fontWeight: "500",
+                  letterSpacing: "2px",
                   textAlign: "center",
-                  direction: "rtl",
-                  marginTop: "-10px",
                 }}
               >
-                {processArabicName("شهادة إنجاز")}
+                OF ACHIEVEMENT
               </div>
             </div>
 
@@ -220,15 +200,14 @@ export async function GET(req: NextRequest) {
             {/* This is to certify that */}
             <div
               style={{
-                fontSize: "16px",
+                fontSize: "14px",
                 color: "#666666",
                 fontStyle: "italic",
                 textAlign: "center",
                 marginBottom: "20px",
-                direction: "rtl",
               }}
             >
-              {processArabicName("هذا لتأكيد أن")}
+              This is to certify that
             </div>
 
             {/* Student Name */}
@@ -238,8 +217,9 @@ export async function GET(req: NextRequest) {
                 fontWeight: "bold",
                 color: "#000000",
                 textAlign: "center",
-                paddingBottom: "24px",
-                direction: "ltr", // Keep username in LTR for proper display
+                marginBottom: "15px",
+                padding: "0 20px",
+                paddingBottom: "10px",
               }}
             >
               {decodeURIComponent(username)}
@@ -252,12 +232,11 @@ export async function GET(req: NextRequest) {
                 color: "#333333",
                 textAlign: "center",
                 marginBottom: "30px",
-                lineHeight: "2.4",
+                lineHeight: "1.4",
                 maxWidth: "800px",
-                direction: "rtl",
               }}
             >
-              درجة على بنجاح حصل قد
+              has successfully achieved a band score of
             </div>
 
             {/* Band Score Display */}
@@ -268,42 +247,35 @@ export async function GET(req: NextRequest) {
                 justifyContent: "center",
                 gap: "20px",
                 marginBottom: "30px",
-                direction: "rtl",
               }}
             >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                  color: "white",
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  boxShadow: "0 8px 16px rgba(34, 197, 94, 0.3)",
+                }}
+              >
+                <div style={{ fontSize: "24px", fontWeight: "bold", lineHeight: "1" }}>{band}</div>
+                <div style={{ fontSize: "14px", fontWeight: "normal", marginTop: "5px" }}>BAND</div>
+              </div>
               <div
                 style={{
                   fontSize: "24px",
                   fontWeight: "bold",
                   color: "#8B4513",
-                  textAlign: "center",
-                  direction: "rtl",
                 }}
               >
-                {processArabicName("في التحدث باللغة الإنجليزية")}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  width: "72px",
-                  height: "72px",
-                  padding: "2px",
-                  lineHeight: "1",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                  color: "white",
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  boxShadow: "0 8px 16px rgba(34, 197, 94, 0.3)",
-                }}
-              >
-                <strong style={{ fontSize: "24px", fontWeight: "bold", lineHeight: "1" }}>
-                  {band}
-                </strong>
-                <small>درجة</small>
+                in English Speaking Practice
               </div>
             </div>
 
@@ -313,7 +285,7 @@ export async function GET(req: NextRequest) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                marginTop: "-16px",
+                marginTop: "-10px",
               }}
             >
               <div
@@ -322,10 +294,9 @@ export async function GET(req: NextRequest) {
                   color: "#666666",
                   textAlign: "center",
                   marginBottom: "30px",
-                  direction: "rtl",
                 }}
               >
-                {processArabicName("تم إصدار هذه الشهادة من قبل")}
+                View full details and feedback at
               </div>
 
               {/* Website Badge */}
@@ -376,7 +347,7 @@ export async function GET(req: NextRequest) {
                 width={70}
                 height={70}
                 style={{
-                  opacity: 0.5,
+                  opacity: 0.3,
                   borderRadius: "50%",
                 }}
               />
@@ -386,48 +357,17 @@ export async function GET(req: NextRequest) {
                   bottom: "5px",
                   left: "50%",
                   transform: "translateX(-50%)",
-                  fontSize: "12px",
+                  fontSize: "10px",
                   fontWeight: "bold",
-                  letterSpacing: "-1px",
                 }}
               >
-                {processArabicName(
-                  new Date().toLocaleDateString("ar-SA", {
-                    day: "numeric",
-                    month: "short",
-                    year: "2-digit",
-                  }),
-                )}
+                {new Date().toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
               </div>
             </div>
-
-            {/* QR Code */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrDataUrl}
-              alt="QR Code"
-              width={110}
-              height={110}
-              style={{
-                position: "absolute",
-                bottom: "64px",
-                left: "100px",
-                border: "2px solid #8B4513",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-              }}
-            />
-            <small
-              style={{
-                position: "absolute",
-                bottom: "40px",
-                left: "100px",
-                fontSize: "12px",
-              }}
-            >
-              {processArabicName("للتأكد من صلاحية الشهادة")}
-            </small>
           </div>
         </div>
       ),
