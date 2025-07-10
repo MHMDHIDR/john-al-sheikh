@@ -11,15 +11,15 @@ export const metadata: Metadata = {
   description: "إلغاء الاشتراك في النشرة البريدية",
 };
 
-type UnsubscribePageProps = { params: Promise<{ token?: string }> };
+type UnsubscribePageProps = {
+  searchParams: Promise<Record<string, string | undefined>>;
+};
 
-export default async function UnsubscribePage({ params }: UnsubscribePageProps) {
-  const { token } = await params;
+export default async function UnsubscribePage({ searchParams }: UnsubscribePageProps) {
+  const search = await searchParams;
+  const token = search.token;
 
-  // If no token provided, redirect to home
-  if (!token) {
-    redirect("/");
-  }
+  if (!token) redirect("/");
 
   return (
     <main className="relative select-none flex h-screen md:-mt-20 flex-col items-center justify-center p-3.5 overflow-hidden">

@@ -43,6 +43,13 @@
       "when": 1749348428801,
       "tag": "0005_opposite_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1752104578187,
+      "tag": "0006_minor_northstar",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { z } from "zod";
 import { formSchema } from "@/app/schemas/subscription-from";
@@ -8,7 +8,7 @@ import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { subscribedEmails } from "@/server/db/schema";
+import { subscribedEmails, users } from "@/server/db/schema";
 
 const newsletterSchema = z.object({
   subject: z.string().min(1, "عنوان البريد الإلكتروني مطلوب"),
@@ -26,7 +26,43 @@ const newsletterSchema = z.object({
 export const subscribedEmailsRouter = createTRPCRouter({
   subscribe: publicProcedure.input(formSchema).mutation(async ({ ctx, input }) => {
     try {
-      // Check if email already exists
+      // First check if user exists in users table
+      const existingUser = await ctx.db.query.users.findFirst({
+        where: eq(users.email, input.email),
+      });
+
+      if (existingUser) {
+        // User exists, check if already subscribed to newsletter
+        if (existingUser.isNewsletterSubscribed) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "لقد اشتركت مسبقاً باستخدام هذا البريد الإلكتروني",
+          });
+        }
+
+        // User exists but not subscribed to newsletter, toggle the flag
+        await ctx.db
+          .update(users)
+          .set({ isNewsletterSubscribed: true })
+          .where(eq(users.email, input.email));
+
+        // Send welcome email
+        const resend = new Resend(env.AUTH_RESEND_KEY);
+        await resend.emails.send({
+          from: env.ADMIN_EMAIL,
+          to: input.email,
+          subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
+          react: WelcomeEmailTemplate({
+            name: input.fullname,
+            customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في اختبار الايلتس.</p>`,
+            ctaUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
+          }),
+        });
+
+        return { success: true };
+      }
+
+      // User doesn't exist, check if email exists in subscribedEmails table
       const existingSubscription = await ctx.db.query.subscribedEmails.findFirst({
         where: eq(subscribedEmails.email, input.email),
       });
@@ -38,7 +74,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
         });
       }
 
-      // Insert new subscription
+      // Insert new subscription to subscribedEmails table
       await ctx.db.insert(subscribedEmails).values({
         fullname: input.fullname,
         email: input.email,
@@ -71,12 +107,57 @@ export const subscribedEmailsRouter = createTRPCRouter({
   }),
 
   getSubscribers: protectedProcedure.query(async ({ ctx }) => {
-    const subscribersList = await ctx.db.query.subscribedEmails.findMany();
-    const [{ count = 0 } = { count: 0 }] = await ctx.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(subscribedEmails);
+    // Get subscribers from both tables
+    const [subscribedEmailsList, subscribedUsers] = await Promise.all([
+      ctx.db.query.subscribedEmails.findMany(),
+      ctx.db.query.users.findMany({
+        where: eq(users.isNewsletterSubscribed, true),
+      }),
+    ]);
 
-    return { subscribers: subscribersList, count };
+    // Combine and deduplicate emails using Map
+    const subscriberMap = new Map<
+      string,
+      {
+        id: string;
+        fullname: string;
+        email: string;
+        ieltsGoal: number;
+        createdAt: Date;
+        source: "subscribed_emails" | "users";
+      }
+    >();
+
+    // Add subscribed emails first (these take priority)
+    subscribedEmailsList.forEach(sub => {
+      subscriberMap.set(sub.email, {
+        id: sub.id,
+        fullname: sub.fullname,
+        email: sub.email,
+        ieltsGoal: sub.ieltsGoal,
+        createdAt: sub.createdAt,
+        source: "subscribed_emails" as const,
+      });
+    });
+
+    // Add user emails only if they don't already exist
+    subscribedUsers.forEach(user => {
+      if (!subscriberMap.has(user.email)) {
+        subscriberMap.set(user.email, {
+          id: user.id,
+          fullname: user.name,
+          email: user.email,
+          ieltsGoal: user.goalBand ?? 5, // Default to 5 if null
+          createdAt: user.createdAt,
+          source: "users" as const,
+        });
+      }
+    });
+
+    const combinedSubscribers = Array.from(subscriberMap.values());
+    const totalCount = combinedSubscribers.length;
+
+    return { subscribers: combinedSubscribers, count: totalCount };
   }),
 
   sendNewsletter: protectedProcedure.input(newsletterSchema).mutation(async ({ input, ctx }) => {
@@ -85,14 +166,23 @@ export const subscribedEmailsRouter = createTRPCRouter({
 
       // Send to each recipient
       const sendPromises = input.recipients.map(async recipient => {
-        // Generate unsubscribe token for this recipient
-        const tokenResult = await ctx.db.query.subscribedEmails.findFirst({
-          where: eq(subscribedEmails.email, recipient.email),
-        });
+        // Check both tables for unsubscribe token generation
+        const [tokenResultFromSubscribed, tokenResultFromUsers] = await Promise.all([
+          ctx.db.query.subscribedEmails.findFirst({
+            where: eq(subscribedEmails.email, recipient.email),
+          }),
+          ctx.db.query.users.findFirst({
+            where: eq(users.email, recipient.email),
+          }),
+        ]);
 
         let unsubscribeToken = "";
-        if (tokenResult) {
-          unsubscribeToken = generateUnsubscribeToken(tokenResult);
+
+        // Generate token based on which table the email exists in
+        if (tokenResultFromSubscribed) {
+          unsubscribeToken = generateUnsubscribeToken(tokenResultFromSubscribed);
+        } else if (tokenResultFromUsers?.isNewsletterSubscribed) {
+          unsubscribeToken = generateUnsubscribeToken(tokenResultFromUsers);
         }
 
         return resend.emails.send({
@@ -127,9 +217,26 @@ export const subscribedEmailsRouter = createTRPCRouter({
     .input(z.object({ email: z.string().email() }))
     .query(async ({ ctx, input }) => {
       try {
-        const subscriber = await ctx.db.query.subscribedEmails.findFirst({
-          where: eq(subscribedEmails.email, input.email),
-        });
+        // Check both tables
+        const [subscriberFromEmails, subscriberFromUsers] = await Promise.all([
+          ctx.db.query.subscribedEmails.findFirst({
+            where: eq(subscribedEmails.email, input.email),
+          }),
+          ctx.db.query.users.findFirst({
+            where: eq(users.email, input.email),
+          }),
+        ]);
+
+        let subscriber = null;
+        let fullname = "";
+
+        if (subscriberFromEmails) {
+          subscriber = subscriberFromEmails;
+          fullname = subscriberFromEmails.fullname;
+        } else if (subscriberFromUsers?.isNewsletterSubscribed) {
+          subscriber = subscriberFromUsers;
+          fullname = subscriberFromUsers.name;
+        }
 
         if (!subscriber) {
           throw new TRPCError({
@@ -145,7 +252,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
           token,
           subscriber: {
             id: subscriber.id,
-            fullname: subscriber.fullname,
+            fullname,
             email: subscriber.email,
           },
         };
@@ -164,8 +271,16 @@ export const subscribedEmailsRouter = createTRPCRouter({
     .input(z.object({ token: z.string() }))
     .query(async ({ ctx, input }) => {
       try {
-        // Get all subscribers to verify token
-        const allSubscribers = await ctx.db.query.subscribedEmails.findMany();
+        // Get all subscribers from both tables
+        const [allSubscribedEmails, allSubscribedUsers] = await Promise.all([
+          ctx.db.query.subscribedEmails.findMany(),
+          ctx.db.query.users.findMany({
+            where: eq(users.isNewsletterSubscribed, true),
+          }),
+        ]);
+
+        // Combine all subscribers
+        const allSubscribers = [...allSubscribedEmails, ...allSubscribedUsers];
 
         // Find subscriber by token
         const subscriber = verifyUnsubscribeToken(input.token, allSubscribers);
@@ -177,10 +292,13 @@ export const subscribedEmailsRouter = createTRPCRouter({
           });
         }
 
+        // Determine fullname based on subscriber type
+        const fullname = "fullname" in subscriber ? subscriber.fullname : subscriber.name;
+
         return {
           subscriber: {
             id: subscriber.id,
-            fullname: subscriber.fullname,
+            fullname,
             email: subscriber.email,
           },
         };
@@ -199,8 +317,16 @@ export const subscribedEmailsRouter = createTRPCRouter({
     .input(z.object({ token: z.string() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        // Get all subscribers to verify token
-        const allSubscribers = await ctx.db.query.subscribedEmails.findMany();
+        // Get all subscribers from both tables
+        const [allSubscribedEmails, allSubscribedUsers] = await Promise.all([
+          ctx.db.query.subscribedEmails.findMany(),
+          ctx.db.query.users.findMany({
+            where: eq(users.isNewsletterSubscribed, true),
+          }),
+        ]);
+
+        // Combine all subscribers
+        const allSubscribers = [...allSubscribedEmails, ...allSubscribedUsers];
 
         // Find subscriber by token
         const subscriber = verifyUnsubscribeToken(input.token, allSubscribers);
@@ -212,11 +338,20 @@ export const subscribedEmailsRouter = createTRPCRouter({
           });
         }
 
-        // Delete the subscriber
-        await ctx.db
-          .delete(subscribedEmails)
-          .where(eq(subscribedEmails.id, subscriber.id))
-          .returning({ email: subscribedEmails.email });
+        // Handle deletion based on subscriber type
+        if ("fullname" in subscriber) {
+          // This is a subscribedEmails record, delete it
+          await ctx.db
+            .delete(subscribedEmails)
+            .where(eq(subscribedEmails.id, subscriber.id))
+            .returning({ email: subscribedEmails.email });
+        } else {
+          // This is a users record, toggle the newsletter subscription flag
+          await ctx.db
+            .update(users)
+            .set({ isNewsletterSubscribed: false })
+            .where(eq(users.id, subscriber.id));
+        }
 
         return { success: true };
       } catch (error) {
@@ -235,13 +370,39 @@ export const subscribedEmailsRouter = createTRPCRouter({
     .input(z.object({ name: z.string(), email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await ctx.db
-          .delete(subscribedEmails)
-          .where(eq(subscribedEmails.email, input.email))
-          .returning({ email: subscribedEmails.email });
+        // Check both tables
+        const [subscriberFromEmails, subscriberFromUsers] = await Promise.all([
+          ctx.db.query.subscribedEmails.findFirst({
+            where: eq(subscribedEmails.email, input.email),
+          }),
+          ctx.db.query.users.findFirst({
+            where: eq(users.email, input.email),
+          }),
+        ]);
+
+        if (subscriberFromEmails) {
+          // Delete from subscribedEmails table
+          await ctx.db
+            .delete(subscribedEmails)
+            .where(eq(subscribedEmails.email, input.email))
+            .returning({ email: subscribedEmails.email });
+        } else if (subscriberFromUsers?.isNewsletterSubscribed) {
+          // Toggle newsletter subscription flag in users table
+          await ctx.db
+            .update(users)
+            .set({ isNewsletterSubscribed: false })
+            .where(eq(users.email, input.email));
+        } else {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "البريد الإلكتروني غير موجود في قائمة المشتركين",
+          });
+        }
 
         return { success: true };
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
         console.error("Delete subscriber error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

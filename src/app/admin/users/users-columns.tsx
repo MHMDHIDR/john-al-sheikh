@@ -145,6 +145,20 @@ export const userColumns: ColumnDef<Users>[] = [
     },
   },
   {
+    accessorKey: "isNewsletterSubscribed",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        إشتراك النشرة البريدية
+        <ArrowUpDown className="size-4 ml-2" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const isNewsletterSubscribed = row.getValue("isNewsletterSubscribed");
+
+      return isNewsletterSubscribed ? <span>نعم</span> : <span>لا</span>;
+    },
+  },
+  {
     accessorKey: "createdAt",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>

@@ -3,30 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/trpc/server";
 import { EmailEditor } from "./email-editor";
-import type { SubscribedEmail, Users } from "@/server/db/schema";
 
 async function EmailList() {
-  const [{ subscribers }, { users }] = await Promise.all([
-    api.subscribedEmails.getSubscribers(),
-    api.users.getUsers(),
-  ]);
+  const { subscribers } = await api.subscribedEmails.getSubscribers();
 
-  // Combine and deduplicate emails
-  const emailMap = new Map<string, { email: string; name: string }>();
-
-  // Add subscribed emails
-  subscribers.forEach((sub: SubscribedEmail) => {
-    emailMap.set(sub.email, { email: sub.email, name: sub.fullname });
-  });
-
-  // Add user emails
-  users.forEach((user: Users) => {
-    if (!emailMap.has(user.email)) {
-      emailMap.set(user.email, { email: user.email, name: user.name });
-    }
-  });
-
-  const emailList = Array.from(emailMap.values());
+  // Convert combined subscribers to email list format
+  const emailList = subscribers.map(sub => ({
+    email: sub.email,
+    name: sub.fullname,
+  }));
 
   // const testingEmailList = [
   //   {

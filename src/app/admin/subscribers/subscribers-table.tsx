@@ -3,15 +3,24 @@
 import { DataTable } from "@/components/custom/data-table";
 import { subscribersColumns } from "./subscribers-columns";
 import type { BaseEntity } from "@/components/custom/data-table/base-columns";
-import type { SubscribedEmail } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
-export default function SubscribersTable({ subscribers }: { subscribers: SubscribedEmail[] }) {
+// Type for combined subscriber data
+export type CombinedSubscriber = {
+  id: string;
+  fullname: string;
+  email: string;
+  ieltsGoal: number;
+  createdAt: Date;
+  source: "subscribed_emails" | "users";
+};
+
+export default function SubscribersTable({ subscribers }: { subscribers: CombinedSubscriber[] }) {
   const columns = [...subscribersColumns];
 
   return (
-    <DataTable<SubscribedEmail & BaseEntity>
-      columns={columns as ColumnDef<SubscribedEmail & BaseEntity>[]}
+    <DataTable<CombinedSubscriber & BaseEntity>
+      columns={columns as ColumnDef<CombinedSubscriber & BaseEntity>[]}
       data={subscribers}
       emptyStateMessage="Sorry, No Subscribers Found."
       exportFilename="subscribers_export"

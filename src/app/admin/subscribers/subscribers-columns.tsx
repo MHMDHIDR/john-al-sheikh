@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
-import type { SubscribedEmail } from "@/server/db/schema";
+import type { CombinedSubscriber } from "./subscribers-table";
 import type { ColumnDef } from "@tanstack/react-table";
 
 // Wrapper component to handle router and mutation logic
-const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) => {
+const SubscribersActionsCell: React.FC<{ user: CombinedSubscriber }> = ({ user }) => {
   const router = useRouter();
   const toast = useToast();
 
@@ -36,6 +36,7 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
   });
 
   const handleDelete = () => {
+    // For admin panel, we'll use the email-based deletion which handles both cases
     deleteSubscriberMutation.mutate({ name: user.fullname, email: user.email });
   };
 
@@ -57,7 +58,7 @@ const SubscribersActionsCell: React.FC<{ user: SubscribedEmail }> = ({ user }) =
   );
 };
 
-export const subscribersColumns: ColumnDef<SubscribedEmail>[] = [
+export const subscribersColumns: ColumnDef<CombinedSubscriber>[] = [
   {
     accessorKey: "fullname",
     header: ({ column }) => (

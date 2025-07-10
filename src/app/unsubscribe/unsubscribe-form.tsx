@@ -61,7 +61,7 @@ export function UnsubscribeForm({ token }: UnsubscribeFormProps) {
   if (isVerifying) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <Loader2 className="size-8 animate-spin text-gray-500" />
         <p className="text-gray-600">جاري التحقق من الرابط...</p>
       </div>
     );
@@ -127,7 +127,7 @@ export function UnsubscribeForm({ token }: UnsubscribeFormProps) {
           </Button>
 
           <Button
-            onClick={() => router.push("/")}
+            onClick={() => router.replace("/")}
             variant="outline"
             className="w-full py-6 font-medium"
             disabled={isLoading || unsubscribeMutation.isPending}

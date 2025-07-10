@@ -72,6 +72,7 @@ export const users = createTable("user", {
   }),
   image: varchar("image", { length: 255 }),
   theme: themeEnum("theme").default("light").notNull(),
+  isNewsletterSubscribed: boolean("is_newsletter_subscribed").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),
