@@ -37,7 +37,7 @@ export default async function BuyCreditsPage({
     <div className="container max-w-7xl py-10 px-4 mx-auto">
       <div className="mb-8 space-y-6 text-center">
         <h1 className="text-xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-          قوي مستواك في اختبارات المحادثة IELTS
+          قوي مستواك في محادثات اللغة الإنجليزية
         </h1>
         <p className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl">
           شراء نقاط رصيد للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
