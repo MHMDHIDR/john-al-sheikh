@@ -30,7 +30,7 @@ const ConversationRecordingsActionsCell: React.FC<{ recording: ConversationRecor
       <DropdownMenuContent align="center" className="rtl">
         <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
         <DropdownMenuItem asChild>
-          <Link href={`/admin/conversations-recording/${recording.callId || ""}`}>
+          <Link href={`/admin/conversations-recording/${recording.callId ?? ""}`}>
             <Headphones className="mr-0.5 size-4" />
             استماع للتسجيل
           </Link>

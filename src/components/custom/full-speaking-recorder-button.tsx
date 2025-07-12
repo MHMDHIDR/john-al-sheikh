@@ -441,6 +441,7 @@ const FullSpeakingRecorderButton = forwardRef<
     user.id,
     isProcessingResults,
     mode,
+    callId,
   ]);
 
   // Process results when test is completed

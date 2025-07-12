@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { eq, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { vapiClient } from "@/lib/vapi.server.sdk";

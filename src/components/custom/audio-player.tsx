@@ -4,7 +4,6 @@ import { Pause, Play, RotateCcw, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -53,7 +52,7 @@ export default function AudioPlayer({
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      void audio.play();
     }
     setIsPlaying(!isPlaying);
   };
@@ -65,7 +64,7 @@ export default function AudioPlayer({
     audio.currentTime = 0;
     setCurrentTime(0);
     if (isPlaying) {
-      audio.play();
+      void audio.play();
     }
   };
 

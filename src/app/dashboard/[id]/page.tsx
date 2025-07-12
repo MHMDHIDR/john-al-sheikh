@@ -1,5 +1,4 @@
 import Link from "next/link";
-import AudioPlayer from "@/components/custom/audio-player";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/server";
@@ -16,7 +15,7 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
     try {
       const vapiResult = await api.vapi.getRecordingUrl({ callId: test.callId });
       recordingUrl = vapiResult?.recordingUrl || null;
-    } catch (e) {
+    } catch (_) {
       recordingUrl = null;
     }
   }
