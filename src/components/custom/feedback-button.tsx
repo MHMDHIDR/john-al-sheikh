@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageSquare } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FeedbackForm } from "@/components/custom/feedback-form";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useFeedbackForm } from "@/hooks/use-feedback-form";
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
   const { form, files, setFiles, handleFilesSelected, onSubmit, feedbackMutation } =
     useFeedbackForm();
 
@@ -23,7 +25,7 @@ export function FeedbackButton() {
     setIsMounted(true);
   }, []);
 
-  return !isMounted ? null : (
+  return !isMounted || pathname?.includes("/admin") ? null : (
     <>
       <Button
         onClick={() => setIsOpen(true)}
