@@ -7,6 +7,7 @@ import { paymentsRouter } from "./routers/payments";
 import { S3Router } from "./routers/s3";
 import { subscribedEmailsRouter } from "./routers/subscribed-emails";
 import { usersRouter } from "./routers/users";
+import { vapiRouter } from "./routers/vapi";
 
 /**
  * This is the primary router for your server.
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
   payments: paymentsRouter,
   subscribedEmails: subscribedEmailsRouter,
   feedback: feedbackRouter,
+  vapi: vapiRouter,
 });
 
 // export type definition of API

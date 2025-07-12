@@ -357,6 +357,7 @@ export const openaiRouter = createTRPCRouter({
             improvementTips: z.array(z.string()),
           })
           .optional(),
+        callId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -372,6 +373,7 @@ export const openaiRouter = createTRPCRouter({
               topic: input.topic,
               band: input.band,
               feedback: input.feedback,
+              callId: input.callId,
             })
             .returning();
 

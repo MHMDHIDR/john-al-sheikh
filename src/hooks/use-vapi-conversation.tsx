@@ -68,6 +68,7 @@ export function useVapiConversation({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [windDownTriggered, setWindDownTriggered] = useState(false);
+  const [callId, setCallId] = useState<string>();
 
   useEffect(() => {
     const handleCallStart = () => {
@@ -147,7 +148,11 @@ export function useVapiConversation({
           serverMessages: assistantOverrides.serverMessages!,
         };
 
-        await vapi.start(fullConfig, fullOverrides);
+        const result = await vapi.start(fullConfig, fullOverrides);
+        // The call ID should be available in the result or through vapi.getCallId()
+        if (result && typeof result === "object" && "id" in result) {
+          setCallId(result.id);
+        }
       } catch (error) {
         setCallStatus(CallStatus.INACTIVE);
         throw error;
@@ -208,6 +213,7 @@ export function useVapiConversation({
     isSpeaking,
     isMuted,
     windDownTriggered,
+    callId,
     startSession,
     endSession,
     setVolume,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { env } from "@/env";
 import { checkRoleAccess } from "@/lib/check-role-access";
+import { formatDate } from "@/lib/format-date";
 import { auth } from "@/server/auth";
 import { UserRole } from "@/server/db/schema";
 import { api } from "@/trpc/server";
@@ -25,13 +26,6 @@ export default async function PrivacyPage() {
     ? checkRoleAccess(session.user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
     : false;
 
-  const LAST_UPDATED_DATE_OPTIONS = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  } as Intl.DateTimeFormatOptions;
-
   return (
     <div className="container mx-auto px-4 py-8 text-right max-w-[800px]" dir="rtl">
       <Link
@@ -45,8 +39,7 @@ export default async function PrivacyPage() {
       <h1 className="text-center text-2xl font-bold my-6">سياسة الخصوصية</h1>
 
       <p className="mb-4" data-page-content-intro>
-        آخر تحديث:{" "}
-        {new Date(content.updatedAt).toLocaleDateString("ar-EG", LAST_UPDATED_DATE_OPTIONS)}
+        آخر تحديث: {formatDate(content.updatedAt.toDateString(), true)}
       </p>
 
       <PrivacyContent content={content.content} isAdmin={isAdmin} />

@@ -15,6 +15,7 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    VAPI_PRIVATE_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -37,6 +38,7 @@ export const env = createEnv({
     AWS_SECRET: process.env.AWS_SECRET,
     AUTH_RESEND_KEY: process.env.AUTH_RESEND_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    VAPI_PRIVATE_KEY: process.env.VAPI_PRIVATE_KEY,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,

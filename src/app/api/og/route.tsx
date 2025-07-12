@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import QRCode from "qrcode";
 import { env } from "@/env";
+import { formatDate } from "@/lib/format-date";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -391,13 +392,7 @@ export async function GET(req: NextRequest) {
                   letterSpacing: "-1px",
                 }}
               >
-                {processArabicName(
-                  new Date().toLocaleDateString("ar-EG", {
-                    day: "numeric",
-                    month: "short",
-                    year: "2-digit",
-                  }),
-                )}
+                {processArabicName(formatDate(new Date().toDateString(), true))}
               </div>
             </div>
 

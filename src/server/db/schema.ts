@@ -174,6 +174,7 @@ export const speakingTests = createTable("speaking_test", {
     };
     improvementTips: string[];
   }>(),
+  callId: varchar("call_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

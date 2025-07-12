@@ -4,6 +4,7 @@ import { Calendar, ExternalLink, Medal } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
+import AudioPlayer from "@/components/custom/audio-player";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
@@ -24,9 +25,10 @@ import type { inferRouterOutputs } from "@trpc/server";
 type TestDetailsProps = {
   details: inferRouterOutputs<AppRouter>["users"]["getTestById"];
   credits: inferRouterOutputs<AppRouter>["payments"]["getUserCredits"];
+  recordingUrl?: string | null;
 };
 
-export default function TestDetails({ details, credits }: TestDetailsProps) {
+export default function TestDetails({ details, credits, recordingUrl }: TestDetailsProps) {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
 
@@ -115,12 +117,13 @@ export default function TestDetails({ details, credits }: TestDetailsProps) {
           onValueChange={handleTabChange}
           className="mt-8"
         >
-          <TabsList className="grid w-full md:w-auto rtl grid-cols-3 md:grid-cols-3 gap-0 md:gap-2.5">
+          <TabsList className="grid w-full md:w-auto rtl grid-cols-4 md:grid-cols-4 gap-0 md:gap-2.5">
             <TabsTrigger value="results">{isMobile ? "النتائج" : "النتائج التفصيلية"}</TabsTrigger>
             <TabsTrigger value="feedback">
               {isMobile ? "التعليقات" : "التعليقات والملاحظات"}
             </TabsTrigger>
             <TabsTrigger value="transcript">{isMobile ? "نص المحادثة" : "نص المحادثة"}</TabsTrigger>
+            <TabsTrigger value="recording">تسجيل المحادثة</TabsTrigger>
           </TabsList>
 
           <TabsContent value="results" className="rtl">
@@ -297,6 +300,24 @@ export default function TestDetails({ details, credits }: TestDetailsProps) {
                 ) : (
                   <div className="text-center py-10">
                     <p className="text-gray-500">لا يتوفر نص المحادثة لهذا الاختبار</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recording" className="rtl">
+            <Card>
+              <CardHeader>
+                <CardTitle>تسجيل المحادثة</CardTitle>
+                <CardDescription>استمع لتسجيل المحادثة الكاملة لهذا الاختبار</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recordingUrl ? (
+                  <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />
+                ) : (
+                  <div className="text-center py-10 text-gray-500">
+                    لا يوجد تسجيل متاح لهذا الاختبار
                   </div>
                 )}
               </CardContent>

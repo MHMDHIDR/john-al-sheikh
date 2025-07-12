@@ -1,4 +1,5 @@
 import {
+  AudioLines,
   CircleUser,
   CreditCard,
   Home,
@@ -63,6 +64,11 @@ export default async function DashboardLayout({
             title: "النشرة البريدية",
             url: "/admin/news-letter/compose",
             icon: <MailIcon className="size-4" />,
+          },
+          {
+            title: "التسجيلات الصوتية",
+            url: "/admin/conversations-recording",
+            icon: <AudioLines className="size-4" />,
           },
         ],
       },

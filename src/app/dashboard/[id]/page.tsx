@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AudioPlayer from "@/components/custom/audio-player";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/server";
@@ -9,6 +10,16 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
 
   const test = await api.users.getTestById({ testId: id });
   const credits = await api.payments.getUserCredits();
+
+  let recordingUrl: string | null = null;
+  if (test?.callId) {
+    try {
+      const vapiResult = await api.vapi.getRecordingUrl({ callId: test.callId });
+      recordingUrl = vapiResult?.recordingUrl || null;
+    } catch (e) {
+      recordingUrl = null;
+    }
+  }
 
   return !test ? (
     <div className="min-h-screen flex items-center justify-center" dir="rtl">
@@ -28,6 +39,6 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
       </Card>
     </div>
   ) : (
-    <TestDetails details={test} credits={credits} />
+    <TestDetails details={test} credits={credits} recordingUrl={recordingUrl} />
   );
 }

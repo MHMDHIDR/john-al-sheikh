@@ -259,48 +259,55 @@ const FullSpeakingRecorderButton = forwardRef<
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
   const { callStatus } = useGlobalVapiConversation();
-  const { isMuted, startSession, setVolume, endSession, triggerWindDown, windDownTriggered } =
-    useVapiConversation({
-      onMessage: message => {
-        const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
-        const timestamp = new Date().toLocaleTimeString();
-        const messageContent = { role, content: message.content, timestamp };
-        addMessage(messageContent);
+  const {
+    isMuted,
+    startSession,
+    setVolume,
+    endSession,
+    triggerWindDown,
+    windDownTriggered,
+    callId,
+  } = useVapiConversation({
+    onMessage: message => {
+      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
+      const timestamp = new Date().toLocaleTimeString();
+      const messageContent = { role, content: message.content, timestamp };
+      addMessage(messageContent);
 
-        // Check if this message indicates test completion
-        if (role === "examiner" && isTestConclusionMessage(message.content)) {
-          setIsTestCompleted(true);
-          setTimeout(() => {
-            vapi.stop();
-          }, 5000);
-        }
+      // Check if this message indicates test completion
+      if (role === "examiner" && isTestConclusionMessage(message.content)) {
+        setIsTestCompleted(true);
+        setTimeout(() => {
+          vapi.stop();
+        }, 5000);
+      }
 
-        if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
-          setVolume(0);
-          setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
-          setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
-        }
-      },
-      onError: error => {
-        const errorMsg =
-          error instanceof Error
-            ? error.message
-            : typeof error === "object" && error !== null && "errorMsg" in error
-              ? (error as { errorMsg: string }).errorMsg
-              : JSON.stringify(error);
-
-        setErrorMessage(
-          typeof error === "object" && error !== null && "errorMsg" in error
-            ? (error as { errorMsg: string }).errorMsg
-            : errorMsg,
-        );
-        console.error("Error:", errorMsg);
-      },
-      onWindDownTriggered: () => {
+      if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
         setVolume(0);
-        vapi.setMuted(true);
-      },
-    });
+        setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
+        setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
+      }
+    },
+    onError: error => {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "errorMsg" in error
+            ? (error as { errorMsg: string }).errorMsg
+            : JSON.stringify(error);
+
+      setErrorMessage(
+        typeof error === "object" && error !== null && "errorMsg" in error
+          ? (error as { errorMsg: string }).errorMsg
+          : errorMsg,
+      );
+      console.error("Error:", errorMsg);
+    },
+    onWindDownTriggered: () => {
+      setVolume(0);
+      vapi.setMuted(true);
+    },
+  });
 
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
@@ -372,6 +379,7 @@ const FullSpeakingRecorderButton = forwardRef<
               areasToImprove: analysis.feedback.areasToImprove,
               improvementTips: analysis.feedback.improvementTips,
             },
+            callId,
           });
 
           // Deduct credits for the completed test
