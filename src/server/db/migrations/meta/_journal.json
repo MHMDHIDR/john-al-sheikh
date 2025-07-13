@@ -50,6 +50,13 @@
       "when": 1752104578187,
       "tag": "0006_minor_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1752441597960,
+      "tag": "0007_sudden_bastion",
+      "breakpoints": true
     }
   ]
 }

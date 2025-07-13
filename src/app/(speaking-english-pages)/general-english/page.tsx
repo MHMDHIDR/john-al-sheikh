@@ -15,13 +15,19 @@ export default async function GeneralEnglishPage() {
   const session = await auth();
   const user = session?.user;
   const hasPhone = session?.user?.phone;
+  const hasEmail = session?.user?.email;
   const isProfileCompleted = session?.user?.profileCompleted;
 
   if (!user) {
     redirect("/signin?callbackUrl=/general-english");
   }
 
-  if (session && (!isProfileCompleted || !hasPhone)) {
+  // For Twitter users, we need both email and phone to be complete
+  // For other providers, we only need phone to be complete
+  const isTwitterUser = !hasEmail;
+  const isComplete = isProfileCompleted && hasPhone && (!isTwitterUser || hasEmail);
+
+  if (session && !isComplete) {
     redirect("/onboarding");
   }
 

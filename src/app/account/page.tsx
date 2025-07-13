@@ -14,12 +14,18 @@ export default async function Account() {
   const user = session?.user;
   const isProfileCompleted = session?.user?.profileCompleted;
   const hasPhone = session?.user?.phone;
+  const hasEmail = session?.user?.email;
 
   if (!user) {
     redirect("/signin?callbackUrl=/account");
   }
 
-  if (session && (!isProfileCompleted || !hasPhone)) redirect("/onboarding");
+  // For Twitter users, we need both email and phone to be complete
+  // For other providers, we only need phone to be complete
+  const isTwitterUser = !hasEmail;
+  const isComplete = isProfileCompleted && hasPhone && (!isTwitterUser || hasEmail);
+
+  if (session && !isComplete) redirect("/onboarding");
 
   return (
     <section className="container px-6 py-10 mx-auto">

@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { hobbiesList } from "@/lib/constants";
+import { hobbiesList, MINUTES_IN_MS } from "@/lib/constants";
 import { api } from "@/trpc/react";
 import { onboardingSchema } from "../schemas/onboarding";
 import type { OnboardingForm } from "../schemas/onboarding";
@@ -76,6 +76,7 @@ export default function OnboardingForm({
     return {
       displayName,
       username: generatedUsername ?? "user", // Ensure we have at least 3 chars
+      email: session?.user?.email ?? "",
       gender: undefined as "male" | "female" | undefined,
       goalBand: 5.0,
       phone: "",
@@ -90,10 +91,13 @@ export default function OnboardingForm({
     defaultValues: getDefaultValues(),
   });
 
-  // Watch the username field to check availability
+  // Watch the username and email fields to check availability
   const username = form.watch("username");
+  const email = form.watch("email");
   const [debouncedUsername, setDebouncedUsername] = useState<string>("");
+  const [debouncedEmail, setDebouncedEmail] = useState<string>("");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const emailDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounce username changes
   useEffect(() => {
@@ -116,10 +120,37 @@ export default function OnboardingForm({
     };
   }, [username]);
 
+  // Debounce email changes
+  useEffect(() => {
+    if (emailDebounceTimerRef.current) {
+      clearTimeout(emailDebounceTimerRef.current);
+    }
+
+    if (email?.includes("@")) {
+      emailDebounceTimerRef.current = setTimeout(() => {
+        setDebouncedEmail(email);
+      }, MINUTES_IN_MS / 60);
+    } else if (!email) {
+      setDebouncedEmail("");
+    }
+
+    return () => {
+      if (emailDebounceTimerRef.current) {
+        clearTimeout(emailDebounceTimerRef.current);
+      }
+    };
+  }, [email]);
+
   const { data: usernameAvailability, isLoading: loadingUsernameAvailability } =
     api.users.checkUsernameAvailability.useQuery(
       { username: debouncedUsername || "" },
       { enabled: !!debouncedUsername && debouncedUsername.length > 2 },
+    );
+
+  const { data: emailAvailability, isLoading: loadingEmailAvailability } =
+    api.users.checkEmailAvailability.useQuery(
+      { email: debouncedEmail || "" },
+      { enabled: !!debouncedEmail && debouncedEmail.includes("@") },
     );
 
   // Handle profile data when available and reset form properly
@@ -137,6 +168,7 @@ export default function OnboardingForm({
         form.reset({
           displayName: user.displayName ?? session?.user?.name ?? "",
           username: user.username ?? generateUsername(session?.user?.name ?? "") ?? "user",
+          email: user.email ?? session?.user?.email ?? "",
           gender: user.gender as "male" | "female" | undefined,
           goalBand: user.goalBand ?? 5.0,
           phone: user.phone ?? "",
@@ -223,6 +255,7 @@ export default function OnboardingForm({
       await onboardUser({
         displayName: data.displayName,
         username: data.username,
+        email: data.email,
         gender: data.gender,
         goalBand: data.goalBand,
         phone: data.phone,
@@ -329,7 +362,7 @@ export default function OnboardingForm({
                   <FormMessage>
                     {loadingUsernameAvailability && (
                       <span className="flex gap-x-1.5 items-center text-gray-500">
-                        <Loader className="mr-2 h-3 w-3 animate-spin" />
+                        <Loader className="mr-2 size-3 animate-spin" />
                         جاري التحقق
                       </span>
                     )}
@@ -340,6 +373,36 @@ export default function OnboardingForm({
                         }
                       >
                         {usernameAvailability.isAvailable ? "✓ متاح" : "✗ غير متاح"}
+                      </span>
+                    )}
+                  </FormMessage>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>البريد الإلكتروني</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="أدخل بريدك الإلكتروني" />
+                  </FormControl>
+                  <FormMessage>
+                    {loadingEmailAvailability && (
+                      <span className="flex gap-x-1.5 items-center text-gray-500">
+                        <Loader className="mr-2 size-3 animate-spin" />
+                        جاري التحقق
+                      </span>
+                    )}
+                    {debouncedEmail && debouncedEmail.includes("@") && emailAvailability && (
+                      <span
+                        className={
+                          emailAvailability.isAvailable ? "text-green-500" : "text-red-500"
+                        }
+                      >
+                        {emailAvailability.isAvailable ? "✓ متاح" : "✗ غير متاح"}
                       </span>
                     )}
                   </FormMessage>
@@ -384,7 +447,7 @@ export default function OnboardingForm({
               name="goalBand"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>الدرجة التي تطمح لها من اختبار IELTS</FormLabel>
+                  <FormLabel>المستوى الذي تطمح للوصول إليه</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={value => {

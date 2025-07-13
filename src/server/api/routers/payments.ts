@@ -294,8 +294,13 @@ export const paymentsRouter = createTRPCRouter({
       },
     });
 
+    // Filter out users with null emails before creating the map
+    const usersWithEmails = users.filter(
+      (user): user is typeof user & { email: string } => user.email !== null,
+    );
+
     // Create user lookup map
-    const userMap = createUserMap(users);
+    const userMap = createUserMap(usersWithEmails);
 
     // Enhance transactions with user details
     const enhancedTransactions = enhanceTransactions(balanceTransactions.data, userMap);

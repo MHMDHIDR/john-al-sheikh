@@ -7,9 +7,15 @@ import { auth } from "@/server/auth";
 export default async function Home() {
   const session = await auth();
   const hasPhone = session?.user?.phone;
+  const hasEmail = session?.user?.email;
   const isProfileCompleted = session?.user?.profileCompleted;
 
-  if (session && (!isProfileCompleted || !hasPhone)) {
+  // For Twitter users, we need both email and phone to be complete
+  // For other providers, we only need phone to be complete
+  const isTwitterUser = !hasEmail;
+  const isComplete = isProfileCompleted && hasPhone && (!isTwitterUser || hasEmail);
+
+  if (session && !isComplete) {
     redirect("/onboarding");
   }
 

@@ -11,6 +11,7 @@ export const onboardingSchema = z.object({
     .min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل")
     .max(20, "اسم المستخدم طويل جداً")
     .regex(/^[a-zA-Z0-9_-]{3,20}$/, "اسم المستخدم يجب أن يحتوي على أحرف إنجليزية وأرقام فقط"),
+  email: z.string().email("يرجى إدخال بريد إلكتروني صحيح").optional(),
   gender: z.enum(["male", "female"], {
     invalid_type_error: "يرجى اختيار النوع",
   }),

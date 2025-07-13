@@ -4,6 +4,7 @@ import { z } from "zod";
 import { accountFormSchema } from "@/app/schemas/account";
 import { onboardingSchema } from "@/app/schemas/onboarding";
 import { extractS3FileName } from "@/lib/extract-s3-filename";
+import { normalizeGmailAddress } from "@/lib/is-valid";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { creditTransactions, speakingTests, users } from "@/server/db/schema";
 
@@ -141,11 +142,16 @@ export const usersRouter = createTRPCRouter({
   onboardUser: protectedProcedure
     .input(onboardingModifiedSchema)
     .mutation(async ({ ctx, input }) => {
-      const { displayName, username, gender, goalBand, phone, hobbies, profileImage } = input;
+      const { displayName, username, email, gender, goalBand, phone, hobbies, profileImage } =
+        input;
 
       // Check if username is already taken
       const usernameExists = await ctx.db.query.users.findFirst({
         where: (users, { eq }) => eq(users.username, username),
+      });
+
+      const phoneExists = await ctx.db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.phone, phone),
       });
 
       if (usernameExists && usernameExists.id !== ctx.session.user.id) {
@@ -155,12 +161,35 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
+      if (phoneExists && phoneExists.id !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "رقم الهاتف مستخدم بالفعل، يرجى استخدام رقم هاتف آخر",
+        });
+      }
+
+      // Check if email is already taken (if email is provided)
+      if (email) {
+        const normalizedEmail = normalizeGmailAddress(email);
+        const emailExists = await ctx.db.query.users.findFirst({
+          where: (users, { eq }) => eq(users.email, normalizedEmail),
+        });
+
+        if (emailExists && emailExists.id !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "البريد الإلكتروني مستخدم بالفعل، يرجى استخدام بريد إلكتروني آخر",
+          });
+        }
+      }
+
       // Update user with onboarding data
       const [updatedUser] = await ctx.db
         .update(users)
         .set({
           displayName,
           username,
+          ...(email && { email: normalizeGmailAddress(email) }),
           gender,
           goalBand,
           phone,
@@ -188,6 +217,41 @@ export const usersRouter = createTRPCRouter({
       // Return true if username is available, false if it's taken
       return {
         isAvailable: !usernameExists || usernameExists.id === ctx.session.user.id,
+      };
+    }),
+
+  checkEmailAvailability: protectedProcedure
+    .input(z.object({ email: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { email } = input;
+
+      // Normalize the email address (handles Gmail variations)
+      const normalizedEmail = normalizeGmailAddress(email);
+
+      // First, try exact match with normalized email
+      let emailExists = await ctx.db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.email, normalizedEmail),
+      });
+
+      // If no exact match, check if any existing email normalizes to the same value
+      if (!emailExists) {
+        const allUsers = await ctx.db.query.users.findMany({
+          where: (users, { isNotNull }) => isNotNull(users.email),
+        });
+
+        emailExists = allUsers.find(user => {
+          if (!user.email) return false;
+          const userNormalizedEmail = normalizeGmailAddress(user.email);
+          const isMatch = userNormalizedEmail === normalizedEmail;
+          return isMatch;
+        });
+      }
+
+      const isAvailable = !emailExists || emailExists.id === ctx.session.user.id;
+
+      // Return true if email is available, false if it's taken
+      return {
+        isAvailable,
       };
     }),
 

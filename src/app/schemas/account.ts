@@ -4,7 +4,7 @@ import { z } from "zod";
 export const accountFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
-  email: z.string().email("البريد الإلكتروني غير صالح").readonly().optional(),
+  email: z.string().email("البريد الإلكتروني غير صالح").readonly().nullable().optional(),
   phone: z
     .string()
     .optional()

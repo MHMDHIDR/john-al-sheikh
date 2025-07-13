@@ -8,6 +8,7 @@ import posthog from "posthog-js";
 import { Resend as ResendEmail } from "resend";
 import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
+import { normalizeGmailAddress } from "@/lib/is-valid";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verificationTokens } from "@/server/db/schema";
@@ -58,7 +59,7 @@ export const authConfig = {
     Twitter({
       clientId: env.NEXT_PUBLIC_TWITTER_CLIENT_ID,
       clientSecret: env.TWITTER_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
+      // allowDangerousEmailAccountLinking: true,
     }),
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
     Resend({
@@ -100,9 +101,10 @@ export const authConfig = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" && profile) {
         try {
-          // Find the user by email
+          // Find the user by normalized email
+          const normalizedEmail = normalizeGmailAddress(profile.email ?? user.email!);
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, profile.email!),
+            where: eq(users.email, normalizedEmail),
           });
 
           // If no user exists, create a new user
@@ -112,14 +114,14 @@ export const authConfig = {
               .values({
                 id: user.id, // Use the same user ID that will be used for the account
                 name: profile.name ?? user.name ?? "Unknown",
-                email: profile.email!,
+                email: normalizedEmail,
                 image: (profile.picture as string) ?? user.image ?? getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
               })
               .returning();
 
-            if (result[0]) {
+            if (result[0]?.email) {
               void sendWelcomeEmail({
                 name: result[0].name ?? user.name,
                 email: result[0].email ?? user.email,
@@ -134,14 +136,14 @@ export const authConfig = {
             await db
               .update(users)
               .set({ name: profile.name ?? existingUser.name ?? "Unknown" })
-              .where(eq(users.email, user.email!));
+              .where(eq(users.email, normalizedEmail));
           }
           // If user exists but image is not set, then update it with Google profile image
           if (existingUser && !existingUser.image) {
             await db
               .update(users)
               .set({ image: (profile.picture as string) ?? getFullImageUrl("logo.svg") })
-              .where(eq(users.email, user.email!));
+              .where(eq(users.email, normalizedEmail));
           }
 
           // If no account exists for this user with Google provider, create one
@@ -165,10 +167,12 @@ export const authConfig = {
               id_token: account.id_token,
             });
 
-            void sendWelcomeEmail({
-              name: existingUser?.name ?? user.name,
-              email: existingUser?.email ?? user.email,
-            });
+            if (existingUser?.email) {
+              void sendWelcomeEmail({
+                name: existingUser.name ?? user.name,
+                email: existingUser.email ?? normalizedEmail,
+              });
+            }
           }
 
           return true;
@@ -181,78 +185,72 @@ export const authConfig = {
       // Handle Twitter provider
       if (account?.provider === "twitter" && profile) {
         try {
-          // Find the user by email (if available) or by Twitter ID
-          let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, profile.email!),
+          // For Twitter, we need to handle users without email
+          // First, try to find user by Twitter provider account ID
+          const existingAccount = await db.query.accounts.findFirst({
+            where: (accounts, { and, eq }) =>
+              and(
+                eq(accounts.provider, "twitter"),
+                eq(accounts.providerAccountId, account.providerAccountId),
+              ),
           });
 
-          // If no user exists, create a new user
+          let existingUser = null;
+          if (existingAccount) {
+            existingUser = await db.query.users.findFirst({
+              where: eq(users.id, existingAccount.userId),
+            });
+          }
+
+          // If no user exists, create a new user without email
           if (!existingUser) {
-            const result = await db
+            const [result] = await db
               .insert(users)
               .values({
                 id: user.id,
                 name: profile.name ?? user.name ?? "Unknown",
-                email: profile.email!,
+                email: null, // Twitter doesn't provide email, will be collected during onboarding
                 image:
                   (profile.profile_image_url as string) ??
                   user.image ??
                   getFullImageUrl("logo.svg"),
-                phone: "",
+                phone: null, // Will be collected during onboarding
                 status: "ACTIVE",
+                profileCompleted: false, // Mark as incomplete so they go through onboarding
               })
               .returning();
 
-            if (result[0]) {
-              void sendWelcomeEmail({
-                name: result[0].name ?? user.name,
-                email: result[0].email ?? user.email,
+            existingUser = result;
+
+            // Create the Twitter account
+            if (existingUser) {
+              await db.insert(accounts).values({
+                userId: existingUser.id,
+                type: "oauth",
+                provider: "twitter",
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
               });
             }
-
-            existingUser = result[0];
-          }
-
-          // If user exists but name is not set, then set it with Twitter profile name
-          if (existingUser && !existingUser.name) {
-            await db
-              .update(users)
-              .set({ name: profile.name ?? existingUser.name ?? "Unknown" })
-              .where(eq(users.email, user.email!));
-          }
-          // If user exists but image is not set, then update it with Twitter profile image
-          if (existingUser && !existingUser.image) {
-            await db
-              .update(users)
-              .set({ image: (profile.profile_image_url as string) ?? getFullImageUrl("logo.svg") })
-              .where(eq(users.email, user.email!));
-          }
-
-          // If no account exists for this user with Twitter provider, create one
-          const existingAccount = existingUser
-            ? await db.query.accounts.findFirst({
-                where: (accounts, { and, eq }) =>
-                  and(eq(accounts.userId, existingUser.id), eq(accounts.provider, "twitter")),
-              })
-            : null;
-
-          // If no existing Twitter account, create a new account
-          if (existingUser && !existingAccount) {
-            await db.insert(accounts).values({
-              userId: existingUser.id,
-              type: "oauth",
-              provider: "twitter",
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token,
-              token_type: account.token_type,
-              scope: account.scope,
-              id_token: account.id_token,
-            });
-
-            void sendWelcomeEmail({
-              name: existingUser?.name ?? user.name,
-              email: existingUser?.email ?? user.email,
-            });
+          } else if (existingUser) {
+            // User exists, update their profile if needed
+            if (!existingUser.name) {
+              await db
+                .update(users)
+                .set({ name: profile.name ?? existingUser.name ?? "Unknown" })
+                .where(eq(users.id, existingUser.id));
+            }
+            if (!existingUser.image) {
+              await db
+                .update(users)
+                .set({
+                  image: (profile.profile_image_url as string) ?? getFullImageUrl("logo.svg"),
+                })
+                .where(eq(users.id, existingUser.id));
+            }
           }
 
           return true;
@@ -265,9 +263,10 @@ export const authConfig = {
       // Handle email provider
       if (account?.provider === "resend" && user.email) {
         try {
-          // Find the user by email
+          // Find the user by normalized email
+          const normalizedEmail = normalizeGmailAddress(user.email);
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, user.email),
+            where: eq(users.email, normalizedEmail),
           });
 
           // If no user exists, create a new user with a default name
@@ -278,7 +277,7 @@ export const authConfig = {
               .values({
                 id: user.id, // Use the same user ID that will be used for the account
                 name: username,
-                email: user.email,
+                email: normalizedEmail,
                 image: getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
@@ -325,6 +324,7 @@ export const authConfig = {
           hobbies: userData?.hobbies ?? [],
           gender: userData?.gender ?? "male",
           age: userData?.age ?? 0,
+          profileCompleted: userData?.profileCompleted ?? false,
         },
       };
     },

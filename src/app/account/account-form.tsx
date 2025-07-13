@@ -220,6 +220,7 @@ export function AccountForm({ user }: { user: Session["user"] }) {
               <FormControl>
                 <Input
                   {...field}
+                  value={field.value ?? ""}
                   className="disabled:cursor-not-allowed disabled:bg-black/50 dark:disabled:bg-white/20"
                   disabled
                 />

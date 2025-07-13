@@ -7,12 +7,18 @@ export default async function OnboardingPage() {
   const session = await auth();
   const profileCompleted = session?.user?.profileCompleted;
   const hasPhone = session?.user?.phone;
+  const hasEmail = session?.user?.email;
 
   if (!session) {
     redirect("/signin?callbackUrl=/onboarding");
   }
 
-  if (profileCompleted && hasPhone) {
+  // For Twitter users, we need both email and phone to be complete
+  // For other providers, we only need phone to be complete
+  const isTwitterUser = !hasEmail;
+  const isComplete = profileCompleted && hasPhone && (!isTwitterUser || hasEmail);
+
+  if (isComplete) {
     redirect("/account");
   }
 

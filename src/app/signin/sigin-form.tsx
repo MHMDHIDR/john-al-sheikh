@@ -1,6 +1,6 @@
 "use client";
 
-import { IconLoader, IconMail } from "@tabler/icons-react";
+import { IconBrandX, IconLoader, IconMail } from "@tabler/icons-react";
 import clsx from "clsx";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -58,14 +58,14 @@ export default function SiginForm() {
             <GoogleIcon className="mx-1" />
           </Button>
 
-          {/* <Button
+          <Button
             onClick={handleTwitterSignIn}
             variant={"outline"}
             className="w-full cursor-pointer h-10"
           >
             تسجيل الدخول بإستخدام
             <IconBrandX className="mx-1" />
-          </Button> */}
+          </Button>
 
           <Divider className="my-4" textClassName="bg-card!">
             أو

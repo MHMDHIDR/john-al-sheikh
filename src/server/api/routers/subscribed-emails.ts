@@ -144,19 +144,21 @@ export const subscribedEmailsRouter = createTRPCRouter({
     });
 
     // Add user emails only if they don't already exist
-    subscribedUsers.forEach(user => {
-      if (!subscriberMap.has(user.email)) {
-        subscriberMap.set(user.email, {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          gender: user.gender,
-          ieltsGoal: user.goalBand ?? 5,
-          createdAt: user.createdAt,
-          source: "users" as const,
-        });
-      }
-    });
+    subscribedUsers
+      .filter((user): user is typeof user & { email: string } => user.email !== null)
+      .forEach(user => {
+        if (!subscriberMap.has(user.email)) {
+          subscriberMap.set(user.email, {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            gender: user.gender,
+            ieltsGoal: user.goalBand ?? 5,
+            createdAt: user.createdAt,
+            source: "users" as const,
+          });
+        }
+      });
 
     const combinedSubscribers = Array.from(subscriberMap.values());
     const totalCount = combinedSubscribers.length;
