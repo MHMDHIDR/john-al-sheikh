@@ -6,6 +6,7 @@ import { Moon, Sun } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { accountFormSchema } from "@/app/schemas/account";
@@ -226,7 +227,9 @@ export function AccountForm({ user }: { user: Session["user"] }) {
                 />
               </FormControl>
               <FormDescription>
-                لتغيير البريد الإلكتروني الخاص بك، يرجى الاتصال بالدعم الفني.
+                <Link href="/contact" className="cursor-pointer hover:underline underline-offset-4">
+                  لتغيير البريد الإلكتروني الخاص بك، يرجى التواصل مع الدعم الفني.
+                </Link>
               </FormDescription>
               <FormMessage />
             </FormItem>

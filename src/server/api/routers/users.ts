@@ -106,6 +106,17 @@ export const usersRouter = createTRPCRouter({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found!" });
     }
 
+    const newPhone = input.phone;
+    const isPhoneChanged = newPhone && existingUser.phone !== newPhone;
+    if (isPhoneChanged) {
+      const phoneExists = await ctx.db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.phone, newPhone),
+      });
+
+      if (phoneExists && phoneExists.id !== ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "لا يمكن استخدام رقم الهاتف هذا" });
+      }
+    }
     // Update user with provided fields
     const [updatedUser] = await ctx.db
       .update(users)
