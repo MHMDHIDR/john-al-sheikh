@@ -1,7 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import FullSpeakingRecorderButton from "@/components/custom/full-speaking-recorder-button";
 import { Timer } from "@/components/custom/timer";
@@ -34,13 +35,14 @@ export default function ConversationUI({
   title = "اختبار المحادثة",
 }: ConversationUIProps) {
   const { messages, clearTest } = useMockTestStore();
-  const { callStatus } = useGlobalVapiConversation();
-  const { isMuted, setVolume, callId } = useVapiConversation();
+  const { callStatus, isSpeaking } = useGlobalVapiConversation();
+  const { isMuted, setVolume } = useVapiConversation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<FullSpeakingRecorderButtonRef>(null);
   const clearTestRef = useRef(clearTest);
   const sessionStartTimeRef = useRef<number | null>(null);
+  const [showConnectingOverlay, setShowConnectingOverlay] = useState(false);
 
   // Update the ref when clearTest changes
   useEffect(() => {
@@ -62,6 +64,21 @@ export default function ConversationUI({
   useEffect(() => scrollToBottom(), [messages]);
 
   const isConnected = callStatus === CallStatus.ACTIVE;
+  const isConnecting =
+    callStatus === CallStatus.CONNECTING || callStatus === CallStatus.CONNECTING_PROGRESS;
+
+  // Show overlay when connecting and hide when AI starts talking (when we get the first message or speech starts)
+  useEffect(() => {
+    if (isConnecting) {
+      setShowConnectingOverlay(true);
+    } else if (isConnected && (messages.length > 0 || isSpeaking)) {
+      // Hide overlay when we get the first message OR when speech starts (AI starts talking)
+      setShowConnectingOverlay(false);
+    } else if (!isConnecting && !isConnected) {
+      // Hide overlay when not connecting and not connected
+      setShowConnectingOverlay(false);
+    }
+  }, [isConnecting, isConnected, messages.length, isSpeaking]);
 
   // Update session start time when connected
   useEffect(() => {
@@ -123,6 +140,18 @@ export default function ConversationUI({
           <FullSpeakingRecorderButton ref={recorderRef} user={user} mode={mode} />
         </div>
       </div>
+
+      {/* Connecting overlay - full screen */}
+      {showConnectingOverlay && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80">
+          <div className="flex flex-col items-center gap-4 p-8 rounded-lg bg-white/10 backdrop-blur-sm">
+            <Loader2 className="size-12 animate-spin text-white" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-white">جاري بدأ المحادثة</h3>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

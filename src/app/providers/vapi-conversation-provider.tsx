@@ -31,6 +31,18 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
       setCallStatus(CallStatus.FINISHED);
     };
 
+    const handleCallStartProgress = () => {
+      setCallStatus(CallStatus.CONNECTING_PROGRESS);
+    };
+
+    const handleCallStartSuccess = () => {
+      setCallStatus(CallStatus.ACTIVE);
+    };
+
+    const handleCallStartFailed = () => {
+      setCallStatus(CallStatus.FAILED);
+    };
+
     const handleSpeechStart = () => {
       setIsSpeaking(true);
     };
@@ -42,6 +54,9 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
     // Register event listeners
     vapi.on("call-start", handleCallStart);
     vapi.on("call-end", handleCallEnd);
+    vapi.on("call-start-progress", handleCallStartProgress);
+    vapi.on("call-start-success", handleCallStartSuccess);
+    vapi.on("call-start-failed", handleCallStartFailed);
     vapi.on("speech-start", handleSpeechStart);
     vapi.on("speech-end", handleSpeechEnd);
 
@@ -49,6 +64,9 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
     return () => {
       vapi.off("call-start", handleCallStart);
       vapi.off("call-end", handleCallEnd);
+      vapi.off("call-start-progress", handleCallStartProgress);
+      vapi.off("call-start-success", handleCallStartSuccess);
+      vapi.off("call-start-failed", handleCallStartFailed);
       vapi.off("speech-start", handleSpeechStart);
       vapi.off("speech-end", handleSpeechEnd);
     };
@@ -65,7 +83,7 @@ export function VapiConversationProvider({ children }: { children: React.ReactNo
   );
 }
 
-// Hook for consuming components
+// Custom hook to use the VAPI conversation context
 export function useGlobalVapiConversation() {
   const context = useContext(VapiConversationContext);
   if (context === undefined) {

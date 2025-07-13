@@ -318,7 +318,7 @@ export const Timer = memo(function Timer({
             <button
               onClick={handleClick}
               className={cn(
-                "flex flex-col items-center justify-center w-20 h-20 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 relative z-10",
+                "flex flex-col cursor-pointer items-center justify-center w-20 h-20 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 relative z-10",
                 getBackgroundColor(),
                 "hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
               )}

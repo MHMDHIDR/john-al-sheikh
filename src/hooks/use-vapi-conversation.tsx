@@ -36,8 +36,10 @@ export type VapiError = {
 export enum CallStatus {
   INACTIVE = "INACTIVE",
   CONNECTING = "CONNECTING",
+  CONNECTING_PROGRESS = "CONNECTING_PROGRESS",
   ACTIVE = "ACTIVE",
   FINISHED = "FINISHED",
+  FAILED = "FAILED",
 }
 
 type SavedMessage = {
@@ -53,6 +55,9 @@ type UseVapiConversationProps = {
   onSpeechStart?: () => void;
   onSpeechEnd?: () => void;
   onWindDownTriggered?: () => void;
+  onCallStartProgress?: () => void;
+  onCallStartSuccess?: () => void;
+  onCallStartFailed?: () => void;
 };
 
 export function useVapiConversation({
@@ -63,6 +68,9 @@ export function useVapiConversation({
   onSpeechStart,
   onSpeechEnd,
   onWindDownTriggered,
+  onCallStartProgress,
+  onCallStartSuccess,
+  onCallStartFailed,
 }: UseVapiConversationProps = {}) {
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -81,6 +89,23 @@ export function useVapiConversation({
       setCallStatus(CallStatus.FINISHED);
       setWindDownTriggered(false);
       onDisconnect?.();
+    };
+
+    const handleCallStartProgress = () => {
+      setCallStatus(CallStatus.CONNECTING_PROGRESS);
+      onCallStartProgress?.();
+    };
+
+    const handleCallStartSuccess = () => {
+      setCallStatus(CallStatus.ACTIVE);
+      setWindDownTriggered(false);
+      onCallStartSuccess?.();
+      onConnect?.();
+    };
+
+    const handleCallStartFailed = () => {
+      setCallStatus(CallStatus.FAILED);
+      onCallStartFailed?.();
     };
 
     const handleMessage = (message: {
@@ -114,6 +139,9 @@ export function useVapiConversation({
 
     vapi.on("call-start", handleCallStart);
     vapi.on("call-end", handleCallEnd);
+    vapi.on("call-start-progress", handleCallStartProgress);
+    vapi.on("call-start-success", handleCallStartSuccess);
+    vapi.on("call-start-failed", handleCallStartFailed);
     vapi.on("message", handleMessage);
     vapi.on("speech-start", handleSpeechStart);
     vapi.on("speech-end", handleSpeechEnd);
@@ -122,12 +150,25 @@ export function useVapiConversation({
     return () => {
       vapi.off("call-start", handleCallStart);
       vapi.off("call-end", handleCallEnd);
+      vapi.off("call-start-progress", handleCallStartProgress);
+      vapi.off("call-start-success", handleCallStartSuccess);
+      vapi.off("call-start-failed", handleCallStartFailed);
       vapi.off("message", handleMessage);
       vapi.off("speech-start", handleSpeechStart);
       vapi.off("speech-end", handleSpeechEnd);
       vapi.off("error", handleError);
     };
-  }, [onConnect, onDisconnect, onMessage, onError, onSpeechStart, onSpeechEnd]);
+  }, [
+    onConnect,
+    onDisconnect,
+    onMessage,
+    onError,
+    onSpeechStart,
+    onSpeechEnd,
+    onCallStartProgress,
+    onCallStartSuccess,
+    onCallStartFailed,
+  ]);
 
   const startSession = useCallback(
     async (config: CreateAssistantDTO, assistantOverrides: AssistantOverrides) => {
@@ -154,7 +195,7 @@ export function useVapiConversation({
           setCallId(result.id);
         }
       } catch (error) {
-        setCallStatus(CallStatus.INACTIVE);
+        setCallStatus(CallStatus.FAILED);
         throw error;
       }
     },
