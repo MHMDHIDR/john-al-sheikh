@@ -9,8 +9,10 @@ type TimerProps = {
   duration: number; // duration in ms
   mode: "preparation" | "recording" | "general-english" | "mock-test";
   isMuted: boolean;
-  onToggleMute: () => void;
+  onToggleMute?: () => void;
   isConnected: boolean;
+  // Add this prop to prevent timer reset during preparation
+  isPreparationMode?: boolean;
 };
 
 // Using memo to prevent unnecessary rerenders
@@ -23,10 +25,12 @@ export const Timer = memo(function Timer({
   isMuted,
   onToggleMute,
   isConnected,
+  isPreparationMode = false,
 }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [progress, setProgress] = useState(0);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const timeUpCalledRef = useRef(false); // Prevent multiple calls to onTimeUp
 
   // Wave visualization refs
   const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -48,8 +52,44 @@ export const Timer = memo(function Timer({
     [],
   );
 
-  // Timer logic
+  // Timer logic - Fixed to not reset during preparation
   useEffect(() => {
+    // For preparation mode, use a completely isolated timer that never resets
+    if (isPreparationMode && mode === "preparation" && startTime) {
+      // Only start the timer once when preparation begins
+      if (!intervalIdRef.current) {
+        timeUpCalledRef.current = false;
+
+        // Set initial values
+        const initialRemaining = Math.ceil(duration / 1000);
+        setTimeLeft(initialRemaining);
+        setProgress(0);
+
+        // Use a stable interval that doesn't depend on external state changes
+        intervalIdRef.current = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
+          const progressPercent = Math.max(0, Math.min(100, (elapsed / duration) * 100));
+
+          setTimeLeft(remaining);
+          setProgress(progressPercent);
+
+          if (remaining <= 0 && !timeUpCalledRef.current) {
+            timeUpCalledRef.current = true;
+            if (intervalIdRef.current) {
+              clearInterval(intervalIdRef.current);
+              intervalIdRef.current = null;
+            }
+            setTimeout(onTimeUp, 0);
+          }
+        }, 1000);
+      }
+
+      // Don't return cleanup for preparation mode - let it run until completion
+      return;
+    }
+
+    // For non-preparation modes, use the original logic
     if (!isRunning || !startTime) {
       if (intervalIdRef.current) {
         clearInterval(intervalIdRef.current);
@@ -57,10 +97,11 @@ export const Timer = memo(function Timer({
       }
       setTimeLeft(0);
       setProgress(0);
+      timeUpCalledRef.current = false;
       return;
     }
 
-    // Update immediately in case of re-mount or prop change
+    // Original timer logic for non-preparation modes
     const updateTime = () => {
       const elapsed = Date.now() - startTime;
 
@@ -77,7 +118,8 @@ export const Timer = memo(function Timer({
         setTimeLeft(remaining);
         setProgress(progressPercent);
 
-        if (remaining <= 0) {
+        if (remaining <= 0 && !timeUpCalledRef.current) {
+          timeUpCalledRef.current = true;
           if (intervalIdRef.current) {
             clearInterval(intervalIdRef.current);
             intervalIdRef.current = null;
@@ -88,7 +130,6 @@ export const Timer = memo(function Timer({
     };
 
     updateTime();
-
     intervalIdRef.current = setInterval(updateTime, 1000);
 
     return () => {
@@ -97,7 +138,16 @@ export const Timer = memo(function Timer({
         intervalIdRef.current = null;
       }
     };
-  }, [isRunning, startTime, duration, onTimeUp, mode]);
+  }, [isRunning, startTime, duration, onTimeUp, mode, isPreparationMode]);
+
+  // Cleanup preparation timer when preparation mode ends
+  useEffect(() => {
+    if (!isPreparationMode && intervalIdRef.current) {
+      clearInterval(intervalIdRef.current);
+      intervalIdRef.current = null;
+      timeUpCalledRef.current = false;
+    }
+  }, [isPreparationMode]);
 
   // Wave visualization logic
   const visualize = useCallback(() => {
@@ -233,9 +283,9 @@ export const Timer = memo(function Timer({
     analyserRef.current = null;
   }, []);
 
-  // Setup audio analyzer when connected and not muted
+  // Setup audio analyzer when connected and not muted (but not during preparation)
   useEffect(() => {
-    if (isConnected && !isMuted) {
+    if (isConnected && !isMuted && !isPreparationMode) {
       void setupAudioAnalyzer();
     } else {
       cleanupAudioAnalyzer();
@@ -244,7 +294,7 @@ export const Timer = memo(function Timer({
     return () => {
       cleanupAudioAnalyzer();
     };
-  }, [isConnected, isMuted, setupAudioAnalyzer, cleanupAudioAnalyzer]);
+  }, [isConnected, isMuted, isPreparationMode, setupAudioAnalyzer, cleanupAudioAnalyzer]);
 
   // Format time
   const minutes = Math.floor(timeLeft / 60);
@@ -280,8 +330,8 @@ export const Timer = memo(function Timer({
     mode === "mock-test" ? circumference : circumference - (progress / 100) * circumference;
 
   const handleClick = () => {
-    if (isConnected) {
-      onToggleMute();
+    if (isConnected && !isPreparationMode) {
+      onToggleMute?.();
     }
   };
 
@@ -317,8 +367,8 @@ export const Timer = memo(function Timer({
 
         {/* Center content with waves */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {/* Wave visualization container */}
-          {isConnected && !isMuted && (
+          {/* Wave visualization container - hidden during preparation */}
+          {isConnected && !isMuted && !isPreparationMode && (
             <div
               className="mt-0 flex h-72 w-88 items-center justify-center absolute -z-10"
               ref={waveContainerRef}
@@ -329,13 +379,16 @@ export const Timer = memo(function Timer({
           {isConnected ? (
             <button
               onClick={handleClick}
+              disabled={isPreparationMode}
               className={cn(
-                "flex flex-col cursor-pointer items-center justify-center w-20 h-20 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 relative z-10",
+                "flex flex-col items-center justify-center w-20 h-20 rounded-full transition-all duration-200 relative z-10",
                 getBackgroundColor(),
-                "hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                isPreparationMode
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
               )}
             >
-              {isMuted ? (
+              {isMuted || isPreparationMode ? (
                 <MicOff className="w-6 h-6 text-red-600" />
               ) : (
                 <Mic className="w-6 h-6 text-green-600" />
@@ -357,13 +410,7 @@ export const Timer = memo(function Timer({
             : `${String(defaultMinutes).padStart(2, "0")}:${String(defaultSeconds).padStart(2, "0")}`}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {mode === "preparation"
-            ? "وقت التحضير"
-            : mode === "mock-test"
-              ? "الوقت المنقضي"
-              : isRunning
-                ? "الوقت المتبقي"
-                : "زمن المحادثة"}
+          {mode === "mock-test" ? "الوقت المنقضي" : isRunning ? "الوقت المتبقي" : "زمن المحادثة"}
         </div>
       </div>
 
@@ -373,12 +420,12 @@ export const Timer = memo(function Timer({
           <div
             className={cn(
               "text-sm font-medium px-3 py-1 rounded-full",
-              isMuted
+              isMuted || isPreparationMode
                 ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
                 : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400",
             )}
           >
-            {isMuted ? "صامت" : "يستمع"}
+            {isPreparationMode ? "وقت التحضير" : isMuted ? "صامت" : "يستمع"}
           </div>
         </div>
       )}

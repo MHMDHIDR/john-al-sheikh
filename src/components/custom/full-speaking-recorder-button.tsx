@@ -247,6 +247,7 @@ const FullSpeakingRecorderButton = forwardRef<
   const conversationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionStartTimeRef = useRef<number | null>(null);
   const windDownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const preparationStartTimeRef = useRef<number | null>(null);
 
   const userProfile = {
     name: user.name,
@@ -260,56 +261,63 @@ const FullSpeakingRecorderButton = forwardRef<
   const router = useRouter();
   const { messages, clearTest, addMessage } = useMockTestStore();
   const { callStatus } = useGlobalVapiConversation();
-  const {
-    isMuted,
-    startSession,
-    setVolume,
-    endSession,
-    triggerWindDown,
-    windDownTriggered,
-    callId,
-  } = useVapiConversation({
-    onMessage: message => {
-      const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
-      const timestamp = new Date().toLocaleTimeString();
-      const messageContent = { role, content: message.content, timestamp };
-      addMessage(messageContent);
+  const { startSession, setVolume, endSession, triggerWindDown, windDownTriggered, callId } =
+    useVapiConversation({
+      onConnect: () => {
+        // Set the session start time when the call actually becomes active
+        sessionStartTimeRef.current = Date.now();
+      },
+      onMessage: message => {
+        const role = message.role === "assistant" ? ("examiner" as const) : ("candidate" as const);
+        const timestamp = new Date().toLocaleTimeString();
+        const messageContent = { role, content: message.content, timestamp };
+        addMessage(messageContent);
 
-      // Check if this message indicates test completion
-      if (role === "examiner" && isTestConclusionMessage(message.content)) {
-        setIsTestCompleted(true);
-        setTimeout(() => {
-          vapi.stop();
-        }, 5000);
-      }
+        // Check if this message indicates test completion
+        if (role === "examiner" && isTestConclusionMessage(message.content)) {
+          setIsTestCompleted(true);
+          setTimeout(() => {
+            vapi.stop();
+          }, 5000);
+        }
 
-      if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
-        setVolume(0);
-        setTimeout(() => setIsOneMinuteToPrepare(true), 3000);
-        setTimeout(() => vapi.setMuted(true), MINUTES_IN_MS);
-      }
-    },
-    onError: error => {
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "errorMsg" in error
+        // Handle one minute preparation - FIXED VERSION
+        if (role === "examiner" && isOneMinuteToPrepareMessage(message.content)) {
+          // Immediately mute the microphone
+          vapi.setMuted(true);
+          setVolume(0);
+
+          // Store the preparation start time
+          preparationStartTimeRef.current = Date.now();
+
+          // Show the preparation dialog after a small delay
+          setTimeout(() => {
+            setIsOneMinuteToPrepare(true);
+          }, 500);
+        }
+      },
+      onError: error => {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null && "errorMsg" in error
+              ? (error as { errorMsg: string }).errorMsg
+              : JSON.stringify(error);
+
+        setErrorMessage(
+          typeof error === "object" && error !== null && "errorMsg" in error
             ? (error as { errorMsg: string }).errorMsg
-            : JSON.stringify(error);
+            : errorMsg,
+        );
+        console.error("Error:", errorMsg);
+      },
+      onWindDownTriggered: () => {
+        setVolume(0);
+        vapi.setMuted(true);
+      },
+    });
 
-      setErrorMessage(
-        typeof error === "object" && error !== null && "errorMsg" in error
-          ? (error as { errorMsg: string }).errorMsg
-          : errorMsg,
-      );
-      console.error("Error:", errorMsg);
-    },
-    onWindDownTriggered: () => {
-      setVolume(0);
-      vapi.setMuted(true);
-    },
-  });
-
+  const isConnected = callStatus === CallStatus.ACTIVE;
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
   const useCreditsForTest = api.payments.useCreditsForTest.useMutation();
@@ -536,9 +544,6 @@ const FullSpeakingRecorderButton = forwardRef<
       setIsTestCompleted(false);
       clearTest();
 
-      // Set the session start time
-      sessionStartTimeRef.current = Date.now();
-
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
         silenceTimeoutSeconds: 100, // Allow 1.66 minutes of silence,
         maxDurationSeconds: mode === "mock-test" ? 600 : GENERAL_ENGLISH_CONVERSATION_TIME / 1000, // 5 minutes for general-english mode
@@ -557,7 +562,7 @@ const FullSpeakingRecorderButton = forwardRef<
           silenceTimeoutMessage: "As there is no response, I am ending the call now.",
           idleMessageResetCountOnUserSpeechEnabled: true,
         },
-        startSpeakingPlan: { waitSeconds: 4 },
+        startSpeakingPlan: { waitSeconds: 3 },
         backgroundDenoisingEnabled: true,
       });
     } catch (error) {
@@ -566,20 +571,10 @@ const FullSpeakingRecorderButton = forwardRef<
     }
   };
 
-  const toggleMute = useCallback(() => {
-    try {
-      setVolume(isMuted ? 1 : 0);
-    } catch (error) {
-      console.error("Error changing volume:", error);
-    }
-  }, [isMuted, setVolume]);
-
-  const isConnected = callStatus === CallStatus.ACTIVE;
-
   // Expose methods to parent component through ref
   useImperativeHandle(ref, () => ({
     stopTest: () => {
-      if (callStatus === CallStatus.ACTIVE) {
+      if (isConnected) {
         setIsTestCompleted(true);
         // Add a small delay before ending the session
         setTimeout(() => {
@@ -594,7 +589,7 @@ const FullSpeakingRecorderButton = forwardRef<
     <>
       {isOneMinuteToPrepare && (
         <AlertDialog open={isOneMinuteToPrepare} onOpenChange={setIsOneMinuteToPrepare}>
-          <AlertDialogContent>
+          <AlertDialogContent onEscapeKeyDown={e => e.preventDefault()}>
             <AlertDialogHeader>
               <AlertDialogTitle className="text-center">دقيقة واحدة للتحضير</AlertDialogTitle>
               <AlertDialogDescription asChild className="text-right">
@@ -606,22 +601,27 @@ const FullSpeakingRecorderButton = forwardRef<
                   <Timer
                     isRunning={true}
                     onTimeUp={() => {
-                      toggleMute();
+                      // Automatically unmute when timer reaches 0
+                      setVolume(1);
                       vapi.setMuted(false);
                       setIsOneMinuteToPrepare(false);
+                      preparationStartTimeRef.current = null;
                     }}
-                    startTime={Date.now()}
+                    startTime={preparationStartTimeRef.current} // Use the stored start time
                     duration={MINUTES_IN_MS}
                     mode="preparation"
                     isMuted={true}
-                    onToggleMute={() => {}} // Disable mute toggle during preparation
                     isConnected={true}
+                    isPreparationMode={true} // Add this new prop
                   />
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isOneMinuteToPrepare} className="w-full">
+              <AlertDialogCancel
+                disabled={true} // Disable cancel during preparation
+                className="w-full opacity-50 cursor-not-allowed"
+              >
                 إلغاء
               </AlertDialogCancel>
             </AlertDialogFooter>

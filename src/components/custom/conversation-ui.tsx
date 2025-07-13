@@ -96,7 +96,7 @@ export default function ConversationUI({
   const latestMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
 
   return (
-    <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip">
+    <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip -my-16">
       <AuroraText
         className={
           "m-2 sticky mt-0 top-12 md:top-13 py-1.5 mx-0 shadow min-w-full text-center z-20 text-xl font-bold bg-white/50 dark:bg-black/50 backdrop-blur-md text-gray-900 select-none"
