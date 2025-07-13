@@ -74,7 +74,7 @@ export default async function DashboardPage({
       <div className="mx-auto max-w-6xl relative z-10">
         <div className="mb-8 text-center select-none">
           <AuroraText className="text-3xl font-bold mb-2">لوحة المعلومات</AuroraText>
-          <p className="text-gray-600">تابع تقدمك في اختبارات المحادثة IELTS</p>
+          <p className="text-gray-600">تابع تقدمك في محادثات اللغة الإنجليزية</p>
         </div>
 
         {payment_success === "true" && (
@@ -85,7 +85,7 @@ export default async function DashboardPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader className="pb-0 select-none">
+            <CardHeader className="pb-0 select-none sr-only">
               <CardTitle className="max-sm:text-center">إبدا المحادثة</CardTitle>
             </CardHeader>
             <CardContent />
@@ -169,7 +169,7 @@ export default async function DashboardPage({
 
         {stats.averageScores && stats.averageScores.length > 0 && (
           <Card className="mb-8">
-            <CardHeader className="select-none">
+            <CardHeader className="select-none max-sm:text-center">
               <CardTitle>متوسط الدرجات حسب نوع الاختبار</CardTitle>
             </CardHeader>
             <CardContent>
@@ -196,7 +196,7 @@ export default async function DashboardPage({
         )}
 
         <Card className="mb-12">
-          <CardHeader className="select-none">
+          <CardHeader className="select-none max-sm:text-center">
             <CardTitle>سجل المحادثات</CardTitle>
             <CardDescription>قائمة بجميع المحادثات والإختبارات التي أكملتها</CardDescription>
           </CardHeader>

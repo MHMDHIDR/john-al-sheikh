@@ -64,12 +64,12 @@ const UsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="rtl">
         <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/users/${user.id}`}>
+        {/* <DropdownMenuItem asChild>
+          <Link href={`/admin/users/${user.id}`}>
             <Pencil className="mr-0.5 size-4" />
             عرض / تعديل
           </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         {status === "PENDING" && (
           <DropdownMenuItem onClick={handleActivate}>
             <Check className="mr-0.5 size-4" /> تفعيل
@@ -104,6 +104,19 @@ export const userColumns: ColumnDef<Users>[] = [
     ),
   },
   {
+    accessorKey: "credits",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        رصيد الحساب
+        <ArrowUpDown className="size-4 ml-2" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const credits = row.getValue("credits");
+      return credits ?? "لا يوجد";
+    },
+  },
+  {
     accessorKey: "phone",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
@@ -112,11 +125,16 @@ export const userColumns: ColumnDef<Users>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const phone = row.getValue("phone");
-      return typeof phone === "string" && phone ? (
-        <span className="[direction:rtl]">{phone}</span>
+      const phone = row.getValue("phone") ? String(row.getValue("phone")) : null;
+
+      return phone ? (
+        <Link href={`tel:${phone}`} dir="auto">
+          <Button variant={"link"} className="p-0 select-none">
+            {phone}
+          </Button>
+        </Link>
       ) : (
-        <span>غير متوفر</span>
+        <span className="text-muted-foreground select-none">غير متوفر</span>
       );
     },
   },
@@ -155,7 +173,11 @@ export const userColumns: ColumnDef<Users>[] = [
     cell: ({ row }) => {
       const isNewsletterSubscribed = row.getValue("isNewsletterSubscribed");
 
-      return isNewsletterSubscribed ? <span>نعم</span> : <span>لا</span>;
+      return isNewsletterSubscribed ? (
+        <span className="text-green-500">نعم</span>
+      ) : (
+        <span className="text-red-500">لا</span>
+      );
     },
   },
   {
@@ -168,19 +190,6 @@ export const userColumns: ColumnDef<Users>[] = [
     ),
     cell: ({ row }) => {
       const date = row.getValue("createdAt");
-      return new Date(String(date)).toLocaleDateString();
-    },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        تاريخ التحديث
-        <ArrowUpDown className="size-4 ml-2" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const date = row.getValue("updatedAt");
       return new Date(String(date)).toLocaleDateString();
     },
   },

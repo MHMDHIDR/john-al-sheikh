@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable } from "@/components/custom/data-table";
+import { baseColumns } from "@/components/custom/data-table/base-columns";
 import { userColumns } from "./test-users-columns";
 import type { TableTestUser } from "./page";
 import type { BaseEntity } from "@/components/custom/data-table/base-columns";
@@ -11,13 +12,13 @@ export default function TestUsersTable({
 }: {
   testUsers: (TableTestUser & BaseEntity)[];
 }) {
-  const columns = [...userColumns];
+  const columns = [...baseColumns(), ...userColumns];
 
   return (
     <DataTable<TableTestUser & BaseEntity>
       columns={columns as ColumnDef<TableTestUser & BaseEntity>[]}
       data={testUsers}
-      emptyStateMessage="Sorry, No Test Users Found."
+      emptyStateMessage="لا يوجد ممتحنين."
       exportFilename="test_users_export"
       searchPlaceholder="البحث في بيانات الممتحنين..."
     />

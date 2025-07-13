@@ -14,7 +14,7 @@ export default function PremiumUsersTable({ users }: { users: (Users & BaseEntit
     <DataTable<Users & BaseEntity>
       columns={columns as ColumnDef<Users & BaseEntity>[]}
       data={users}
-      emptyStateMessage="Sorry, No Premium Users Found."
+      emptyStateMessage="لم يتم العثور على مستخدمين مميزين."
       exportFilename="users_export"
       searchPlaceholder="البحث في بيانات المستخدمين المميزون..."
     />

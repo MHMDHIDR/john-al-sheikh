@@ -12,29 +12,11 @@ import type Stripe from "stripe";
 
 export const paymentsColumns: ColumnDef<Payment>[] = [
   {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        اسم المستخدم
-        <ArrowUpDown className="w-4 h-4 ml-2" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const name = row.original.name;
-      return (
-        <div className="flex items-center gap-2">
-          <User className="size-4" />
-          <span>{name}</span>
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: "type",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         نوع الدفع
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -66,7 +48,7 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         العملة
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -79,7 +61,7 @@ export const paymentsColumns: ColumnDef<Payment>[] = [
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         طريقة الدفع
-        <ArrowUpDown className="w-4 h-4 ml-2" />
+        <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {

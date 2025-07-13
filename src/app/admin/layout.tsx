@@ -1,9 +1,9 @@
 import {
   AudioLines,
   CircleUser,
-  CreditCard,
   Home,
   MailIcon,
+  ReceiptPoundSterling,
   ShieldUser,
   UserPen,
   UserPlus,
@@ -51,14 +51,14 @@ export default async function DashboardLayout({
             icon: <UserPen className="size-5" />,
           },
           {
-            title: "مشترين النشرة البريدية",
+            title: "مشتركون النشرة البريدية",
             url: "/admin/subscribers",
             icon: <UserPlus className="size-4" />,
           },
           {
-            title: "المدفوعات",
+            title: "الأرباح",
             url: "/admin/payments",
-            icon: <CreditCard className="size-4" />,
+            icon: <ReceiptPoundSterling className="size-4" />,
           },
           {
             title: "النشرة البريدية",

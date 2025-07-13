@@ -39,8 +39,8 @@ export default async function BuyCreditsPage({
         <h1 className="text-xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
           قوي مستواك في محادثات اللغة الإنجليزية
         </h1>
-        <p className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl">
-          شراء نقاط رصيد للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
+        <p className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl text-balance">
+          شراء رصيد نقاط للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
           مستواك
         </p>
       </div>

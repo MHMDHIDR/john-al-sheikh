@@ -81,7 +81,7 @@ function MetricCard({
           className={clsx("text-5xl text-center font-bold", {
             "text-green-600": title === "الربح الحالي في Stripe",
             "text-blue-600": title === "عدد المستخدمين",
-            "text-yellow-600": title === "عدد الأشتراكات",
+            "text-yellow-600": title === "عدد مشتركون النشرة البريدية",
             "text-purple-600": title === "مستخدمي اختبار المحادثة",
           })}
         >

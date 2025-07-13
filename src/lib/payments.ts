@@ -25,6 +25,7 @@ export const createUserMap = (
   users: Array<{
     id: string;
     name: string;
+    gender: string | null;
     email: string;
     displayName: string | null;
     role: UserRoleType;
@@ -38,7 +39,14 @@ export const enhanceTransactions = (
   transactions: Stripe.BalanceTransaction[],
   userMap: Map<
     string,
-    { id: string; name: string; email: string; displayName: string | null; role: UserRoleType }
+    {
+      id: string;
+      name: string;
+      gender: string | null;
+      email: string;
+      displayName: string | null;
+      role: UserRoleType;
+    }
   >,
 ) => {
   return transactions
@@ -68,6 +76,7 @@ export const enhanceTransactions = (
         user: {
           id: userDetails.id,
           name: userDetails.name,
+          gender: userDetails.gender,
           displayName: userDetails.displayName,
           email: userDetails.email,
         },

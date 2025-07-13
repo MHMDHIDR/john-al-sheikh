@@ -31,6 +31,7 @@ export default async function Payments() {
       return {
         id: `payment-${index}`,
         name: tx.user?.displayName ?? paymentDetails.name ?? `Payment ${index + 1}`,
+        gender: tx.user.gender,
         amount: tx.amount,
         currency: tx.currency,
         type: tx.type,

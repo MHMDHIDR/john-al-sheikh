@@ -15,68 +15,6 @@ import { api } from "@/trpc/react";
 import type { Users } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
-// Wrapper component to handle router and mutation logic
-const PremiumUsersActionsCell: React.FC<{ user: Users }> = ({ user }) => {
-  const router = useRouter();
-  const toast = useToast();
-
-  const utils = api.useUtils();
-  const status = user.status;
-  const isSuspended = user.status === "SUSPENDED";
-
-  const updateUserMutation = api.users.update.useMutation({
-    onSuccess: async () => {
-      toast.success("تم تحديث حالة المستخدم بنجاح");
-      await utils.users.getUsers.invalidate();
-      router.refresh();
-    },
-    onError: error => {
-      toast.error(`فشل تحديث حالة المستخدم: ${error.message}`);
-    },
-    onMutate: () => {
-      toast.loading("يتم تحديث حالة المستخدم...");
-    },
-  });
-
-  const handleActivate = () => {
-    updateUserMutation.mutate({ email: user.email, status: "ACTIVE" });
-  };
-
-  const handleUnsuspend = () => {
-    updateUserMutation.mutate({ email: user.email, status: "ACTIVE" });
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="size-8 p-0">
-          <span className="sr-only">الإجراءات</span>
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="rtl">
-        <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/users/${user.id}`}>
-            <Pencil className="mr-0.5 size-4" />
-            عرض / تعديل
-          </Link>
-        </DropdownMenuItem>
-        {status === "PENDING" && (
-          <DropdownMenuItem onClick={handleActivate}>
-            <Check className="mr-0.5 size-4" /> تفعيل
-          </DropdownMenuItem>
-        )}
-        {isSuspended && (
-          <DropdownMenuItem onClick={handleUnsuspend}>
-            <CheckCircle className="mr-0.5 size-4" /> تفعيل
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
 export const premiumUserColumns: ColumnDef<Users>[] = [
   {
     accessorKey: "email",
@@ -109,8 +47,17 @@ export const premiumUserColumns: ColumnDef<Users>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const phone = row.getValue("phone");
-      return phone ?? "لا يوجد";
+      const phone = row.getValue("phone") ? String(row.getValue("phone")) : null;
+
+      return phone ? (
+        <Link href={`tel:${phone}`} dir="auto">
+          <Button variant={"link"} className="p-0 select-none">
+            {phone}
+          </Button>
+        </Link>
+      ) : (
+        <span className="text-muted-foreground select-none">غير متوفر</span>
+      );
     },
   },
   {
@@ -149,23 +96,5 @@ export const premiumUserColumns: ColumnDef<Users>[] = [
       const date = row.getValue("createdAt");
       return new Date(String(date)).toLocaleDateString();
     },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        تاريخ التحديث
-        <ArrowUpDown className="size-4 ml-2" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const date = row.getValue("updatedAt");
-      return new Date(String(date)).toLocaleDateString();
-    },
-  },
-  {
-    accessorKey: "actions",
-    header: "الإجراءات",
-    cell: ({ row }) => <PremiumUsersActionsCell user={row.original} />,
   },
 ];

@@ -32,9 +32,9 @@ export default function PaymentsTable({ payments }: { payments: Payment[] }) {
     <DataTable<Payment>
       columns={paymentsColumns}
       data={payments}
-      emptyStateMessage="No payments found."
+      emptyStateMessage="لا يوجد أرباح."
       exportFilename="payments_export"
-      searchPlaceholder="البحث في بيانات المدفوعات..."
+      searchPlaceholder="البحث في بيانات الأرباح..."
     />
   );
 }

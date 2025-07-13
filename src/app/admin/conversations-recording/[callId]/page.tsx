@@ -85,6 +85,7 @@ export default async function CallIDRecording({ params }: CallIDRecordingProps) 
               </div>
 
               <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">نوع الاختبار</span>
                 <Badge variant={recordingData?.type === "MOCK" ? "secondary" : "default"}>
                   {recordingData?.type === "MOCK"
                     ? "اختبار تجريبي"
@@ -92,7 +93,6 @@ export default async function CallIDRecording({ params }: CallIDRecordingProps) 
                       ? "تدريب"
                       : "اختبار رسمي"}
                 </Badge>
-                <span className="text-xs text-muted-foreground">نوع الاختبار</span>
               </div>
             </div>
           </CardContent>

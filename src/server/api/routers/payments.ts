@@ -286,6 +286,7 @@ export const paymentsRouter = createTRPCRouter({
       columns: {
         id: true,
         name: true,
+        gender: true,
         email: true,
         displayName: true,
         credits: true,

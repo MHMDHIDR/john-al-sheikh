@@ -14,7 +14,7 @@ export default function UsersTable({ users }: { users: (Users & BaseEntity)[] })
     <DataTable<Users & BaseEntity>
       columns={columns as ColumnDef<Users & BaseEntity>[]}
       data={users}
-      emptyStateMessage="Sorry, No Users Found."
+      emptyStateMessage="لا يوجد مستخدمين."
       exportFilename="users_export"
       searchPlaceholder="البحث في بيانات المستخدمين..."
     />

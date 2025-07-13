@@ -29,7 +29,7 @@ import type { BaseEntity } from "./base-columns";
 import type { Users } from "@/server/db/schema";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 
-type RowStatus = "inactive" | "suspended" | "pending" | "active" | "default";
+type RowStatus = "inactive" | "suspended" | "pending" | "default";
 type DataTableProps<TData extends BaseEntity> = {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -171,8 +171,6 @@ export function DataTable<TData extends BaseEntity>({
         return "suspended";
       case "PENDING":
         return "pending";
-      case "ACTIVE":
-        return "active";
       default:
         return "default";
     }
@@ -185,8 +183,6 @@ export function DataTable<TData extends BaseEntity>({
       "text-orange-700 hover:text-orange-50 bg-orange-200 hover:bg-orange-500 dark:text-orange-200 dark:bg-orange-900 dark:hover:bg-orange-950",
     pending:
       "text-yellow-800 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-50 dark:bg-yellow-950 dark:hover:bg-yellow-900",
-    active:
-      "text-green-800 bg-green-50 hover:bg-green-100 dark:text-green-50 dark:bg-green-950 dark:hover:bg-green-900",
     default: "",
   };
 
