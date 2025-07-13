@@ -25,7 +25,9 @@ export function FeedbackButton() {
     setIsMounted(true);
   }, []);
 
-  return !isMounted || pathname?.includes("/admin") ? null : (
+  const DO_NOT_SHOW_FEEDBACK_BUTTON = ["/admin", "/dashboard"];
+
+  return !isMounted || DO_NOT_SHOW_FEEDBACK_BUTTON.some(path => pathname?.includes(path)) ? null : (
     <>
       <Button
         onClick={() => setIsOpen(true)}

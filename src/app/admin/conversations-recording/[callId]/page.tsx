@@ -137,11 +137,11 @@ export default async function CallIDRecording({ params }: CallIDRecordingProps) 
               <CardTitle>نص المحادثة</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recordingData?.transcription.messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`p-2.5 rounded-lg flex gap-3 ${
+                    className={`p-2.5 rounded-lg flex gap-1.5 ${
                       message.role === "examiner"
                         ? "bg-blue-100 text-blue-900"
                         : "bg-green-100 text-green-900"

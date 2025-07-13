@@ -1,7 +1,8 @@
 "use client";
 
-import { Pause, Play, RotateCcw, Volume2 } from "lucide-react";
+import { FastForward, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AudioVolumeControl } from "@/components/custom/audio-volume-control";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,10 +18,45 @@ export default function AudioPlayer({
   subtitle,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const prevVolume = useRef(1);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const header = document.querySelector("header");
+      const player = playerRef.current;
+      if (!header || !player) return;
+
+      const headerRect = header.getBoundingClientRect();
+      const playerRect = player.getBoundingClientRect();
+
+      setHeaderHeight(headerRect.height);
+
+      // Check if the player's top reaches the header's bottom
+      const headerBottom = headerRect.bottom;
+      const playerTop = playerRect.top;
+      setIsScrolled(playerTop <= headerBottom + 16); // 16px = top-4
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = isMuted ? 0 : volume;
+  }, [volume, isMuted]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -28,19 +64,15 @@ export default function AudioPlayer({
 
     const updateTime = () => {
       setCurrentTime(audio.currentTime);
-      // Debug log
-      console.log("AUDIO DEBUG: currentTime", audio.currentTime, "duration", audio.duration);
     };
-    const updateDuration = () => setDuration(audio.duration);
+    setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
 
     audio.addEventListener("timeupdate", updateTime);
-    audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", handleEnded);
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
-      audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
     };
   }, [audioUrl]);
@@ -82,13 +114,32 @@ export default function AudioPlayer({
     setCurrentTime(newTime);
   };
 
-  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    if (newVolume === 0) {
+      setIsMuted(true);
+    } else {
+      setIsMuted(false);
+      prevVolume.current = newVolume;
+    }
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      setVolume(prevVolume.current || 1);
+    } else {
+      setIsMuted(true);
+      prevVolume.current = volume;
+      setVolume(0);
+    }
+  };
+
+  const skipForward = () => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    const newVolume = parseFloat(event.target.value);
-    audio.volume = newVolume;
-    setVolume(newVolume);
+    audio.currentTime = Math.min(audio.currentTime + 10, duration);
+    setCurrentTime(audio.currentTime);
   };
 
   const formatTime = (time: number) => {
@@ -100,62 +151,125 @@ export default function AudioPlayer({
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto mb-5">
-      <CardHeader>
-        <CardTitle className="text-center text-xl font-bold">{title}</CardTitle>
-        {subtitle && <p className="text-center text-muted-foreground">{subtitle}</p>}
+    <Card
+      ref={playerRef}
+      className={`w-full select-none max-w-2xl mx-auto mb-5 bg-gradient-to-br from-[#1e3c72] via-[#2a5298] to-[#1e3c72] backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl transition-all duration-300 ${
+        isScrolled ? "sticky shadow-2xl scale-[0.98] z-30 opacity-85" : ""
+      }`}
+      style={isScrolled ? { top: `${headerHeight + 4}px` } : {}}
+    >
+      <CardHeader className={`pb-1 transition-all ${isScrolled ? "scale-0 h-0" : ""}`}>
+        <CardTitle className="text-center text-xl font-bold text-white drop-shadow-sm">
+          {title}
+        </CardTitle>
+        {subtitle && <p className="text-center text-sm text-white/70">{subtitle}</p>}
       </CardHeader>
-      <CardContent className="p-6">
-        <audio ref={audioRef} src={audioUrl} preload="metadata" />
 
+      {/* <CardContent className="px-5 py-2.5"> */}
+      <CardContent className="px-5 py-3 text-white space-y-6">
+        <audio ref={audioRef} src={audioUrl} preload="metadata" />
         <div className="space-y-6">
           {/* Custom Progress Bar */}
           <div className="space-y-2">
             <div
-              className="relative w-full h-2 rounded-full bg-muted cursor-pointer select-none ltr"
+              className="relative w-full h-2 rounded-full bg-muted backdrop-blur-sm shadow-inner cursor-pointer ltr"
               onClick={handleProgressClick}
             >
-              {/* Filled portion */}
               <div
                 className="absolute h-2 rounded-full bg-primary max-w-full"
                 style={{ width: `${(currentTime / Math.max(duration, 0.01)) * 100}%` }}
               />
-              {/* Thumb */}
               <div
                 className="absolute top-1/2 -translate-y-1/2 transition-all duration-200"
                 style={{ left: `calc(${(currentTime / Math.max(duration, 0.01)) * 100}% - 12px)` }}
               >
-                <div className="w-6 h-6 rounded-full border-4 border-primary bg-background shadow ring-2 ring-primary" />
+                <div className="size-5 rounded-full border-4 border-primary bg-background shadow ring-2 ring-primary" />
               </div>
             </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
+          </div>
+
+          {/* Controls Row */}
+          <div className="flex items-center gap-1 md:gap-2 ltr px-1">
+            {/* Play/Pause */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={togglePlayPause}
+              className="size-8 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:shadow-md transition"
+            >
+              {isPlaying ? <Pause className="size-4.5" /> : <Play className="size-4.5 ml-0.5" />}
+            </Button>
+            {/* Skip Forward 10s */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={skipForward}
+              className="size-8 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:shadow-md transition"
+            >
+              <FastForward className="size-4.5" />
+            </Button>
+            {/* Reset */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={resetAudio}
+              className="size-8 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:shadow-md transition"
+            >
+              <RotateCcw className="size-4.5" />
+            </Button>
+            {/* Volume Control */}
+            <div
+              className="flex items-center ltr relative"
+              onMouseEnter={() => setShowVolumeSlider(true)}
+              onMouseLeave={() => setShowVolumeSlider(false)}
+              onFocus={() => setShowVolumeSlider(true)}
+              onBlur={() => setShowVolumeSlider(false)}
+            >
+              {/* Mobile: Only icon, toggles mute */}
+              <button
+                type="button"
+                aria-label={isMuted ? "Unmute" : "Mute"}
+                onClick={toggleMute}
+                className="md:hidden p-1"
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="size-4.5" />
+                ) : (
+                  <Volume2 className="size-4.5" />
+                )}
+              </button>
+              {/* Desktop: Icon + slider on hover/focus */}
+              <div className="hidden md:flex items-center relative group">
+                <button
+                  type="button"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                  onClick={toggleMute}
+                  className="p-1"
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="size-4.5" />
+                  ) : (
+                    <Volume2 className="size-4.5" />
+                  )}
+                </button>
+                <div
+                  className={`transition-all duration-200 overflow-hidden flex items-center ml-2 ${
+                    showVolumeSlider ? "w-28 opacity-100" : "w-0 opacity-0"
+                  }`}
+                >
+                  <AudioVolumeControl
+                    value={isMuted ? 0 : volume}
+                    onChange={handleVolumeChange}
+                    className="w-full"
+                    showLabel
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-center gap-4">
-            <Button variant="ghost" size="icon" onClick={resetAudio} className="h-12 w-12">
-              <RotateCcw className="h-6 w-6" />
-            </Button>
-            <Button variant="default" size="icon" onClick={togglePlayPause} className="h-16 w-16">
-              {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8 ml-0.5" />}
-            </Button>
-          </div>
-
-          {/* Volume Control */}
-          <div className="flex items-center gap-3 ltr">
-            <Volume2 className="h-4 w-4 text-muted-foreground" />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={handleVolumeChange}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            />
+            {/* Time Display */}
+            <span className="flex-1 text-xs tabular-nums text-muted dark:text-muted-foreground min-w-[60px] text-right drop-shadow">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
           </div>
         </div>
       </CardContent>

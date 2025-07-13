@@ -85,6 +85,7 @@
     "posthog-js": "^1.256.2",
     "posthog-node": "^4.18.0",
     "qrcode": "^1.5.4",
+    "radix-ui": "^1.4.2",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.0",

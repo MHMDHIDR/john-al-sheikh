@@ -59,7 +59,7 @@ export default async function DashboardPage({
   };
 
   return (
-    <main className="min-h-screen p-4 md:p-8" dir="rtl">
+    <main className="min-h-screen px-2 py-4 md:p-8" dir="rtl">
       <InteractiveGridPattern
         className={cn(
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
@@ -213,7 +213,7 @@ export default async function DashboardPage({
                         <h3 className="sm:font-medium max-sm:text-sm ltr max-sm:text-left text-right">
                           {test.topic || "اختبار محادثة"}
                         </h3>
-                        <div className="flex items-center max-sm:text-xs text-sm text-gray-500">
+                        <div className="hidden md:flex items-center max-sm:text-xs text-sm text-gray-500">
                           <CalendarClock className="ml-1 size-4" />
                           {formatDate(test.createdAt.toISOString(), true, true)}
                           <span className="mx-2 inline-flex">•</span>
@@ -229,17 +229,34 @@ export default async function DashboardPage({
                         </div>
                       </section>
                     </Link>
-                    <section className="flex items-center gap-x-2">
-                      <span className="text-base sm:text-2xl font-bold text-blue-600">
-                        {Number(test.band)}
-                      </span>
-                      <ShareTestDialog
-                        testId={test.id}
-                        username={username}
-                        band={test.band ?? 0}
-                        size="icon"
-                        type={test.type}
-                      />
+                    <section className="flex items-center max-md:justify-between max-md:min-w-full gap-x-2">
+                      <div className="flex md:hidden items-center max-sm:text-xs text-sm text-gray-500">
+                        <CalendarClock className="ml-1 size-4" />
+                        {formatDate(test.createdAt.toISOString(), true, true)}
+                        <span className="mx-2 inline-flex">•</span>
+                        <span
+                          className={clsx("inline-flex", {
+                            "text-green-600 dark:text-green-400": test.type === "MOCK",
+                            "text-yellow-600 dark:text-yellow-400": test.type === "PRACTICE",
+                            "text-blue-600 dark:text-blue-400": test.type === "OFFICIAL",
+                          })}
+                        >
+                          {formatTestType(test.type)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        <span className="text-base sm:text-2xl font-bold text-blue-600">
+                          {Number(test.band)}
+                        </span>
+                        <ShareTestDialog
+                          testId={test.id}
+                          username={username}
+                          band={test.band ?? 0}
+                          size="icon"
+                          type={test.type}
+                        />
+                      </div>
                     </section>
                   </div>
                 ))}

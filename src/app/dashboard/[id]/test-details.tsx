@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/custom/audio-player";
+import EmptyState from "@/components/custom/empty-state";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
@@ -118,18 +119,20 @@ export default function TestDetails({ details, credits, recordingUrl }: TestDeta
           className="mt-8"
         >
           <TabsList className="grid w-full md:w-auto rtl grid-cols-3 md:grid-cols-3 gap-0 md:gap-2.5">
-            <TabsTrigger value="results">{isMobile ? "النتائج" : "النتائج التفصيلية"}</TabsTrigger>
-            <TabsTrigger value="feedback">
-              {isMobile ? "التعليقات" : "التعليقات والملاحظات"}
+            <TabsTrigger value="results">
+              {isMobile ? "ملخص النتيجة" : "ملخص عام للنتيجة"}
             </TabsTrigger>
-            <TabsTrigger value="transcript">المحادثة</TabsTrigger>
+            <TabsTrigger value="feedback">{isMobile ? "نصائح" : "التعليقات والنصائح"}</TabsTrigger>
+            <TabsTrigger value="transcript">المحادثـــة</TabsTrigger>
           </TabsList>
 
           <TabsContent value="results" className="rtl">
             <Card>
               <CardHeader>
-                <CardTitle>النتائج التفصيلية</CardTitle>
-                <CardDescription>تفاصيل الدرجات حسب معايير IELTS</CardDescription>
+                <CardTitle>المستوى (Band)</CardTitle>
+                <CardDescription className="sr-only">
+                  تفاصيل الدرجات حسب معايير IELTS
+                </CardDescription>
               </CardHeader>
               <CardContent className="max-sm:p-2">
                 {details.feedback ? (
@@ -138,6 +141,9 @@ export default function TestDetails({ details, credits, recordingUrl }: TestDeta
                       <div className="inline-flex items-center justify-center h-32 w-32 rounded-full bg-blue-50 border-4 border-blue-500">
                         <span className="text-4xl md:text-5xl font-bold text-blue-600">
                           {Number(details.band)}
+                          <sub className="text-xs text-blue-600">
+                            {details.type === "MOCK" ? "/9" : "/10"}
+                          </sub>
                         </span>
                       </div>
                     </div>
@@ -279,33 +285,50 @@ export default function TestDetails({ details, credits, recordingUrl }: TestDeta
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-sm:p-2">
-                <AudioPlayer audioUrl={recordingUrl!} title="تسجيل المحادثة" />
+                {recordingUrl ? (
+                  <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />
+                ) : (
+                  <EmptyState>
+                    <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
+                      لا يوجد تسجيل صوتي لهذه المحادثة
+                    </p>
+                  </EmptyState>
+                )}
 
                 {details.transcription?.messages && details.transcription.messages.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-2 mt-6">
                     {details.transcription.messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`p-4 rounded-lg ${
+                        className={`p-4 rounded-lg flex gap-1.5 ${
                           message.role === "examiner"
                             ? "bg-blue-100 text-blue-900"
                             : "bg-green-100 text-green-900"
                         }`}
                       >
-                        <div className="font-semibold mb-1">
-                          {message.role === "examiner" ? "الممتحن" : "أنت"}
+                        <div className="flex-shrink-0">
+                          <Badge
+                            variant={message.role === "user" ? "default" : "secondary"}
+                            className="flex-col "
+                          >
+                            {message.role === "user" ? "المستخدم" : "الممتحن"}
+                            <span className="text-xs text-muted-foreground mt-1">
+                              {message.timestamp}
+                            </span>
+                          </Badge>
                         </div>
-                        <div className="whitespace-pre-wrap ltr">{message.content}</div>
-                        <div className="text-xs mt-2 opacity-70">{message.timestamp}</div>
+                        <div className="flex-1">
+                          <p className="text-sm ltr">{message.content}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">
-                      لا يتوفر نص المحادثة لهذا أو تسجيل متاح لهذا المحادثة
+                  <EmptyState>
+                    <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
+                      لا يوجد تسجيل نصي لهذه المحادثة
                     </p>
-                  </div>
+                  </EmptyState>
                 )}
               </CardContent>
             </Card>

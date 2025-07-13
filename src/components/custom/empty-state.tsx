@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { EmptyStateIcon } from "./icons";
 
 export default function EmptyState({
   children,
@@ -13,16 +14,11 @@ export default function EmptyState({
   return (
     <div
       className={cn(
-        `flex flex-col items-center justify-center ${isSmall ? "gap-y-4 py-4" : "gap-y-10 py-10"}`,
+        `flex flex-col items-center justify-center ${isSmall ? "gap-y-2 py-2" : "gap-y-4 py-4"}`,
         className,
       )}
     >
-      <Image
-        alt="Empty State"
-        height={isSmall ? 100 : 300}
-        src="/empty-state.svg"
-        width={isSmall ? 100 : 300}
-      />
+      <EmptyStateIcon className={cn(isSmall ? "size-24" : "size-56")} />
 
       {children ?? <h3 className="text-lg font-semibold">No data available</h3>}
     </div>
