@@ -39,8 +39,9 @@ export function FeedbackButton() {
         <DialogContent className="max-h-[90vh] select-none overflow-y-auto max-w-sm rounded-md sm:max-w-[500px] data-[state=open]:slide-in-from-bottom-full! data-[state=closed]:slide-out-to-bottom-full!">
           <DialogHeader>
             <DialogTitle className="text-xs hidden" hidden />
-            <DialogDescription className="text-center">
-              إذا كان لديك أي إستفسار أو مقترحات، يرجى إدخالها هنا
+            <DialogDescription className="text-balance">
+              للإستفسارات، المقترحات، الأفكار التطويرية، أو التبليغ عن الأخطاء، (المشاكل التقنية)
+              سنكون سعداء بمساعدتك
             </DialogDescription>
           </DialogHeader>
 

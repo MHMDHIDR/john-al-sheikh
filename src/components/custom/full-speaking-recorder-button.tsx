@@ -44,6 +44,7 @@ export type ConversationModeType = "mock-test" | "general-english";
 // Add a new interface for the ref methods
 export interface FullSpeakingRecorderButtonRef {
   stopTest: () => void;
+  getSessionStartTime: () => number | null;
 }
 
 /**
@@ -586,6 +587,7 @@ const FullSpeakingRecorderButton = forwardRef<
         }, 1000);
       }
     },
+    getSessionStartTime: () => sessionStartTimeRef.current,
   }));
 
   return (
@@ -611,6 +613,9 @@ const FullSpeakingRecorderButton = forwardRef<
                     startTime={Date.now()}
                     duration={MINUTES_IN_MS}
                     mode="preparation"
+                    isMuted={isMuted}
+                    onToggleMute={toggleMute}
+                    isConnected={true}
                   />
                 </div>
               </AlertDialogDescription>
@@ -633,27 +638,7 @@ const FullSpeakingRecorderButton = forwardRef<
         )}
 
         <CardContent className="p-0">
-          <div
-            className={clsx("flex justify-center items-center ", {
-              "gap-0": !isConnected,
-              "gap-1": isConnected,
-              "px-10": mode === "general-english" && isConnected,
-            })}
-          >
-            {isConnected && mode === "general-english" && sessionStartTimeRef.current && (
-              <Timer
-                isRunning={isConnected}
-                onTimeUp={() => {
-                  toggleMute();
-                  vapi.setMuted(false);
-                  setIsOneMinuteToPrepare(false);
-                }}
-                startTime={sessionStartTimeRef.current}
-                duration={GENERAL_ENGLISH_CONVERSATION_TIME}
-                mode="general-english"
-              />
-            )}
-
+          <div className="flex justify-center items-center">
             {!isConnected && (
               <Button
                 id="start-conversation-button"

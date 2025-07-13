@@ -79,7 +79,7 @@ export default function SpeakingTestResults({ credits }: { credits: number }) {
 
   return (
     <main
-      className="min-h-screen bg-white flex flex-col select-none items-center justify-center p-4"
+      className="min-h-screen flex flex-col select-none items-center justify-center p-4"
       dir="rtl"
     >
       <InteractiveGridPattern
@@ -99,7 +99,7 @@ export default function SpeakingTestResults({ credits }: { credits: number }) {
           <div className="mt-4 text-5xl font-bold text-blue-600">
             {results.overallBand.toFixed(1)}
           </div>
-          <p className="mt-2 text-gray-600">الدرجة الكلية</p>
+          <p className="mt-2">الدرجة الكلية</p>
         </div>
 
         <Card className="p-6 shadow-sm">
@@ -143,7 +143,7 @@ export default function SpeakingTestResults({ credits }: { credits: number }) {
             <p className="">{results.feedback.overall}</p>
 
             <Link href={`/dashboard/${results.testId}`}>
-              <Button variant="active">عرض النتيجة الكاملة</Button>
+              <Button variant="active">عرض النتيجة الكاملة مع مشاركة التفاصيل</Button>
             </Link>
           </Card>
         </div>

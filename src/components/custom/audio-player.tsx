@@ -100,7 +100,7 @@ export default function AudioPlayer({
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto mb-5">
       <CardHeader>
         <CardTitle className="text-center text-xl font-bold">{title}</CardTitle>
         {subtitle && <p className="text-center text-muted-foreground">{subtitle}</p>}
