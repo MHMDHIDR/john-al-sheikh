@@ -370,23 +370,11 @@ const footerSection: CSSProperties = {
   borderTop: "1px solid #e2e8f0",
 };
 
-const footerContent: CSSProperties = {
-  padding: "30px",
-  textAlign: "center",
-};
-
 const footerText: CSSProperties = {
   fontSize: "11px",
   color: "#718096",
   margin: "0 0 8px 0",
   fontWeight: "500",
-};
-
-const footerSubtext: CSSProperties = {
-  fontSize: "12px",
-  color: "#a0aec0",
-  margin: "0",
-  fontStyle: "italic",
 };
 
 const headingSectionOuter: CSSProperties = {

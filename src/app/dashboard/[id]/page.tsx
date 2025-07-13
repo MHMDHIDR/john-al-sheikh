@@ -15,7 +15,7 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
     try {
       const vapiResult = await api.vapi.getRecordingUrl({ callId: test.callId });
       recordingUrl = vapiResult?.recordingUrl || null;
-    } catch (_) {
+    } catch {
       recordingUrl = null;
     }
   }
