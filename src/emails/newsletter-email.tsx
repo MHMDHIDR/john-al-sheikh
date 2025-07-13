@@ -6,10 +6,12 @@ import {
   Heading,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
 } from "@react-email/components";
+import { IconBrandLinkedin, IconWorld } from "@tabler/icons-react";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
@@ -76,31 +78,13 @@ export default function NewsletterEmailTemplate({
           {/* Header with gradient background */}
           <Section style={headerSection}>
             <div style={gradientOverlay}>
-              <table width="100%" cellPadding="0" cellSpacing="0" style={{ textAlign: "center" }}>
-                <tr>
-                  <td style={{ textAlign: "center", paddingBottom: "20px" }}>
-                    <table cellPadding="0" cellSpacing="0" style={{ display: "inline-table" }}>
-                      <tr>
-                        <td style={{ verticalAlign: "middle", paddingLeft: "16px" }}>
-                          <div style={logoContainer}>
-                            <Img
-                              src={process.env.NEXT_PUBLIC_APP_URL + "/logo.png"}
-                              width="50"
-                              height="50"
-                              alt={process.env.NEXT_PUBLIC_APP_NAME}
-                              style={logoImage}
-                            />
-                          </div>
-                        </td>
-                        <td style={{ verticalAlign: "middle" }}>
-                          <span style={logoText}>{process.env.NEXT_PUBLIC_APP_NAME}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <Text style={taglineText}>منصتك لكسر حاجز المحادثة باللغة الإنجليزية</Text>
+              <Img
+                src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-header.png"}
+                width="100%"
+                height="350"
+                alt={process.env.NEXT_PUBLIC_APP_NAME}
+                style={headerImage}
+              />
             </div>
           </Section>
 
@@ -127,15 +111,15 @@ export default function NewsletterEmailTemplate({
           {/* Main content section */}
           <Section style={contentSection}>
             <div style={contentWrapper}>
-              <Heading as="h1" style={mainHeading}>
-                {subject ?? `نشرة ${process.env.NEXT_PUBLIC_APP_NAME}`}
-              </Heading>
-
-              <div style={greetingContainer}>
-                <Text style={greeting}>
-                  {getTimeOfDay()} الخير {name} {getTimeOfDay() === "صباح" ? "🌞" : "🌚"}
-                </Text>
+              <div style={mainHeadingContainer}>
+                <Heading as="h1" style={mainHeading}>
+                  {subject ?? `نشرة ${process.env.NEXT_PUBLIC_APP_NAME}`}
+                </Heading>
               </div>
+
+              <Text style={greeting}>
+                {getTimeOfDay()} الخير {name} {getTimeOfDay() === "صباح" ? "🌞" : "🌚"}
+              </Text>
 
               {/* Custom content with better styling */}
               <div style={contentArea}>
@@ -159,21 +143,70 @@ export default function NewsletterEmailTemplate({
 
           {/* Footer */}
           <Section style={footerSection}>
-            <div style={footerContent}>
-              <Text style={footerText}>
-                © {year} {process.env.NEXT_PUBLIC_APP_NAME} ● جميع الحقوق محفوظة.
-              </Text>
-              <Text style={footerSubtext}>شكراً لكونك جزءاً من مجتمعنا المتميز</Text>
-            </div>
-            <div>
-              <Text style={{ textAlign: "center", fontSize: "11px" }}>
-                <a
+            <div style={{ padding: "10px 0 0 0", textAlign: "center" }}>
+              <table
+                width="100%"
+                cellPadding="0"
+                cellSpacing="0"
+                style={{ margin: "0 auto", width: "auto" }}
+              >
+                <tr>
+                  <td style={{ textAlign: "center", padding: "0 12px" }}>
+                    <Link
+                      href={`https://www.linkedin.com/company/john-al-shiekh`}
+                      style={{ color: "#999", display: "inline-block" }}
+                    >
+                      <IconBrandLinkedin className="" color="#667eea" />
+                    </Link>
+                  </td>
+                  <td style={{ textAlign: "center", padding: "0 12px" }}>
+                    <Link
+                      href={process.env.NEXT_PUBLIC_APP_URL}
+                      style={{ color: "#999", display: "inline-block" }}
+                    >
+                      <IconWorld className="" color="#667eea" />
+                    </Link>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style={{ border: "0.5px solid #efede8", margin: "10px 36px" }} />
+
+              <Text style={{ textAlign: "center", fontSize: "11px", margin: 0 }}>
+                <Link
                   href={`${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${unsubscribeToken ?? ""}`}
                   style={{ color: "#999", textDecoration: "underline" }}
                 >
-                  لإلغاء الاشتراك يمكنك الضغط هنا
-                </a>
+                  لإلغاء الاشتراك من هنا
+                </Link>
               </Text>
+              <table width="100%" cellPadding="0" cellSpacing="0" style={{ textAlign: "center" }}>
+                <tr>
+                  <td style={{ textAlign: "center", paddingBottom: "20px" }}>
+                    <table cellPadding="0" cellSpacing="0" style={{ display: "inline-table" }}>
+                      <tr>
+                        <td style={{ verticalAlign: "middle", paddingLeft: "16px" }}>
+                          <div style={logoContainer}>
+                            <Img
+                              src={process.env.NEXT_PUBLIC_APP_URL + "/logo.png"}
+                              width="50"
+                              height="50"
+                              alt={process.env.NEXT_PUBLIC_APP_NAME}
+                              style={logoImage}
+                            />
+                          </div>
+                        </td>
+                        <td style={{ verticalAlign: "middle" }}>
+                          <span style={logoText}>{process.env.NEXT_PUBLIC_APP_NAME}</span>
+                          <Text style={footerText}>
+                            © {year} {process.env.NEXT_PUBLIC_APP_NAME} ● جميع الحقوق محفوظة.
+                          </Text>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
             </div>
           </Section>
         </Container>
@@ -204,8 +237,8 @@ const container: CSSProperties = {
 };
 
 const headerSection: CSSProperties = {
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  padding: "40px 30px",
+  // background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  padding: "20px 10px 5px",
   textAlign: "center",
   position: "relative",
 };
@@ -222,7 +255,6 @@ const logoContainer: CSSProperties = {
   backdropFilter: "blur(10px)",
   border: "2px solid rgba(255, 255, 255, 0.3)",
 };
-
 const logoImage: CSSProperties = {
   display: "block",
   borderRadius: "50%",
@@ -230,8 +262,8 @@ const logoImage: CSSProperties = {
 };
 
 const logoText: CSSProperties = {
-  fontSize: "28px",
-  color: "#ffffff",
+  fontSize: "26px",
+  color: "#000",
   fontWeight: "700",
   textDecoration: "none",
   display: "inline-block",
@@ -239,12 +271,11 @@ const logoText: CSSProperties = {
   letterSpacing: "0.5px",
 };
 
-const taglineText: CSSProperties = {
-  fontSize: "14px",
-  color: "rgba(255, 255, 255, 0.9)",
-  margin: "2px 0 0 0",
-  fontWeight: "400",
-  textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+const headerImage: CSSProperties = {
+  display: "block",
+  borderRadius: "16px",
+  width: "100%",
+  height: "auto",
 };
 
 const contentSection: CSSProperties = {
@@ -260,7 +291,7 @@ const mainHeading: CSSProperties = {
   fontSize: "24px",
   fontWeight: "700",
   color: "#2d3748",
-  margin: "0 0 24px 0",
+  margin: "0",
   textAlign: "center",
   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   WebkitBackgroundClip: "text",
@@ -269,12 +300,12 @@ const mainHeading: CSSProperties = {
   letterSpacing: "-0.5px",
 };
 
-const greetingContainer: CSSProperties = {
+const mainHeadingContainer: CSSProperties = {
   backgroundColor: "#f7fafc",
   padding: "20px",
   borderRadius: "12px",
   borderLeft: "4px solid #667eea",
-  marginBottom: "30px",
+  marginBottom: "12px",
 };
 
 const greeting: CSSProperties = {
@@ -345,7 +376,7 @@ const footerContent: CSSProperties = {
 };
 
 const footerText: CSSProperties = {
-  fontSize: "14px",
+  fontSize: "11px",
   color: "#718096",
   margin: "0 0 8px 0",
   fontWeight: "500",
@@ -359,7 +390,7 @@ const footerSubtext: CSSProperties = {
 };
 
 const headingSectionOuter: CSSProperties = {
-  padding: "20px 30px",
+  padding: "10px 30px",
   backgroundColor: "#f8fafc",
   borderBottom: "1px solid #e2e8f0",
   fontSize: "14px",
