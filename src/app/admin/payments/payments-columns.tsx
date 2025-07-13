@@ -1,6 +1,6 @@
 import { IconBrandMastercard, IconBrandVisa } from "@tabler/icons-react";
 import clsx from "clsx";
-import { ArrowUpDown, Calendar, CreditCard, User } from "lucide-react";
+import { ArrowUpDown, Calendar, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format-date";

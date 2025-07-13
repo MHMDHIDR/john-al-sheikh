@@ -9,6 +9,7 @@ import { env } from "@/env";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { subscribedEmails, users } from "@/server/db/schema";
+import type { SubscribedEmail, Users } from "@/server/db/schema";
 
 const newsletterSchema = z.object({
   subject: z.string().min(1, "عنوان البريد الإلكتروني مطلوب"),
@@ -119,11 +120,12 @@ export const subscribedEmailsRouter = createTRPCRouter({
     const subscriberMap = new Map<
       string,
       {
-        id: string;
-        fullname: string;
-        email: string;
-        ieltsGoal: number;
-        createdAt: Date;
+        id: SubscribedEmail["id"];
+        name: SubscribedEmail["fullname"];
+        email: SubscribedEmail["email"];
+        gender: Users["gender"];
+        ieltsGoal: SubscribedEmail["ieltsGoal"];
+        createdAt: SubscribedEmail["createdAt"];
         source: "subscribed_emails" | "users";
       }
     >();
@@ -132,8 +134,9 @@ export const subscribedEmailsRouter = createTRPCRouter({
     subscribedEmailsList.forEach(sub => {
       subscriberMap.set(sub.email, {
         id: sub.id,
-        fullname: sub.fullname,
+        name: sub.fullname,
         email: sub.email,
+        gender: null,
         ieltsGoal: sub.ieltsGoal,
         createdAt: sub.createdAt,
         source: "subscribed_emails" as const,
@@ -145,9 +148,10 @@ export const subscribedEmailsRouter = createTRPCRouter({
       if (!subscriberMap.has(user.email)) {
         subscriberMap.set(user.email, {
           id: user.id,
-          fullname: user.name,
+          name: user.name,
           email: user.email,
-          ieltsGoal: user.goalBand ?? 5, // Default to 5 if null
+          gender: user.gender,
+          ieltsGoal: user.goalBand ?? 5,
           createdAt: user.createdAt,
           source: "users" as const,
         });

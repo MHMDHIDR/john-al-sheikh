@@ -49,10 +49,10 @@ export function SignoutButton() {
             void handleSignoutClick();
           }
         }}
-        className="cursor-pointer"
+        className="cursor-pointer px-1.5"
         variant={"destructive"}
       >
-        <IconLogout2 className="w-5 h-5 mx-1" />
+        <IconLogout2 className="size-5 mx-1" />
         <span>تسجيل الخروج</span>
       </Button>
 

@@ -10,7 +10,7 @@ async function EmailList() {
   // Convert combined subscribers to email list format
   const emailList = subscribers.map(sub => ({
     email: sub.email,
-    name: sub.fullname,
+    name: sub.name,
   }));
 
   // const testingEmailList = [

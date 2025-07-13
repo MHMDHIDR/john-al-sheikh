@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
+import Twitter from "next-auth/providers/twitter";
 import posthog from "posthog-js";
 import { Resend as ResendEmail } from "resend";
 import WelcomeEmailTemplate from "@/emails/welcome-email";
@@ -54,6 +55,11 @@ const resendEmail = new ResendEmail(env.AUTH_RESEND_KEY);
 
 export const authConfig = {
   providers: [
+    Twitter({
+      clientId: env.NEXT_PUBLIC_TWITTER_CLIENT_ID,
+      clientSecret: env.TWITTER_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     GoogleProvider({ allowDangerousEmailAccountLinking: true }),
     Resend({
       name: "Email",
@@ -168,6 +174,90 @@ export const authConfig = {
           return true;
         } catch (error) {
           console.error("Google Sign-In Error:", error);
+          return false;
+        }
+      }
+
+      // Handle Twitter provider
+      if (account?.provider === "twitter" && profile) {
+        try {
+          // Find the user by email (if available) or by Twitter ID
+          let existingUser = await db.query.users.findFirst({
+            where: eq(users.email, profile.email!),
+          });
+
+          // If no user exists, create a new user
+          if (!existingUser) {
+            const result = await db
+              .insert(users)
+              .values({
+                id: user.id,
+                name: profile.name ?? user.name ?? "Unknown",
+                email: profile.email!,
+                image:
+                  (profile.profile_image_url as string) ??
+                  user.image ??
+                  getFullImageUrl("logo.svg"),
+                phone: "",
+                status: "ACTIVE",
+              })
+              .returning();
+
+            if (result[0]) {
+              void sendWelcomeEmail({
+                name: result[0].name ?? user.name,
+                email: result[0].email ?? user.email,
+              });
+            }
+
+            existingUser = result[0];
+          }
+
+          // If user exists but name is not set, then set it with Twitter profile name
+          if (existingUser && !existingUser.name) {
+            await db
+              .update(users)
+              .set({ name: profile.name ?? existingUser.name ?? "Unknown" })
+              .where(eq(users.email, user.email!));
+          }
+          // If user exists but image is not set, then update it with Twitter profile image
+          if (existingUser && !existingUser.image) {
+            await db
+              .update(users)
+              .set({ image: (profile.profile_image_url as string) ?? getFullImageUrl("logo.svg") })
+              .where(eq(users.email, user.email!));
+          }
+
+          // If no account exists for this user with Twitter provider, create one
+          const existingAccount = existingUser
+            ? await db.query.accounts.findFirst({
+                where: (accounts, { and, eq }) =>
+                  and(eq(accounts.userId, existingUser.id), eq(accounts.provider, "twitter")),
+              })
+            : null;
+
+          // If no existing Twitter account, create a new account
+          if (existingUser && !existingAccount) {
+            await db.insert(accounts).values({
+              userId: existingUser.id,
+              type: "oauth",
+              provider: "twitter",
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+            });
+
+            void sendWelcomeEmail({
+              name: existingUser?.name ?? user.name,
+              email: existingUser?.email ?? user.email,
+            });
+          }
+
+          return true;
+        } catch (error) {
+          console.error("Twitter Sign-In Error:", error);
           return false;
         }
       }

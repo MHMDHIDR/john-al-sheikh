@@ -1,4 +1,4 @@
-import { ArrowUpDown, Ban, Check, CheckCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, Ban, Check, CheckCircle, MoreHorizontal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";

@@ -35,31 +35,9 @@ export default function SiginForm() {
     await signIn("google", { callbackUrl });
   };
 
-  // const handlePasskeySignIn = async () => {
-  //   try {
-  //     setIsPasskeyLoading(true);
-  //     setPasskeyError(null);
-  //     await signInWithPasskey("passkey", {
-  //       callbackUrl,
-  //       redirect: true,
-  //     });
-  //   } catch (error) {
-  //     console.error("Passkey authentication error:", error);
-  //     if (error instanceof Error) {
-  //       if (error.name === "NotAllowedError") {
-  //         setPasskeyError("تم إلغاء عملية المصادقة أو انتهت مهلة الوقت");
-  //       } else if (error.name === "NotSupportedError") {
-  //         setPasskeyError("متصفحك لا يدعم مفتاح المرور");
-  //       } else if (error.name === "SecurityError") {
-  //         setPasskeyError("يرجى التأكد من استخدام HTTPS");
-  //       } else {
-  //         setPasskeyError("حدث خطأ أثناء المصادقة. يرجى المحاولة مرة أخرى");
-  //       }
-  //     }
-  //   } finally {
-  //     setIsPasskeyLoading(false);
-  //   }
-  // };
+  const handleTwitterSignIn = async () => {
+    await signIn("twitter", { callbackUrl });
+  };
 
   return (
     <div className="flex flex-col items-center gap-y-2">
@@ -76,11 +54,20 @@ export default function SiginForm() {
             variant={"outline"}
             className="w-full cursor-pointer h-10"
           >
+            تسجيل الدخول بإستخدام
             <GoogleIcon className="mx-1" />
-            تسجيل الدخول بإستخدام Google
           </Button>
 
-          <Divider className="my-5" textClassName="bg-card!">
+          {/* <Button
+            onClick={handleTwitterSignIn}
+            variant={"outline"}
+            className="w-full cursor-pointer h-10"
+          >
+            تسجيل الدخول بإستخدام
+            <IconBrandX className="mx-1" />
+          </Button> */}
+
+          <Divider className="my-4" textClassName="bg-card!">
             أو
           </Divider>
 

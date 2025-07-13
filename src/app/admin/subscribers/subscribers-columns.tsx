@@ -37,7 +37,7 @@ const SubscribersActionsCell: React.FC<{ user: CombinedSubscriber }> = ({ user }
 
   const handleDelete = () => {
     // For admin panel, we'll use the email-based deletion which handles both cases
-    deleteSubscriberMutation.mutate({ name: user.fullname, email: user.email });
+    deleteSubscriberMutation.mutate({ name: user.name, email: user.email });
   };
 
   return (
@@ -60,7 +60,7 @@ const SubscribersActionsCell: React.FC<{ user: CombinedSubscriber }> = ({ user }
 
 export const subscribersColumns: ColumnDef<CombinedSubscriber>[] = [
   {
-    accessorKey: "fullname",
+    accessorKey: "name",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         الاسم الكامل

@@ -7,13 +7,19 @@ import ConversationRecordingsTable from "./conversation-recordings-table";
 export default async function ConversationRecordingPage() {
   const { recordings, totalCount } = await api.vapi.getConversationRecordings();
 
+  const transformedRecordings = recordings.map(recording => ({
+    ...recording,
+    name: recording.user.name,
+    gender: recording.user.gender,
+  }));
+
   return (
     <div className="container max-w-6xl md:px-3.5 px-2 py-3 mx-auto">
       <h1 className="text-xl select-none mb-5 font-bold text-center">
         <AuroraText>يوجد {totalCount} تسجيل محادثة</AuroraText>
       </h1>
       <Suspense fallback={<LoadingCard renderedSkeletons={totalCount} />}>
-        <ConversationRecordingsTable recordings={recordings} />
+        <ConversationRecordingsTable recordings={transformedRecordings} />
       </Suspense>
     </div>
   );

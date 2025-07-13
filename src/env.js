@@ -16,6 +16,7 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     VAPI_PRIVATE_KEY: z.string().min(1),
+    TWITTER_CLIENT_SECRET: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -27,6 +28,7 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PRICE_ID_20: z.string().min(1),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
+    NEXT_PUBLIC_TWITTER_CLIENT_ID: z.string().min(1),
   },
   runtimeEnv: {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL,
@@ -37,6 +39,8 @@ export const env = createEnv({
     AWS_ACCESS_ID: process.env.AWS_ACCESS_ID,
     AWS_SECRET: process.env.AWS_SECRET,
     AUTH_RESEND_KEY: process.env.AUTH_RESEND_KEY,
+    TWITTER_CLIENT_SECRET: process.env.TWITTER_CLIENT_SECRET,
+    NEXT_PUBLIC_TWITTER_CLIENT_ID: process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     VAPI_PRIVATE_KEY: process.env.VAPI_PRIVATE_KEY,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
