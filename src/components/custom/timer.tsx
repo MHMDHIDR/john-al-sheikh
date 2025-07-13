@@ -7,7 +7,7 @@ type TimerProps = {
   onTimeUp: () => void;
   startTime: number | null; // timestamp in ms
   duration: number; // duration in ms
-  mode: "preparation" | "recording" | "general-english";
+  mode: "preparation" | "recording" | "general-english" | "mock-test";
   isMuted: boolean;
   onToggleMute: () => void;
   isConnected: boolean;
@@ -63,18 +63,27 @@ export const Timer = memo(function Timer({
     // Update immediately in case of re-mount or prop change
     const updateTime = () => {
       const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
-      const progressPercent = Math.max(0, Math.min(100, (elapsed / duration) * 100));
 
-      setTimeLeft(remaining);
-      setProgress(progressPercent);
+      if (mode === "mock-test") {
+        // For mock-test mode, show elapsed time instead of countdown
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        setTimeLeft(elapsedSeconds);
+        setProgress(0); // No progress circle for mock-test
+      } else {
+        // For other modes, show countdown
+        const remaining = Math.max(0, Math.ceil((duration - elapsed) / 1000));
+        const progressPercent = Math.max(0, Math.min(100, (elapsed / duration) * 100));
 
-      if (remaining <= 0) {
-        if (intervalIdRef.current) {
-          clearInterval(intervalIdRef.current);
-          intervalIdRef.current = null;
+        setTimeLeft(remaining);
+        setProgress(progressPercent);
+
+        if (remaining <= 0) {
+          if (intervalIdRef.current) {
+            clearInterval(intervalIdRef.current);
+            intervalIdRef.current = null;
+          }
+          setTimeout(onTimeUp, 0);
         }
-        setTimeout(onTimeUp, 0);
       }
     };
 
@@ -88,7 +97,7 @@ export const Timer = memo(function Timer({
         intervalIdRef.current = null;
       }
     };
-  }, [isRunning, startTime, duration, onTimeUp]);
+  }, [isRunning, startTime, duration, onTimeUp, mode]);
 
   // Wave visualization logic
   const visualize = useCallback(() => {
@@ -248,6 +257,7 @@ export const Timer = memo(function Timer({
   // Get color based on time left
   const getTimerColor = () => {
     if (mode === "preparation") return "stroke-blue-600";
+    if (mode === "mock-test") return "stroke-green-600";
     if (timeLeft <= 10) return "stroke-red-600";
     if (timeLeft <= 60) return "stroke-orange-500";
     return "stroke-blue-600";
@@ -256,6 +266,7 @@ export const Timer = memo(function Timer({
   // Get background color based on time left
   const getBackgroundColor = () => {
     if (mode === "preparation") return "bg-blue-50 dark:bg-blue-950/20";
+    if (mode === "mock-test") return "bg-green-50 dark:bg-green-950/20";
     if (timeLeft <= 10) return "bg-red-50 dark:bg-red-950/20";
     if (timeLeft <= 60) return "bg-orange-50 dark:bg-orange-950/20";
     return "bg-blue-50 dark:bg-blue-950/20";
@@ -265,7 +276,8 @@ export const Timer = memo(function Timer({
   const radius = 45; // SVG circle radius
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const strokeDashoffset =
+    mode === "mock-test" ? circumference : circumference - (progress / 100) * circumference;
 
   const handleClick = () => {
     if (isConnected) {
@@ -345,7 +357,13 @@ export const Timer = memo(function Timer({
             : `${String(defaultMinutes).padStart(2, "0")}:${String(defaultSeconds).padStart(2, "0")}`}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {mode === "preparation" ? "وقت التحضير" : isRunning ? "الوقت المتبقي" : "زمن المحادثة"}
+          {mode === "preparation"
+            ? "وقت التحضير"
+            : mode === "mock-test"
+              ? "الوقت المنقضي"
+              : isRunning
+                ? "الوقت المتبقي"
+                : "زمن المحادثة"}
         </div>
       </div>
 

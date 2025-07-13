@@ -613,8 +613,8 @@ const FullSpeakingRecorderButton = forwardRef<
                     startTime={Date.now()}
                     duration={MINUTES_IN_MS}
                     mode="preparation"
-                    isMuted={isMuted}
-                    onToggleMute={toggleMute}
+                    isMuted={true}
+                    onToggleMute={() => {}} // Disable mute toggle during preparation
                     isConnected={true}
                   />
                 </div>

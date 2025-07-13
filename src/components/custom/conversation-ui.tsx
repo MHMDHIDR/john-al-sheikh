@@ -121,13 +121,15 @@ export default function ConversationUI({
           isRunning={isConnected}
           onTimeUp={() => {
             if (recorderRef.current) {
-              // Stop the test when time is up
-              recorderRef.current.stopTest();
+              // Stop the test when time is up (only for general-english mode)
+              if (mode === "general-english") {
+                recorderRef.current.stopTest();
+              }
             }
           }}
           startTime={sessionStartTimeRef.current}
-          duration={GENERAL_ENGLISH_CONVERSATION_TIME}
-          mode="general-english"
+          duration={mode === "general-english" ? GENERAL_ENGLISH_CONVERSATION_TIME : 0}
+          mode={mode}
           isMuted={isMuted}
           onToggleMute={() => setVolume(isMuted ? 1 : 0)}
           isConnected={isConnected}
