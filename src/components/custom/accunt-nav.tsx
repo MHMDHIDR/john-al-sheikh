@@ -3,6 +3,7 @@
 import {
   IconCreditCard,
   IconHome,
+  IconMenu3,
   IconPackage,
   IconPhoneCalling,
   IconSettings,
@@ -15,6 +16,12 @@ import { usePathname } from "next/navigation";
 import { SignoutButton } from "@/components/custom/signout-button";
 import { AvatarFallback, AvatarImage, Avatar as AvatarWrapper } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetClose,
@@ -63,49 +70,80 @@ export default function AccountNav({ user, credits }: AccountNavProps) {
   ].filter(Boolean);
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          className="inline-flex cursor-pointer justify-between px-0 shadow"
-        >
-          <Avatar user={user} className="rounded-sm rounded-r size-8" />
-          <span className="pl-2 pr-1 select-none">{truncateUsername(user.name)}</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side={"right"} className="flex flex-col">
-        <SheetHeader className="flex-col flex-1 gap-2">
-          <div className="flex items-center gap-x-2">
-            <SheetTitle>
-              <Avatar user={user} />
-            </SheetTitle>
-            <SheetDescription className="font-semibold truncate select-none">
-              <span className="hidden md:inline-flex mx-1">مرحبا،</span>
-              {truncateUsername(user.name, 2, 20)}
-            </SheetDescription>
-          </div>
+    <div className="flex gap-2">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            className="inline-flex cursor-pointer justify-between hover:bg-transparent"
+          >
+            <IconMenu3 size={20} />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side={"right"} className="flex flex-col">
+          <SheetHeader className="flex-col flex-1 gap-2">
+            <div className="flex items-center gap-x-2">
+              <SheetTitle>
+                <Avatar user={user} />
+              </SheetTitle>
+              <SheetDescription className="font-semibold truncate select-none">
+                <span className="hidden md:inline-flex mx-1">مرحبا،</span>
+                {truncateUsername(user.name, 2, 20)}
+              </SheetDescription>
+            </div>
 
-          <div className="flex flex-col gap-y-1.5">
-            {NAV_ITEMS.map((item, index) => {
-              if (!item) return null;
-              const Icon = item.icon;
-              return (
-                <NavLink key={item.href + index} href={item.href}>
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </div>
-        </SheetHeader>
+            <div className="flex flex-col gap-y-1.5">
+              {NAV_ITEMS.map((item, index) => {
+                if (!item) return null;
+                const Icon = item.icon;
+                return (
+                  <NavLink key={item.href + index} href={item.href}>
+                    <Icon size={20} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </SheetHeader>
 
-        <SheetFooter className="rtl:self-start">
-          <SheetClose asChild>
+          <SheetFooter className="rtl:self-start">
+            <SheetClose asChild>
+              <SignoutButton />
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="inline-flex cursor-pointer justify-between hover:bg-transparent"
+          >
+            <span className="pl-2 pr-1 select-none hidden md:inline-flex">
+              {truncateUsername(user.name)}
+            </span>
+            <Avatar user={user} className="rounded-full size-8" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="max-sm:ml-1 rtl">
+          <DropdownMenuItem asChild>
+            <Link href="/account" className="flex items-center gap-2">
+              <IconUser size={16} />
+              <span>الحساب</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <IconPackage size={16} />
+              <span>لوحة التحكم</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <SignoutButton />
-          </SheetClose>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
