@@ -264,27 +264,26 @@ export const authConfig = {
       if (account?.provider === "resend" && user.email) {
         try {
           // Find the user by normalized email
-          const normalizedEmail = normalizeGmailAddress(user.email);
           let existingUser = await db.query.users.findFirst({
-            where: eq(users.email, normalizedEmail),
+            where: eq(users.email, user.email),
           });
 
           // If no user exists, create a new user with a default name
           if (!existingUser) {
             const username = user.email.split("@")[0];
-            const result = await db
+            const [result] = await db
               .insert(users)
               .values({
                 id: user.id, // Use the same user ID that will be used for the account
                 name: username,
-                email: normalizedEmail,
+                email: user.email,
                 image: getFullImageUrl("logo.svg"),
                 phone: "",
                 status: "ACTIVE",
               } as Users)
               .returning();
 
-            existingUser = result[0];
+            existingUser = result;
           }
 
           return true;
