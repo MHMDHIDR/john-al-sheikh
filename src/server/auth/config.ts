@@ -282,25 +282,47 @@ export const authConfig = {
       // Handle email provider (Resend)
       if (account?.provider === "resend" && user.email) {
         try {
+          // Normalize the input email for comparison only
           const normalizedEmail = normalizeGmailAddress(user.email);
-          let existingUser = await findUserByEmailOrId(normalizedEmail, user.id);
 
-          // If no user exists, create a new user with a default name
-          if (!existingUser) {
-            const username = user.email.split("@")[0];
-            const [result] = await db
-              .insert(users)
-              .values({
-                id: user.id, // Use the same user ID that will be used for the account
-                name: username,
-                email: normalizedEmail,
-                image: getFullImageUrl("logo.svg"),
-                phone: "",
-                status: "ACTIVE",
-              } as Users)
-              .returning();
+          // Find any user whose normalized email matches the normalized input
+          const allUsers = await db.query.users.findMany({
+            where: (users, { isNotNull }) => isNotNull(users.email),
+          });
+          const existingUser = allUsers.find(
+            user => user.email && normalizeGmailAddress(user.email) === normalizedEmail,
+          );
 
-            existingUser = result;
+          console.log("normalizedEmail: ", normalizedEmail);
+          console.log("existingUser: ", existingUser);
+
+          if (existingUser) {
+            // Patch the user object so NextAuth uses the existing user
+            user.id = existingUser.id;
+            user.email = existingUser.email; // Use the email as stored in DB
+            if (!user.name) user.name = existingUser.name ?? "user";
+            return true;
+          }
+
+          // If no user exists, create a new user with the RAW email
+          const username = user.email.split("@")[0] ?? "user";
+          const [result] = await db
+            .insert(users)
+            .values({
+              id: user.id,
+              name: username,
+              email: user.email, // store raw email
+              image: getFullImageUrl("logo.svg"),
+              phone: "",
+              status: "ACTIVE",
+            } as Users)
+            .returning();
+
+          if (result?.email) {
+            void sendWelcomeEmail({
+              name: result.name ?? user.name,
+              email: result.email ?? user.email,
+            });
           }
 
           return true;
