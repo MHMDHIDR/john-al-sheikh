@@ -156,7 +156,13 @@ export default function NewsletterEmailTemplate({
                       href={`https://www.linkedin.com/company/john-al-shiekh`}
                       style={{ color: "#999", display: "inline-block" }}
                     >
-                      <IconBrandLinkedin className="" color="#667eea" />
+                      <Img
+                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/linkedin.svg"}
+                        width="24"
+                        height="24"
+                        alt="LinkedIn"
+                        style={logoImage}
+                      />
                     </Link>
                   </td>
                   <td style={{ textAlign: "center", padding: "0 12px" }}>
@@ -164,7 +170,13 @@ export default function NewsletterEmailTemplate({
                       href={process.env.NEXT_PUBLIC_APP_URL}
                       style={{ color: "#999", display: "inline-block" }}
                     >
-                      <IconWorld className="" color="#667eea" />
+                      <Img
+                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/website.svg"}
+                        width="24"
+                        height="24"
+                        alt="Website"
+                        style={logoImage}
+                      />
                     </Link>
                   </td>
                 </tr>

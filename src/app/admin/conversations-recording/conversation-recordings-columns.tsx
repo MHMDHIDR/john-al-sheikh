@@ -27,7 +27,7 @@ const ConversationRecordingsActionsCell: React.FC<{ recording: ConversationRecor
           <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="rtl">
+      <DropdownMenuContent align="start" className="rtl">
         <DropdownMenuLabel className="select-none bg-accent">الإجراءات</DropdownMenuLabel>
         <DropdownMenuItem asChild>
           <Link href={`/admin/conversations-recording/${recording.callId ?? ""}`}>
@@ -53,6 +53,8 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
       const user = row.original.user;
       const name = user?.name;
       const gender = user.gender;
+      const callId = row.original.callId;
+
       return (
         <TooltipProvider>
           <span className="flex items-center gap-2">
@@ -62,7 +64,9 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
               </TooltipTrigger>
               <TooltipContent>{gender === "male" ? "ذكر" : "أنثى"}</TooltipContent>
             </Tooltip>
-            <span className="text-muted-foreground select-none">{name}</span>
+            <Link href={`/admin/conversations-recording/${callId ?? ""}`}>
+              <span className="text-muted-foreground select-none">{name}</span>
+            </Link>
           </span>
         </TooltipProvider>
       );
@@ -78,7 +82,7 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
     ),
   },
   {
-    accessorKey: "user.phone",
+    accessorKey: "phone",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         رقم الهاتف

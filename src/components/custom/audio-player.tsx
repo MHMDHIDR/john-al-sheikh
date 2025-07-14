@@ -165,7 +165,6 @@ export default function AudioPlayer({
         {subtitle && <p className="text-center text-sm text-white/70">{subtitle}</p>}
       </CardHeader>
 
-      {/* <CardContent className="px-5 py-2.5"> */}
       <CardContent className="px-5 py-3 text-white space-y-6">
         <audio ref={audioRef} src={audioUrl} preload="metadata" />
         <div className="space-y-6">
