@@ -26,17 +26,60 @@ export function SignInEmailTemplate({ url }: { url: string }) {
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
-            <Heading as="h1" style={logo}>
-              <Img
-                src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
-                width="40"
-                height="40"
-                alt={env.NEXT_PUBLIC_APP_NAME}
-                className="rounded-full"
-              />
-              {env.NEXT_PUBLIC_APP_NAME}
-            </Heading>
-            <small style={smallText}>منصتك للمحادثة بالللغة الإنجليزية</small>
+            <table
+              width="100%"
+              cellPadding="0"
+              cellSpacing="0"
+              style={{ textAlign: "center", margin: "0 auto" }}
+            >
+              <tr>
+                <td style={{ textAlign: "center", paddingBottom: "0" }}>
+                  <table cellPadding="0" cellSpacing="0" style={{ display: "inline-table" }}>
+                    <tr>
+                      <td style={{ verticalAlign: "middle", paddingLeft: "16px" }}>
+                        <div
+                          style={{
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "50%",
+                            padding: "8px",
+                            border: "2px solid rgba(255, 255, 255, 0.3)",
+                            display: "inline-block",
+                          }}
+                        >
+                          <Img
+                            src={env.NEXT_PUBLIC_APP_URL + "/logo.png"}
+                            width="50"
+                            height="50"
+                            alt={env.NEXT_PUBLIC_APP_NAME}
+                            style={{
+                              display: "block",
+                              borderRadius: "50%",
+                              border: "2px solid #ffffff",
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td style={{ verticalAlign: "middle" }}>
+                        <span
+                          style={{
+                            fontSize: "26px",
+                            color: "#000",
+                            fontWeight: "700",
+                            textDecoration: "none",
+                            display: "inline-block",
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          {env.NEXT_PUBLIC_APP_NAME}
+                        </span>
+                        <br />
+                        <small style={smallText}>منصتك للمحادثة بالللغة الإنجليزية</small>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </Section>
 
           <Section style={contentSection}>
@@ -95,16 +138,6 @@ const headerSection: CSSProperties = {
   margin: "20px 0",
   padding: "20px 0",
   borderBottom: "1px solid #eeeeee",
-};
-
-const logo: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "10px",
-  fontSize: "24px",
-  color: "#333333",
-  fontWeight: "bold",
 };
 
 const contentSection: CSSProperties = {

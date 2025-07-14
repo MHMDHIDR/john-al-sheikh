@@ -19,6 +19,8 @@ export default function AudioPlayer({
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  const prevVolume = useRef(1);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -27,8 +29,6 @@ export default function AudioPlayer({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
-
-  const prevVolume = useRef(1);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,15 +65,24 @@ export default function AudioPlayer({
     const updateTime = () => {
       setCurrentTime(audio.currentTime);
     };
-    setDuration(audio.duration);
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+    };
     const handleEnded = () => setIsPlaying(false);
 
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    // If metadata is already loaded (e.g. cached), set duration immediately
+    if (audio.readyState >= 1) {
+      setDuration(audio.duration);
+    }
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [audioUrl]);
 
@@ -142,6 +151,13 @@ export default function AudioPlayer({
     setCurrentTime(audio.currentTime);
   };
 
+  const skipBackward = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(audio.currentTime - 10, 0);
+    setCurrentTime(audio.currentTime);
+  };
+
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
 
@@ -153,8 +169,8 @@ export default function AudioPlayer({
   return (
     <Card
       ref={playerRef}
-      className={`w-full select-none max-w-2xl mx-auto mb-5 bg-gradient-to-br from-[#1e3c72] via-[#2a5298] to-[#1e3c72] backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl transition-all duration-300 ${
-        isScrolled ? "sticky shadow-2xl scale-[0.98] z-30 opacity-85" : ""
+      className={`w-full select-none max-w-2xl mx-auto mb-5 bg-black/85 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl transition-all duration-400 ${
+        isScrolled ? "sticky shadow-2xl scale-[0.98] z-30 opacity-85 bg-black/75" : ""
       }`}
       style={isScrolled ? { top: `${headerHeight + 4}px` } : {}}
     >
@@ -171,24 +187,33 @@ export default function AudioPlayer({
           {/* Custom Progress Bar */}
           <div className="space-y-2">
             <div
-              className="relative w-full h-2 rounded-full bg-muted backdrop-blur-sm shadow-inner cursor-pointer ltr"
+              className="relative w-full h-1 rounded-full bg-muted backdrop-blur-md shadow-inner cursor-pointer ltr"
               onClick={handleProgressClick}
             >
               <div
-                className="absolute h-2 rounded-full bg-primary max-w-full"
+                className="absolute h-1 rounded-full bg-black max-w-full"
                 style={{ width: `${(currentTime / Math.max(duration, 0.01)) * 100}%` }}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 transition-all duration-200"
                 style={{ left: `calc(${(currentTime / Math.max(duration, 0.01)) * 100}% - 12px)` }}
               >
-                <div className="size-5 rounded-full border-4 border-primary bg-background shadow ring-2 ring-primary" />
+                <div className="size-3.5 rounded-full border-3 border-black bg-background shadow ring-2 ring-black" />
               </div>
             </div>
           </div>
 
           {/* Controls Row */}
           <div className="flex items-center gap-1 md:gap-2 ltr px-1">
+            {/* Go Backward 10s */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={skipBackward}
+              className="size-8 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:shadow-md transition"
+            >
+              <FastForward className="size-4.5 rotate-180" />
+            </Button>
             {/* Play/Pause */}
             <Button
               variant="ghost"
@@ -243,7 +268,7 @@ export default function AudioPlayer({
                   type="button"
                   aria-label={isMuted ? "Unmute" : "Mute"}
                   onClick={toggleMute}
-                  className="p-1"
+                  className="p-1 cursor-pointer"
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="size-4.5" />

@@ -96,11 +96,15 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
     ),
     cell: ({ row }) => {
       const phone = row.original.user.phone;
-      const callId = row.original.callId;
-      return (
-        <Link href={`/admin/conversations-recording/${callId ?? ""}`}>
-          {phone ?? <span>غير متوفر</span>}
+
+      return phone ? (
+        <Link href={`tel:${phone}`} dir="auto">
+          <Button variant={"link"} className="p-0 select-none">
+            {phone}
+          </Button>
         </Link>
+      ) : (
+        <span className="text-muted-foreground select-none">غير متوفر</span>
       );
     },
   },
