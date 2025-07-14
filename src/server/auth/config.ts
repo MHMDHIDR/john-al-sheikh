@@ -119,8 +119,8 @@ export const authConfig = {
       // Handle Google provider
       if (account?.provider === "google" && profile) {
         try {
-          const normalizedEmail = normalizeGmailAddress(profile.email ?? user.email!);
-          let existingUser = await findUserByEmailOrId(normalizedEmail, user.id!);
+          const normalizedEmail = normalizeGmailAddress(profile.email ?? user.email ?? "");
+          let existingUser = await findUserByEmailOrId(normalizedEmail, user.id);
 
           // If no user exists, create a new user
           if (!existingUser) {
@@ -283,7 +283,7 @@ export const authConfig = {
       if (account?.provider === "resend" && user.email) {
         try {
           const normalizedEmail = normalizeGmailAddress(user.email);
-          let existingUser = await findUserByEmailOrId(normalizedEmail, user.id!);
+          let existingUser = await findUserByEmailOrId(normalizedEmail, user.id);
 
           // If no user exists, create a new user with a default name
           if (!existingUser) {

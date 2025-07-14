@@ -11,7 +11,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { IconBrandLinkedin, IconWorld } from "@tabler/icons-react";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 

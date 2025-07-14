@@ -15,7 +15,7 @@
  */
 export function normalizeGmailAddress(email: string): string {
   if (!email || typeof email !== "string") {
-    return email;
+    return "";
   }
 
   const lowerEmail = email.toLowerCase().trim();
