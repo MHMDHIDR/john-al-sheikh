@@ -29,6 +29,7 @@ export const userRoleEnum = pgEnum("jas_user_role", [
   UserRole.USER,
 ]);
 export const userStatusEnum = pgEnum("jas_user_status", ["PENDING", "ACTIVE", "SUSPENDED"]);
+export const newsletterStatusEnum = pgEnum("jas_newsletter_status", ["PENDING", "SENT", "FAILED"]);
 export const themeEnum = pgEnum("jas_theme", ["light", "dark"]);
 export const genderEnum = pgEnum("jas_gender", ["male", "female"]);
 export const speakingTestEnum = pgEnum("jas_speaking_test_type", ["MOCK", "PRACTICE", "OFFICIAL"]);
@@ -40,7 +41,6 @@ export const transactionStatusEnum = pgEnum("jas_transaction_status", [
   "FAILED",
   "REFUNDED",
 ]);
-
 export type themeEnumType = (typeof themeEnum.enumValues)[number];
 export type genderEnumType = (typeof genderEnum.enumValues)[number];
 export type UserRoleType = keyof typeof UserRole;
@@ -282,6 +282,41 @@ export const authenticators = createTable("authenticator", {
 });
 
 export type Authenticator = typeof authenticators.$inferSelect;
+
+// Newsletter campaign table
+export const newsletters = createTable("newsletter", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  ctaUrl: varchar("cta_url", { length: 255 }),
+  ctaButtonLabel: varchar("cta_button_label", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const newsletterSendQueue = createTable("newsletter_send_queue", {
+  id: varchar("id", { length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  newsletterId: varchar("newsletter_id", { length: 255 })
+    .notNull()
+    .references(() => newsletters.id),
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  recipientName: varchar("recipient_name", { length: 255 }),
+  status: newsletterStatusEnum("status").notNull().default("PENDING"),
+  error: text("error"),
+  attemptCount: integer("attempt_count").notNull().default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Newsletter = typeof newsletters.$inferSelect;
+export type NewsletterSendQueue = typeof newsletterSendQueue.$inferSelect;
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

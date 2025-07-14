@@ -57,6 +57,20 @@
       "when": 1752441597960,
       "tag": "0007_sudden_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1752534002286,
+      "tag": "0008_smart_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1752536843699,
+      "tag": "0009_bent_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

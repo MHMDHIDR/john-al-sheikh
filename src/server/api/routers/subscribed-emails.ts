@@ -8,7 +8,13 @@ import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { subscribedEmails, users } from "@/server/db/schema";
+import {
+  newsletters,
+  newsletterSendQueue,
+  newsletterStatusEnum,
+  subscribedEmails,
+  users,
+} from "@/server/db/schema";
 import type { SubscribedEmail, Users } from "@/server/db/schema";
 
 const newsletterSchema = z.object({
@@ -168,53 +174,37 @@ export const subscribedEmailsRouter = createTRPCRouter({
 
   sendNewsletter: protectedProcedure.input(newsletterSchema).mutation(async ({ input, ctx }) => {
     try {
-      const resend = new Resend(env.AUTH_RESEND_KEY);
-
-      // Send to each recipient
-      const sendPromises = input.recipients.map(async recipient => {
-        // Check both tables for unsubscribe token generation
-        const [tokenResultFromSubscribed, tokenResultFromUsers] = await Promise.all([
-          ctx.db.query.subscribedEmails.findFirst({
-            where: eq(subscribedEmails.email, recipient.email),
-          }),
-          ctx.db.query.users.findFirst({
-            where: eq(users.email, recipient.email),
-          }),
-        ]);
-
-        let unsubscribeToken = "";
-
-        // Generate token based on which table the email exists in
-        if (tokenResultFromSubscribed) {
-          unsubscribeToken = generateUnsubscribeToken(tokenResultFromSubscribed);
-        } else if (tokenResultFromUsers?.isNewsletterSubscribed) {
-          unsubscribeToken = generateUnsubscribeToken(tokenResultFromUsers);
-        }
-
-        return resend.emails.send({
-          from: env.ADMIN_EMAIL,
-          to: recipient.email,
+      // Insert the newsletter campaign (one row)
+      const [newsletter] = await ctx.db
+        .insert(newsletters)
+        .values({
           subject: input.subject,
-          react: NewsletterEmailTemplate({
-            senderName: ctx.session?.user?.name ?? "فريق المنصة",
-            name: recipient.name,
-            subject: input.subject,
-            customContent: input.content,
-            ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
-            ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
-            unsubscribeToken,
-          }),
+          content: input.content,
+          ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
+          ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
+        })
+        .returning();
+      if (!newsletter)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Newsletter creation failed",
         });
-      });
 
-      const [data] = await Promise.all(sendPromises);
-
-      return { success: data?.data?.id ? true : false };
+      // Insert each recipient into the newsletterSendQueue table, referencing the newsletterId
+      await ctx.db.insert(newsletterSendQueue).values(
+        input.recipients.map(recipient => ({
+          newsletterId: newsletter.id,
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          status: "PENDING" as (typeof newsletterStatusEnum.enumValues)[number],
+        })),
+      );
+      return { success: true };
     } catch (error) {
-      console.error("Newsletter sending error:", error);
+      console.error("Newsletter queueing error:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "حدث خطأ أثناء إرسال النشرة البريدية",
+        message: "حدث خطأ أثناء جدولة النشرة البريدية للإرسال",
       });
     }
   }),
