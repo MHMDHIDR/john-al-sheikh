@@ -300,7 +300,7 @@ export const authConfig = {
             // Patch the user object so NextAuth uses the existing user
             user.id = existingUser.id;
             user.email = existingUser.email; // Use the email as stored in DB
-            if (!user.name) user.name = existingUser.name ?? "user";
+            user.name ??= existingUser.name ?? "user";
             return true;
           }
 
