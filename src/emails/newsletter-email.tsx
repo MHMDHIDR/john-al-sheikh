@@ -157,7 +157,7 @@ export default function NewsletterEmailTemplate({
                       style={{ color: "#999", display: "inline-block" }}
                     >
                       <Img
-                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/linkedin.svg"}
+                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/linkedin.png"}
                         width="24"
                         height="24"
                         alt="LinkedIn"
@@ -171,7 +171,7 @@ export default function NewsletterEmailTemplate({
                       style={{ color: "#999", display: "inline-block" }}
                     >
                       <Img
-                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/website.svg"}
+                        src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-assets/website.png"}
                         width="24"
                         height="24"
                         alt="Website"
