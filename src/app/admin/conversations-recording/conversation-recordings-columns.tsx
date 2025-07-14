@@ -80,6 +80,11 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
+    cell: ({ row }) => {
+      const email = row.original.user.email;
+      const callId = row.original.callId;
+      return <Link href={`/admin/conversations-recording/${callId ?? ""}`}>{email}</Link>;
+    },
   },
   {
     accessorKey: "phone",
@@ -91,7 +96,12 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
     ),
     cell: ({ row }) => {
       const phone = row.original.user.phone;
-      return phone ?? <span>غير متوفر</span>;
+      const callId = row.original.callId;
+      return (
+        <Link href={`/admin/conversations-recording/${callId ?? ""}`}>
+          {phone ?? <span>غير متوفر</span>}
+        </Link>
+      );
     },
   },
   {
@@ -102,6 +112,11 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
+    cell: ({ row }) => {
+      const topic = row.original.topic;
+      const callId = row.original.callId;
+      return <Link href={`/admin/conversations-recording/${callId ?? ""}`}>{topic}</Link>;
+    },
   },
   {
     accessorKey: "type",
@@ -118,7 +133,12 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
         PRACTICE: "تدريبي",
         OFFICIAL: "رسمي",
       };
-      return typeMap[type as keyof typeof typeMap] || type;
+      const callId = row.original.callId;
+      return (
+        <Link href={`/admin/conversations-recording/${callId ?? ""}`}>
+          {typeMap[type as keyof typeof typeMap] || type}
+        </Link>
+      );
     },
   },
   {
@@ -131,7 +151,12 @@ export const conversationRecordingsColumns: ColumnDef<ConversationRecording>[] =
     ),
     cell: ({ row }) => {
       const date = row.getValue("createdAt");
-      return formatDate(String(date), true, true);
+      const callId = row.original.callId;
+      return (
+        <Link href={`/admin/conversations-recording/${callId ?? ""}`}>
+          {formatDate(String(date), true, true)}
+        </Link>
+      );
     },
   },
   {
