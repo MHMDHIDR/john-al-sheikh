@@ -75,7 +75,7 @@ export const authConfig = {
           const result = await resendEmail.emails.send({
             from: env.ADMIN_EMAIL,
             to: email,
-            subject: `تسجيل الدخول إلى منصة ${env.NEXT_PUBLIC_APP_NAME} للايلتس`,
+            subject: `تسجيل الدخول إلى منصة ${env.NEXT_PUBLIC_APP_NAME}`,
             react: SignInEmailTemplate({ url }),
           });
 

@@ -36,7 +36,7 @@ export function SignInEmailTemplate({ url }: { url: string }) {
               />
               {env.NEXT_PUBLIC_APP_NAME}
             </Heading>
-            <small style={smallText}>منصتك لتعلم وممارسة الايلتس</small>
+            <small style={smallText}>منصتك للمحادثة بالللغة الإنجليزية</small>
           </Section>
 
           <Section style={contentSection}>
