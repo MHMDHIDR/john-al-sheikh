@@ -69,7 +69,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
 
   const sendNewsletter = api.subscribedEmails.sendNewsletter.useMutation({
     onSuccess: () => {
-      success("تم إرسال النشرة البريدية بنجاح");
+      success("تم جدولة النشرة البريدية");
       setIsPreview(false);
     },
     onError: error => {

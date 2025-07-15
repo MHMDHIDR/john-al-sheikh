@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req });
+  // if (req.nextUrl.pathname.startsWith("/api/newsletter-send-cron")) {
+  //   return NextResponse.next();
+  // }
+
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
 
   // Skip middleware for these paths
   const publicPaths = [
