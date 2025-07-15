@@ -83,13 +83,17 @@ export async function GET(request: Request) {
           updatedAt: new Date(),
         })
         .where(eq(newsletterSendQueue.id, item.id));
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Mark as failed, increment attempt count
+      let errorMessage = "Unknown error";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       await db
         .update(newsletterSendQueue)
         .set({
           status: "FAILED",
-          error: error?.message || "Unknown error",
+          error: errorMessage,
           attemptCount: item.attemptCount + 1,
           lastAttemptAt: new Date(),
           updatedAt: new Date(),

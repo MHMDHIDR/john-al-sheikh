@@ -3,18 +3,12 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { z } from "zod";
 import { formSchema } from "@/app/schemas/subscription-from";
-import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import WelcomeEmailTemplate from "@/emails/welcome-email";
 import { env } from "@/env";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import {
-  newsletters,
-  newsletterSendQueue,
-  newsletterStatusEnum,
-  subscribedEmails,
-  users,
-} from "@/server/db/schema";
+import { newsletters, newsletterSendQueue, subscribedEmails, users } from "@/server/db/schema";
+import type { newsletterStatusEnum } from "@/server/db/schema";
 import type { SubscribedEmail, Users } from "@/server/db/schema";
 
 const newsletterSchema = z.object({
