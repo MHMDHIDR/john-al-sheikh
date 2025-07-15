@@ -1,5 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { feedbackRouter } from "./routers/feedback";
+import { newsletterRouter } from "./routers/newsletter";
 import { openaiRouter } from "./routers/openai";
 import { optimizeImageRouter } from "./routers/optimize-image";
 import { pageContentRouter } from "./routers/page-content.ts";
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   subscribedEmails: subscribedEmailsRouter,
   feedback: feedbackRouter,
   vapi: vapiRouter,
+  newsletter: newsletterRouter,
 });
 
 // export type definition of API
