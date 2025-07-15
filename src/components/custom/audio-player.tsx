@@ -2,6 +2,7 @@
 
 import { FastForward, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AudioProgressControl } from "@/components/custom/audio-progress-control";
 import { AudioVolumeControl } from "@/components/custom/audio-volume-control";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,15 +110,9 @@ export default function AudioPlayer({
     }
   };
 
-  const handleProgressClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleProgressChange = (newTime: number) => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const width = rect.width;
-    const percentage = clickX / width;
-    const newTime = percentage * audio.duration;
 
     audio.currentTime = newTime;
     setCurrentTime(newTime);
@@ -184,23 +179,14 @@ export default function AudioPlayer({
       <CardContent className="px-5 py-3 text-white space-y-6">
         <audio ref={audioRef} src={audioUrl} preload="metadata" />
         <div className="space-y-6">
-          {/* Custom Progress Bar */}
+          {/* Progress Bar */}
           <div className="space-y-2">
-            <div
-              className="relative w-full h-1 rounded-full bg-muted backdrop-blur-md shadow-inner cursor-pointer ltr"
-              onClick={handleProgressClick}
-            >
-              <div
-                className="absolute h-1 rounded-full bg-black max-w-full"
-                style={{ width: `${(currentTime / Math.max(duration, 0.01)) * 100}%` }}
-              />
-              <div
-                className="absolute top-1/2 -translate-y-1/2 transition-all duration-200"
-                style={{ left: `calc(${(currentTime / Math.max(duration, 0.01)) * 100}% - 12px)` }}
-              >
-                <div className="size-3.5 rounded-full border-3 border-black bg-background shadow ring-2 ring-black" />
-              </div>
-            </div>
+            <AudioProgressControl
+              value={currentTime}
+              max={duration}
+              onChange={handleProgressChange}
+              className="w-full"
+            />
           </div>
 
           {/* Controls Row */}
