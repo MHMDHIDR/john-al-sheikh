@@ -296,7 +296,7 @@ export function EditorMenu({ editor, isSimpleEditor }: EditorMenuProps) {
   const DEFAULT_FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 88, 96];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30 rounded-t-lg">
+    <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30 dark:bg-background/95 rounded-t-lg">
       <div className="flex items-center gap-1">
         <EditorButton
           onClick={() => editor.chain().focus().undo().run()}

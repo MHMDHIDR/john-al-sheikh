@@ -177,7 +177,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     editorProps: {
       attributes: {
         class:
-          "prose prose-lg max-w-none rtl py-4 px-6 leading-relaxed focus:outline-none min-h-[400px] bg-white prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-bold prose-em:text-gray-700 prose-em:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-blockquote:border-r-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700",
+          "prose prose-lg max-w-none rtl py-4 px-6 leading-relaxed focus:outline-none min-h-[400px] bg-white dark:bg-background prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-bold prose-em:text-gray-700 prose-em:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-blockquote:border-r-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700",
       },
     },
     immediatelyRender: false,
