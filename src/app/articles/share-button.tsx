@@ -55,7 +55,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
         onClick={e => {
           e.preventDefault();
           void navigator.clipboard.writeText(url);
-          alert("تم نسخ رابط المقال! يمكنك الآن مشاركته على انستغرام أو أي مكان آخر.");
+          alert("تم نسخ رابط المقال! يمكنك الآن مشاركته على Instagram أو أي مكان آخر.");
         }}
         className="rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] hover:opacity-90 p-2 transition-colors"
         title="مشاركة في انستغرام (انسخ الرابط)"

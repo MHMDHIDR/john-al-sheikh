@@ -181,6 +181,15 @@ export default function NewsletterEmailTemplate({
                 </tr>
               </table>
 
+              <Text style={{ textAlign: "center", fontSize: "11px", margin: "10px 0" }}>
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_APP_URL}/articles`}
+                  style={{ color: "#999", textDecoration: "underline" }}
+                >
+                  لقراءة النشرة على منصة {process.env.NEXT_PUBLIC_APP_NAME}
+                </Link>
+              </Text>
+
               <hr style={{ border: "0.5px solid #efede8", margin: "10px 36px" }} />
 
               <Text style={{ textAlign: "center", fontSize: "11px", margin: 0 }}>
