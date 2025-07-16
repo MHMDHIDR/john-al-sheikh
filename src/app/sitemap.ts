@@ -14,6 +14,7 @@ export default async function sitemap() {
     "buy-credits",
     "subscribe",
     "signin",
+    "articles",
   ].map(route => ({
     url: `${baseUrl}/${route}`,
   }));
