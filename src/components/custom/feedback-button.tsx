@@ -31,6 +31,8 @@ export function FeedbackButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
+        aria-label="Feedback"
+        title="Feedback to John Al-Shiekh"
         className="flex select-none max-sm:scale-70 items-center gap-2 fixed max-sm:bottom-32 bottom-10 -rotate-90 max-sm:-right-1 max-sm:size-20 max-sm:rounded-full -right-11 z-50 shadow-lg animate-feedback-aurora max-sm:opacity-45 opacity-75"
       >
         <strong className="hidden sm:flex">Feedback</strong>
