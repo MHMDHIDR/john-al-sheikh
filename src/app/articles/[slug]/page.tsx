@@ -9,17 +9,63 @@ import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
+import type { Metadata } from "next";
 
 export const dynamic = "force-static";
 export const revalidate = 600;
 
+type ArticleProps = {
+  params: Promise<{ slug: string }>;
+};
+
 function getShareUrl(slug: string) {
-  return `${env.NEXT_PUBLIC_APP_URL}/articles/${slug}`;
+  const baseUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return `${baseUrl}/articles/${slug}`;
 }
 
-export default async function Article({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: ArticleProps): Promise<Metadata> {
   const { slug } = await params;
-  const newsletter = await api.newsletter.getNewsletterBySlug({ slug });
+  try {
+    const newsletter = await api.newsletter.getNewsletterBySlug({ slug });
+    if (!newsletter) {
+      return {
+        title: "نشرة المقالات",
+        description: "نشرة المقالات",
+      };
+    }
+    const title = `نشرة المقالات | ${newsletter.subject}`;
+    const description = newsletter
+      ? `نشرة المقالات - ${newsletter.subject}`
+      : `نشرة المقالات | ${env.NEXT_PUBLIC_APP_NAME}`;
+
+    return {
+      title,
+      description,
+      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+      openGraph: {
+        title,
+        description,
+        images: [newsletter.image ?? "/newsletter-header.png"],
+      },
+    };
+  } catch (error) {
+    console.error("Error generating metadata for test result page =>  ", error);
+    return {
+      title: "نشرة المقالات",
+      description: "نشرة المقالات",
+    };
+  }
+}
+
+export default async function Article({ params }: ArticleProps) {
+  const { slug } = await params;
+  let newsletter = null;
+  try {
+    newsletter = await api.newsletter.getNewsletterBySlug({ slug });
+  } catch (error) {
+    console.error("Failed to fetch newsletter by slug:", error);
+    return notFound();
+  }
   if (!newsletter) return notFound();
 
   const session = await auth();
