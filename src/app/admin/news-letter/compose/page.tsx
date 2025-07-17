@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import NewsletterAnalytics from "@/components/custom/newsletter-analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/trpc/server";
@@ -26,6 +27,7 @@ async function EmailList() {
 export default function ComposeNewsletterPage() {
   return (
     <div className="container mx-auto py-8">
+      <NewsletterAnalytics />
       <Card>
         <CardHeader>
           <CardTitle className="select-none text-center font-bold">

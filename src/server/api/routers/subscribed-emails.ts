@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
 import { z } from "zod";
 import { formSchema } from "@/app/schemas/subscription-from";
@@ -8,8 +8,7 @@ import { env } from "@/env";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "@/lib/unsubscribe-token";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { newsletters, newsletterSendQueue, subscribedEmails, users } from "@/server/db/schema";
-import type { newsletterStatusEnum } from "@/server/db/schema";
-import type { SubscribedEmail, Users } from "@/server/db/schema";
+import type { newsletterStatusEnum, SubscribedEmail, Users } from "@/server/db/schema";
 
 const newsletterSchema = z.object({
   subject: z.string().min(1, "عنوان البريد الإلكتروني مطلوب"),
@@ -400,4 +399,40 @@ export const subscribedEmailsRouter = createTRPCRouter({
         });
       }
     }),
+
+  // --- NEWSLETTER ANALYTICS ---
+  getNewsletterAnalytics: protectedProcedure.query(async ({ ctx }) => {
+    // Count total newsletters
+    const [{ count: totalNewsletters = 0 } = { count: 0 }] = await ctx.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(newsletters);
+
+    // Count SENT and PENDING in newsletterSendQueue
+    const [sentResult, pendingResult] = await Promise.all([
+      ctx.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(newsletterSendQueue)
+        .where(eq(newsletterSendQueue.status, "SENT")),
+      ctx.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(newsletterSendQueue)
+        .where(eq(newsletterSendQueue.status, "PENDING")),
+    ]);
+    const sentCount = sentResult[0]?.count ?? 0;
+    const pendingCount = pendingResult[0]?.count ?? 0;
+
+    // Get createdAt of the last sent newsletter
+    const [lastSent] = await ctx.db
+      .select({ createdAt: newsletters.createdAt })
+      .from(newsletters)
+      .orderBy(desc(newsletters.createdAt))
+      .limit(1);
+
+    return {
+      totalNewsletters,
+      sentCount,
+      pendingCount,
+      lastSentCreatedAt: lastSent?.createdAt ?? null,
+    };
+  }),
 });
