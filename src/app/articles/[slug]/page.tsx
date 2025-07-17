@@ -14,12 +14,10 @@ import type { Metadata } from "next";
 export const dynamic = "force-static";
 export const revalidate = 600;
 
-type ArticleProps = {
-  params: Promise<{ slug: string }>;
-};
+type ArticleProps = { params: Promise<{ slug: string }> };
 
 function getShareUrl(slug: string) {
-  const baseUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = env.NEXT_PUBLIC_APP_URL || "https://localhost:3000";
   return `${baseUrl}/articles/${slug}`;
 }
 
@@ -41,7 +39,7 @@ export async function generateMetadata({ params }: ArticleProps): Promise<Metada
     return {
       title,
       description,
-      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"),
       openGraph: {
         title,
         description,
@@ -109,7 +107,7 @@ export default async function Article({ params }: ArticleProps) {
           </div>
 
           <div
-            className="prose prose-lg prose-slate rtl leading-loose max-w-none text-gray-800"
+            className="prose prose-lg prose-slate rtl leading-12 max-w-none text-gray-800"
             dir="rtl"
           >
             <div dangerouslySetInnerHTML={{ __html: newsletter.content ?? "لا يوجد محتوى" }} />
