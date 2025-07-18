@@ -285,15 +285,7 @@ export default function TestDetails({ details, credits, recordingUrl }: TestDeta
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-sm:p-2">
-                {recordingUrl ? (
-                  <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />
-                ) : (
-                  <EmptyState>
-                    <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
-                      لا يوجد تسجيل صوتي لهذه المحادثة
-                    </p>
-                  </EmptyState>
-                )}
+                {recordingUrl && <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />}
 
                 {details.transcription?.messages && details.transcription.messages.length > 0 ? (
                   <div className="space-y-2 mt-6">
