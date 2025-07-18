@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkRoleAccess } from "@/lib/check-role-access";
-import { vapiClient } from "@/lib/vapi.server.sdk";
+import { createVapiClient, getAllVapiKeysInOrder } from "@/lib/vapi.server.sdk";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { speakingTests, UserRole, users } from "@/server/db/schema";
 
@@ -117,32 +117,33 @@ export const vapiRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح بالوصول" });
       }
 
-      try {
-        // Get call details from Vapi API
-        const call = await vapiClient.calls.get(input.callId);
+      const vapiKeys = getAllVapiKeysInOrder();
+      let lastError: unknown = null;
 
-        // Extract recording URL from the call data
-        const recordingUrl = call.artifact?.recordingUrl;
+      for (const key of vapiKeys) {
+        try {
+          const vapiClient = createVapiClient(key);
+          const call = await vapiClient.calls.get(input.callId);
+          const recordingUrl = call.artifact?.recordingUrl;
 
-        if (!recordingUrl) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "لم يتم العثور على رابط التسجيل",
-          });
+          if (recordingUrl) {
+            return {
+              recordingUrl,
+              stereoRecordingUrl: call.artifact?.stereoRecordingUrl,
+              transcript: call.artifact?.transcript,
+              summary: call.analysis?.summary,
+            };
+          }
+        } catch (error) {
+          lastError = error;
         }
-
-        return {
-          recordingUrl,
-          stereoRecordingUrl: call.artifact?.stereoRecordingUrl,
-          transcript: call.artifact?.transcript,
-          summary: call.analysis?.summary,
-        };
-      } catch (error) {
-        console.error("Error fetching recording URL:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "فشل في جلب رابط التسجيل",
-        });
       }
+
+      // If none of the keys worked, throw a not found error
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "لم يتم العثور على رابط التسجيل بأي من المفاتيح المتاحة",
+        cause: lastError,
+      });
     }),
 });
