@@ -32,6 +32,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
     NEXT_PUBLIC_TWITTER_CLIENT_ID: z.string().min(1),
+    NEXT_PUBLIC_APP_SOCIAL_BANNER: z.string().url(),
   },
   runtimeEnv: {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL,
@@ -61,6 +62,7 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PRICE_ID_20: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_20,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_APP_SOCIAL_BANNER: process.env.NEXT_PUBLIC_APP_SOCIAL_BANNER,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

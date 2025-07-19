@@ -1,19 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
+import { generateMetadata } from "@/components/custom/seo";
 import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
 import { api } from "@/trpc/server";
-import type { Metadata } from "next";
 
 type NewsletterType = Awaited<ReturnType<typeof api.newsletter.getAllNewsletters>>[number];
 
 export const dynamic = "force-static";
 export const revalidate = 600;
 
-export const metadata: Metadata = {
+export const metadata = generateMetadata({
   title: `نشرة المقالات | ${env.NEXT_PUBLIC_APP_NAME}`,
   description: env.NEXT_PUBLIC_APP_DESCRIPTION,
-};
+});
 
 export default async function Articles() {
   let newsletters: NewsletterType[] = [];
