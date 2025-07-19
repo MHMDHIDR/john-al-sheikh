@@ -10,10 +10,7 @@ type NewsletterType = Awaited<ReturnType<typeof api.newsletter.getAllNewsletters
 export const dynamic = "force-static";
 export const revalidate = 600;
 
-export const metadata = generateMetadata({
-  title: `نشرة المقالات | ${env.NEXT_PUBLIC_APP_NAME}`,
-  description: env.NEXT_PUBLIC_APP_DESCRIPTION,
-});
+export const metadata = generateMetadata({ title: `نشرة المقالات` });
 
 export default async function Articles() {
   let newsletters: NewsletterType[] = [];
