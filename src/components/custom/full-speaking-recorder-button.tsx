@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ExternalLink, Mic } from "lucide-react";
+import { ExternalLink, Loader2, Mic } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
@@ -21,7 +21,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
-import { GENERAL_ENGLISH_CONVERSATION_TIME, MINUTES_IN_MS } from "@/lib/constants";
+import {
+  GENERAL_ENGLISH_CONVERSATION_TIME,
+  GENERAL_ENGLISH_WIND_DOWN_TRIGGER_TIME,
+  MINUTES_IN_MS,
+  MOCK_TEST_CONVERSATION_TIME,
+  MOCK_TEST_WIND_DOWN_TRIGGER_TIME,
+} from "@/lib/constants";
 import { countryNames } from "@/lib/list-of-countries";
 import { vapi } from "@/lib/vapi.sdk";
 import { api } from "@/trpc/react";
@@ -225,7 +231,6 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
 ];
 
 // Wind down timing constants
-const WIND_DOWN_TRIGGER_TIME = 4.5 * MINUTES_IN_MS; // 4.5 minutes (270 seconds)
 
 // Modify component to use forwardRef
 const FullSpeakingRecorderButton = forwardRef<
@@ -462,14 +467,23 @@ const FullSpeakingRecorderButton = forwardRef<
 
   // Conversation timer for general-english mode
   useEffect(() => {
+    // Determine timing based on mode
+    const isGeneralEnglish = mode === "general-english";
+    const totalDuration = isGeneralEnglish
+      ? GENERAL_ENGLISH_CONVERSATION_TIME
+      : MOCK_TEST_CONVERSATION_TIME;
+    const windDownTriggerTime = isGeneralEnglish
+      ? GENERAL_ENGLISH_WIND_DOWN_TRIGGER_TIME
+      : MOCK_TEST_WIND_DOWN_TRIGGER_TIME;
+
     if (
-      mode === "general-english" &&
+      (isGeneralEnglish || mode === "mock-test") &&
       callStatus === CallStatus.ACTIVE &&
       sessionStartTimeRef.current
     ) {
       const elapsed = Date.now() - sessionStartTimeRef.current;
-      const windDownRemaining = WIND_DOWN_TRIGGER_TIME - elapsed;
-      const totalRemaining = GENERAL_ENGLISH_CONVERSATION_TIME - elapsed;
+      const windDownRemaining = windDownTriggerTime - elapsed;
+      const totalRemaining = totalDuration - elapsed;
 
       // Set up wind-down timer
       if (windDownRemaining > 0 && !windDownTriggered) {
@@ -546,7 +560,10 @@ const FullSpeakingRecorderButton = forwardRef<
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
         silenceTimeoutSeconds: 100, // Allow 1.66 minutes of silence,
-        maxDurationSeconds: mode === "mock-test" ? 600 : GENERAL_ENGLISH_CONVERSATION_TIME / 1000, // 5 minutes for general-english mode
+        maxDurationSeconds:
+          mode === "mock-test"
+            ? MOCK_TEST_CONVERSATION_TIME / 1000 // 10 minutes for mock-test mode
+            : GENERAL_ENGLISH_CONVERSATION_TIME / 1000, // 5 minutes for general-english mode
         endCallMessage:
           mode === "general-english"
             ? "Thank you for our conversation! I hope you enjoyed practicing your English with me. Have a great day!"
@@ -642,28 +659,26 @@ const FullSpeakingRecorderButton = forwardRef<
             {!isConnected && (
               <Button
                 id="start-conversation-button"
-                onClick={() => {
-                  if (mode === "general-english") {
-                    setShowQuickTipsDialog(true);
-                  } else {
-                    void handleStartConversation();
-                  }
-                }}
+                onClick={() => setShowQuickTipsDialog(true)}
                 disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
                 className={clsx("w-full relative cursor-pointer", {
                   "animate-pulse": callStatus === CallStatus.INACTIVE,
                 })}
               >
-                <Mic
-                  className={clsx("mx-2 size-5", {
-                    "animate-pulse text-blue-600": callStatus === CallStatus.INACTIVE,
-                  })}
-                />
+                {isProcessingResults ? (
+                  <Loader2 className={clsx("mx-2 size-5 animate-spin")} />
+                ) : (
+                  <Mic
+                    className={clsx("mx-2 size-5", {
+                      "animate-pulse text-blue-600": callStatus === CallStatus.INACTIVE,
+                    })}
+                  />
+                )}
                 <strong>
                   {callStatus === CallStatus.CONNECTING
                     ? `جاري بدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}...`
                     : isProcessingResults
-                      ? "جاري معالجة النتائج..."
+                      ? "جاري تحليل النتائج يرجى الإنتظار..."
                       : `إبدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}`}
                 </strong>
               </Button>
@@ -677,8 +692,13 @@ const FullSpeakingRecorderButton = forwardRef<
             description={
               <ul className="text-justify list-decimal leading-7">
                 <li className="text-gray-500">
-                  ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة{" "}
-                  <strong>{GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60} دقائق</strong>
+                  ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة
+                  <strong className="text-green-600 mx-1">
+                    {mode === "mock-test"
+                      ? MOCK_TEST_CONVERSATION_TIME / 1000 / 60
+                      : GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60}
+                  </strong>
+                  دقائق
                 </li>
                 <li className="text-purple-500 font-bold">
                   إجعل إجابتك واضحة ومنظمة في محور السؤال باللغة الإنجليزية
