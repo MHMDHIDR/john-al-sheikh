@@ -24,6 +24,16 @@ const prompts = [
   "تحدث عن تجربة تعلمت منها درساً قيماً.",
   "صِف كتاباً أو فيلماً أثر فيك.",
   "تحدث عن تغيير مهم حدث في حياتك.",
+  "تحدث عن هدف تسعى لتحقيقه في المستقبل.",
+  "صِف يوماً مميزاً في حياتك.",
+  "تحدث عن تحدٍ واجهته وكيف تغلبت عليه.",
+  "صِف شخصاً تعتبره قدوة لك.",
+  "تحدث عن عادة صحية تتبعها.",
+  "صِف مدينة تتمنى زيارتها ولماذا.",
+  "تحدث عن أهمية تعلم لغة جديدة.",
+  "صِف موقفاً طريفاً حدث لك.",
+  "تحدث عن نشاط تفضله في وقت فراغك.",
+  "صِف كيف تتعامل مع التوتر والضغوط.",
 ];
 
 // Helper function to make sure we have valid audio data
@@ -332,10 +342,7 @@ export function QuickSpeakingTest() {
 
       <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
         <div className="text-center">
-          <h1 className="mb-5 text-2xl font-bold">
-            اختبار التحدث السريع
-            <span className="mx-2">IELTS</span>
-          </h1>
+          <h1 className="mb-5 text-2xl font-bold">اختبار المحادثة السريع</h1>
           <p className="mb-2 font-black text-3xl text-blue-600 dark:text-blue-400">
             <AuroraText className="mx-2">
               <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;

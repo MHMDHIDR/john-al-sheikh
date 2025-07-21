@@ -62,7 +62,7 @@ export function ResultsDisplay({ user }: { user: Session["user"] | undefined }) 
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white p-3">
         <div className="w-full max-w-2xl space-y-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900">جاري تحميل النتائج...</h2>
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-solid border-gray-400 border-t-primary"></div>
@@ -75,7 +75,7 @@ export function ResultsDisplay({ user }: { user: Session["user"] | undefined }) 
   if (!result) return null;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-white p-3">
       <div className="w-full max-w-2xl space-y-8 text-right">
         <div className="text-center">
           <h1
@@ -90,7 +90,7 @@ export function ResultsDisplay({ user }: { user: Session["user"] | undefined }) 
           <p className="mb-8 text-2xl text-gray-600">نتيجة المحادثة بالإنجليزية الخاصة بك</p>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 mb-8">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 mb-8">
           <h3 className="mb-2 text-lg font-medium text-gray-900">الموضوع:</h3>
           <p className="text-gray-700">{result.prompt}</p>
 
