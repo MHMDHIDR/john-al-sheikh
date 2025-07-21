@@ -8,7 +8,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 export type ConversationRecording = {
   id: string;
-  topic: string;
   type: "MOCK" | "PRACTICE" | "OFFICIAL";
   callId: string | null;
   createdAt: Date;

@@ -33,7 +33,6 @@ export const vapiRouter = createTRPCRouter({
       const recordings = await ctx.db
         .select({
           id: speakingTests.id,
-          topic: speakingTests.topic,
           type: speakingTests.type,
           callId: speakingTests.callId,
           createdAt: speakingTests.createdAt,
