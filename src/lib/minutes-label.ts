@@ -14,14 +14,13 @@ export function creditsToMinutes(credits: number): number {
  * @returns The correct label for the number of minutes in Arabic
  */
 export function minutesLabel({ credits }: { credits: number }): string {
-  const minutes = creditsToMinutes(credits);
-  if (minutes === 0) return "دقائق";
-  if (minutes === 1) return "دقيقة";
-  if (minutes === 2) return "دقيقتين";
-  if (minutes >= 3 && minutes <= 10) return "دقائق";
-  const lastDigit = minutes % 10;
-  if (lastDigit === 1) return "دقيقة";
-  if (lastDigit === 2) return "دقيقتين";
-  if (lastDigit >= 3 && lastDigit <= 9) return "دقيقة";
-  return "دقيقة";
+  if (credits === 0 || credits === 1) return "دقيقة";
+
+  if (credits === 2) return "دقيقتين";
+
+  if (credits >= 3 && credits <= 10) return "دقائق";
+
+  if (credits >= 11) return "دقيقة";
+
+  return "";
 }

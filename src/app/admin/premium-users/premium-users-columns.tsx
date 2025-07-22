@@ -15,16 +15,16 @@ export const premiumUserColumns: ColumnDef<Users>[] = [
     ),
   },
   {
-    accessorKey: "credits",
+    accessorKey: "minutes",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        رصيد الحساب
+        رصيد الدقائق
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
-      const credits = row.getValue("credits");
-      return credits ?? "لا يوجد";
+      const minutes = row.getValue("minutes");
+      return minutes ?? "لا يوجد";
     },
   },
   {

@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { minutesLabel } from "@/lib/minutes-label";
 import { api } from "@/trpc/react";
 import type { Users } from "@/server/db/schema";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -104,16 +105,16 @@ export const userColumns: ColumnDef<Users>[] = [
     ),
   },
   {
-    accessorKey: "credits",
+    accessorKey: "minutes",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        رصيد الحساب
+        رصيد الدقائق
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
     cell: ({ row }) => {
-      const credits = row.getValue("credits");
-      return credits ?? "لا يوجد";
+      const minutes = row.original.minutes ?? 0;
+      return `${minutes} ${minutesLabel({ credits: minutes })}`;
     },
   },
   {
