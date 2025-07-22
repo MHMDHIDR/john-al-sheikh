@@ -379,7 +379,7 @@ const FullSpeakingRecorderButton = forwardRef<
         deductionTimerRef.current = null;
       }
     };
-  }, [isConnected, callId, user.id]);
+  }, [isConnected, callId, user.id, deductUserMinutes]);
 
   // On reload or navigation, deduct all used minutes
   useEffect(() => {
@@ -387,10 +387,8 @@ const FullSpeakingRecorderButton = forwardRef<
       const saved = sessionStorage.getItem(`live-minutes-${user.id}`);
       let totalMinutes = 0;
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          totalMinutes = secondsToMinutes(parsed.elapsedSeconds ?? 0);
-        } catch {}
+        const parsed = JSON.parse(saved) as { elapsedSeconds: number };
+        totalMinutes = secondsToMinutes(parsed.elapsedSeconds ?? 0);
       }
       if (totalMinutes > lastDeductedMinute) {
         const toDeduct = totalMinutes - lastDeductedMinute;
