@@ -166,59 +166,6 @@ export const paymentsRouter = createTRPCRouter({
       }
     }),
 
-  /** Use credits for a speaking test */
-  useCreditsForTest: protectedProcedure
-    .input(z.object({ speakingTestId: z.string(), minutesCost: z.number().default(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const { speakingTestId, minutesCost } = input;
-      const { session } = ctx;
-      const userId = session.user.id;
-
-      // Get user current credits
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-      });
-
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      // Check if user has enough minutes
-      if (user.minutes < minutesCost) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Insufficient minutes",
-        });
-      }
-
-      const newCreditBalance = user.minutes - minutesCost;
-
-      // Begin transaction to update user minutes and create transaction record
-      await db.transaction(async tx => {
-        // Update user minutes
-        await tx.update(users).set({ minutes: newCreditBalance }).where(eq(users.id, userId));
-
-        // Create transaction record
-        await tx.insert(creditTransactions).values({
-          userId,
-          type: "USAGE",
-          amount: -minutesCost,
-          minutesAfter: newCreditBalance,
-          speakingTestId,
-          minutesCost,
-          status: "COMPLETED",
-          metadata: {
-            testType: "MOCK", // Default to MOCK, this can be updated based on actual test type
-          },
-        });
-      });
-
-      return { success: true, remainingCredits: newCreditBalance };
-    }),
-
   /**
    * Get user's minutes balance
    * @returns {number} The user's credit balance
@@ -301,4 +248,50 @@ export const paymentsRouter = createTRPCRouter({
       balanceTransactions: enhancedTransactions,
     };
   }),
+
+  deductUserMinutes: protectedProcedure
+    .input(z.object({ minutes: z.number().min(1), callId: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const { minutes, callId } = input;
+      const userId = ctx.session.user.id;
+
+      // Get user current minutes
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, userId),
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      if (user.minutes < minutes) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Insufficient minutes",
+        });
+      }
+
+      const newMinuteBalance = user.minutes - minutes;
+
+      // Begin transaction to update user minutes and create transaction record
+      await ctx.db.transaction(async tx => {
+        await tx.update(users).set({ minutes: newMinuteBalance }).where(eq(users.id, userId));
+        await tx.insert(creditTransactions).values({
+          userId,
+          type: "USAGE",
+          amount: -minutes,
+          minutesCost: minutes,
+          minutesAfter: newMinuteBalance,
+          status: "COMPLETED",
+          metadata: {
+            callId,
+          },
+        });
+      });
+
+      return { success: true, remainingMinutes: newMinuteBalance };
+    }),
 });

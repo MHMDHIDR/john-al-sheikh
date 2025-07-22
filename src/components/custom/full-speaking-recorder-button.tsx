@@ -325,7 +325,91 @@ const FullSpeakingRecorderButton = forwardRef<
   const isConnected = callStatus === CallStatus.ACTIVE;
   const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
-  const useCreditsForTest = api.payments.useCreditsForTest.useMutation();
+  const deductUserMinutes = api.payments.deductUserMinutes.useMutation();
+
+  // Live minute deduction state
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [lastDeductedMinute, setLastDeductedMinute] = useState(0);
+  const lastDeductedMinuteRef = useRef(0);
+  const deductionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  function secondsToMinutes(seconds: number) {
+    // 0:00–1:39 → 1, 1:40–2:39 → 2, etc.
+    if (seconds < 100) return 1;
+    return Math.ceil((seconds - 40) / 60) + 1;
+  }
+
+  // Start timer and deduct minutes in real time
+  useEffect(() => {
+    if (isConnected) {
+      let initialElapsed = 0;
+      let initialDeducted = 0;
+      const saved = sessionStorage.getItem(`live-minutes-${user.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          initialElapsed = parsed.elapsedSeconds || 0;
+          initialDeducted = parsed.lastDeductedMinute || 0;
+        } catch {}
+      }
+      setElapsedSeconds(initialElapsed);
+      setLastDeductedMinute(initialDeducted);
+      lastDeductedMinuteRef.current = initialDeducted;
+      deductionTimerRef.current = setInterval(() => {
+        setElapsedSeconds(prev => {
+          const next = prev + 1;
+          const minutesNow = secondsToMinutes(next);
+          if (minutesNow > lastDeductedMinuteRef.current) {
+            deductUserMinutes.mutate({ minutes: 1, callId });
+            setLastDeductedMinute(minutesNow);
+            lastDeductedMinuteRef.current = minutesNow;
+          }
+          sessionStorage.setItem(
+            `live-minutes-${user.id}`,
+            JSON.stringify({
+              elapsedSeconds: next,
+              lastDeductedMinute: lastDeductedMinuteRef.current,
+            }),
+          );
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (deductionTimerRef.current) {
+        clearInterval(deductionTimerRef.current);
+        deductionTimerRef.current = null;
+      }
+    };
+  }, [isConnected, callId, user.id]);
+
+  // On reload or navigation, deduct all used minutes
+  useEffect(() => {
+    const handleUnload = () => {
+      const saved = sessionStorage.getItem(`live-minutes-${user.id}`);
+      let totalMinutes = 0;
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          totalMinutes = secondsToMinutes(parsed.elapsedSeconds || 0);
+        } catch {}
+      }
+      if (totalMinutes > lastDeductedMinute) {
+        const toDeduct = totalMinutes - lastDeductedMinute;
+        if (toDeduct > 0) {
+          deductUserMinutes.mutate({
+            minutes: toDeduct,
+            callId: callId || undefined,
+          });
+        }
+      }
+      sessionStorage.removeItem(`live-minutes-${user.id}`);
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [lastDeductedMinute, callId, user.id]);
 
   // Check if the message contains any test conclusion phrases
   const isTestConclusionMessage = useCallback((content: string) => {
@@ -412,16 +496,6 @@ const FullSpeakingRecorderButton = forwardRef<
 
             // Save results to session storage
             sessionStorage.setItem("ieltsResult", JSON.stringify(results));
-
-            try {
-              await useCreditsForTest.mutateAsync({
-                speakingTestId: savedTest.id,
-                minutesCost: 1, // Default cost is 1 credit per test
-              });
-            } catch (creditError) {
-              console.error("Error deducting credits:", creditError);
-              // Continue anyway to show results to user
-            }
           }
         } catch (dbError) {
           console.error("Error saving to database:", dbError);
@@ -449,7 +523,6 @@ const FullSpeakingRecorderButton = forwardRef<
     messages,
     analyzeFullIELTSConversation,
     saveSpeakingTest,
-    useCreditsForTest,
     clearTest,
     router,
     user.id,
@@ -601,6 +674,8 @@ const FullSpeakingRecorderButton = forwardRef<
     },
     getSessionStartTime: () => sessionStartTimeRef.current,
   }));
+
+  const liveMinutesUsed = secondsToMinutes(elapsedSeconds);
 
   return (
     <>
