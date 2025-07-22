@@ -3,14 +3,18 @@ import Image from "next/image";
 import { HomePageInteractiveGridPattern } from "@/components/custom/quick-speaking-test";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  isEnoughMinutesForGeneralEnglish,
+  isEnoughMinutesForMockTest,
+} from "@/lib/is-enough-minutes";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 
 export default async function HomepagePagesOptions() {
   const session = await auth();
 
-  const credits = await api.payments.getUserCredits();
-  const isEnoughCredits = credits > 0;
+  // Check if user has enough credits to proceed with the mock test
+  const minutes = await api.payments.getUserMinutes();
 
   return (
     <div
@@ -22,7 +26,7 @@ export default async function HomepagePagesOptions() {
       <HomePageInteractiveGridPattern />
       <Card
         className="z-10 w-full border min-h-56 md:min-h-68 m-4 md:mt-40 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
-        href={isEnoughCredits ? "/general-english" : "/buy-credits"}
+        href={isEnoughMinutesForGeneralEnglish(minutes) ? "/general-english" : "/buy-minutes"}
         asLink
       >
         <CardHeader className="relative pb-2">
@@ -51,7 +55,7 @@ export default async function HomepagePagesOptions() {
 
       <Card
         className="z-10 w-full border min-h-56 md:min-h-68 m-4 md:mt-40 bg-gradient-to-br from-blue-50 to-blue-100 transition-all dark:from-blue-900 dark:to-blue-800 hover:from-blue-100 hover:to-blue-200 hover:dark:from-blue-800 hover:dark:to-blue-700"
-        href={isEnoughCredits ? "/mock-test" : "/buy-credits"}
+        href={isEnoughMinutesForMockTest(minutes) ? "/mock-test" : "/buy-minutes"}
         asLink
       >
         <CardHeader className="relative pb-2">

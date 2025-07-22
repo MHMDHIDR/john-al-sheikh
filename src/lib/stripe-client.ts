@@ -1,15 +1,15 @@
 import { env } from "@/env";
 
 export const PriceIDs = {
-  fiveCredits: env.NEXT_PUBLIC_STRIPE_PRICE_ID_5,
-  fifteenCredits: env.NEXT_PUBLIC_STRIPE_PRICE_ID_15,
-  twentyCredits: env.NEXT_PUBLIC_STRIPE_PRICE_ID_20,
+  fiveMinutes: env.NEXT_PUBLIC_STRIPE_PRICE_ID_5,
+  tenMinutes: env.NEXT_PUBLIC_STRIPE_PRICE_ID_10,
+  fifteenMinutes: env.NEXT_PUBLIC_STRIPE_PRICE_ID_15,
 };
 
-export const Credits = {
-  STARTER: 5,
-  PLUS: 15,
-  PRO: 20,
+export const Minutes = {
+  STARTER: 25,
+  PLUS: 50,
+  PRO: 75,
 };
 
 export type PackageInfo = {
@@ -17,52 +17,54 @@ export type PackageInfo = {
   priceId: string;
   name: string;
   description: string;
-  credits: number;
+  minutes: number;
   features: string[];
   popular?: boolean;
 };
 
-export const creditPackages: Record<keyof typeof PriceIDs, PackageInfo> = {
-  fiveCredits: {
-    id: "fiveCredits",
-    priceId: PriceIDs.fiveCredits,
+export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
+  fiveMinutes: {
+    id: "fiveMinutes",
+    priceId: PriceIDs.fiveMinutes,
     name: "Starter",
     description: "مناسب للمبتدئين لتجربة المنصة",
-    credits: Credits.STARTER,
+    minutes: Minutes.STARTER,
     features: [
-      "5 محادثات تدريبية محاكاة IELTS",
+      "أحصل على 25 دقيقة",
+      "محادثات تدريبية باللغة الإنجليزية",
       "تحليل الأداء بالتفصيل",
       "إحصائيات بمستوى الأداء",
       "وصول مستمر للخدمة",
     ],
   },
-  fifteenCredits: {
-    id: "fifteenCredits",
-    priceId: PriceIDs.fifteenCredits,
-    name: "Plus",
-    description: "من أكثر الباقات شعبية للمحادثات التدريبية",
-    credits: Credits.PLUS,
-    features: [
-      "15 محادثة تدريبية محاكاة IELTS",
-      "تحليل الأداء المتقدم",
-      "لوحة التحكم لتتبع الأداء",
-      "الأولوية في الدعم",
-      "وصول مستمر للخدمة",
-    ],
-    popular: true,
-  },
-  twentyCredits: {
-    id: "twentyCredits",
-    priceId: PriceIDs.twentyCredits,
+  tenMinutes: {
+    id: "tenMinutes",
+    priceId: PriceIDs.tenMinutes,
     name: "Pro",
     description: "تحضير متكامل للنجاح المضمون",
-    credits: Credits.PRO,
+    minutes: Minutes.PLUS,
     features: [
-      "20 محادثة تدريبية محاكاة IELTS",
-      "تحليل أداء محادثات متقدم",
+      "أحصل على 50 دقيقة",
+      "محادثات تدريبية باللغة الإنجليزية",
       "إحصائات تفصيلية لمتابعة الأداء",
-      "الأولوية القصوى في الدعم",
       "وصول مستمر للخدمة",
+      "الأولوية في الدعم",
     ],
+  },
+  fifteenMinutes: {
+    id: "fifteenMinutes",
+    priceId: PriceIDs.fifteenMinutes,
+    name: "Plus",
+    description: "من أكثر الباقات شعبية للمحادثات التدريبية",
+    minutes: Minutes.PRO,
+    features: [
+      "أحصل على 75 دقيقة",
+      "محادثات تدريبية باللغة الإنجليزية",
+      "تحليل الأداء المتقدم",
+      "لوحة التحكم لتتبع الأداء",
+      "وصول مستمر للخدمة",
+      "الأولوية القصوى في الدعم",
+    ],
+    popular: true,
   },
 };

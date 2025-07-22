@@ -20,7 +20,7 @@ export const translateSring = (string: string) => {
     case "onboarding": {
       return "تكملة بيانات المستخدم";
     }
-    case "buy-credits": {
+    case "buy-minutes": {
       return "شراء رصيد نقاط";
     }
     case "speaking-test-results": {

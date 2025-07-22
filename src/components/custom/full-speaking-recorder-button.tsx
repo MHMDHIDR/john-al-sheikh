@@ -416,7 +416,7 @@ const FullSpeakingRecorderButton = forwardRef<
             try {
               await useCreditsForTest.mutateAsync({
                 speakingTestId: savedTest.id,
-                creditCost: 1, // Default cost is 1 credit per test
+                minutesCost: 1, // Default cost is 1 credit per test
               });
             } catch (creditError) {
               console.error("Error deducting credits:", creditError);

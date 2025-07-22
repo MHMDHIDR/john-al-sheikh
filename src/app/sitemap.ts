@@ -11,7 +11,7 @@ export default async function sitemap() {
     "terms",
     "mock-test",
     "general-english",
-    "buy-credits",
+    "buy-minutes",
     "subscribe",
     "signin",
     "articles",

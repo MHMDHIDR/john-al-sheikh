@@ -71,6 +71,13 @@
       "when": 1752536843699,
       "tag": "0009_bent_mister_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1753193112111,
+      "tag": "0010_panoramic_lester",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,7 @@ export default async function BuyCreditsLayout({ children }: { children: React.R
   const user = session?.user;
 
   if (!user) {
-    redirect("/signin?callbackUrl=/buy-credits");
+    redirect("/signin?callbackUrl=/buy-minutes");
   }
 
   return <>{children}</>;

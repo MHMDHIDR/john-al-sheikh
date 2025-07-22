@@ -11,7 +11,7 @@ export default async function SpeakingTestResults() {
     redirect("/signin?callbackUrl=/speaking-test-results");
   }
 
-  const credits = await api.payments.getUserCredits();
+  const minutes = await api.payments.getUserMinutes();
 
-  return <SpeakingTestResultsDisplay credits={credits} />;
+  return <SpeakingTestResultsDisplay minutes={minutes} />;
 }

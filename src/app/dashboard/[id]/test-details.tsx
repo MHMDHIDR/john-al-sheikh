@@ -25,18 +25,18 @@ import type { inferRouterOutputs } from "@trpc/server";
 
 type TestDetailsProps = {
   details: inferRouterOutputs<AppRouter>["users"]["getTestById"];
-  credits: inferRouterOutputs<AppRouter>["payments"]["getUserCredits"];
+  minutes: inferRouterOutputs<AppRouter>["payments"]["getUserMinutes"];
   recordingUrl?: string | null;
 };
 
-export default function TestDetails({ details, credits, recordingUrl }: TestDetailsProps) {
+export default function TestDetails({ details, minutes, recordingUrl }: TestDetailsProps) {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
 
   // Get the active tab from the URL or default to "results"
   const activeTab = searchParams.get("view") ?? "results";
 
-  const isEnoughCredits = credits > 0;
+  const isEnoughMinutes = minutes > 5;
 
   // Handle tab change by updating URL without navigation
   const handleTabChange = useCallback(
@@ -328,13 +328,13 @@ export default function TestDetails({ details, credits, recordingUrl }: TestDeta
         </Tabs>
 
         <div className="mt-8 text-center">
-          <Link href={isEnoughCredits ? "/mock-test" : "/buy-credits"}>
+          <Link href={isEnoughMinutes ? "/mock-test" : "/buy-minutes"}>
             <Button variant="outline" className="w-full max-w-xs">
               ابدأ اختبار محادثة جديد
             </Button>
           </Link>
           <Divider className="my-5">أو</Divider>
-          <Link href={isEnoughCredits ? "/general-english" : "/buy-credits"}>
+          <Link href={isEnoughMinutes ? "/general-english" : "/buy-minutes"}>
             <Button variant="outline" className="w-full max-w-xs">
               محادثة عامة بالإنجليزي
             </Button>

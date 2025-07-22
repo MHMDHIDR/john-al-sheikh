@@ -34,6 +34,10 @@ import {
 } from "@/components/ui/sheet";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { fallbackUsername, truncateUsername } from "@/lib/fallback-username";
+import {
+  isEnoughMinutesForGeneralEnglish,
+  isEnoughMinutesForMockTest,
+} from "@/lib/is-enough-minutes";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/server/db/schema";
 import type { AppRouter } from "@/server/api/root";
@@ -42,27 +46,25 @@ import type { Session } from "next-auth";
 
 type AccountNavProps = {
   user: Session["user"];
-  credits: inferRouterOutputs<AppRouter>["payments"]["getUserCredits"];
+  minutes: inferRouterOutputs<AppRouter>["payments"]["getUserMinutes"];
 };
 
-export default function AccountNav({ user, credits }: AccountNavProps) {
-  const isEnoughCredits = credits > 0;
-
+export default function AccountNav({ user, minutes }: AccountNavProps) {
   const NAV_ITEMS = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
     { href: "/account", icon: IconUser, label: "الحساب" },
     { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
     {
-      href: isEnoughCredits ? "/mock-test" : "/buy-credits",
+      href: isEnoughMinutesForMockTest(minutes) ? "/mock-test" : "/buy-minutes",
       icon: IconSpeakerphone,
       label: "اختبار المحادثة",
     },
     {
-      href: isEnoughCredits ? "/general-english" : "/buy-credits",
+      href: isEnoughMinutesForGeneralEnglish(minutes) ? "/general-english" : "/buy-minutes",
       icon: IconPhoneCalling,
       label: "محادثة عامة بالإنجليزي",
     },
-    { href: "/buy-credits", icon: IconCreditCard, label: "شراء نقاط" },
+    { href: "/buy-minutes", icon: IconCreditCard, label: "شراء رصيد دقائق" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
       ? { href: "/admin", icon: IconSettings, label: "الإدارة" }

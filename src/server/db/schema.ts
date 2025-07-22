@@ -63,7 +63,7 @@ export const users = createTable("user", {
   hobbies: jsonb("hobbies").$type<string[]>(),
   goalBand: decimal("goal_band", { precision: 3, scale: 1 }).$type<number>().default(5),
   currentBand: decimal("current_band", { precision: 3, scale: 1 }).$type<number>().default(0),
-  credits: integer("credits").notNull().default(1),
+  minutes: integer("minutes").notNull().default(5),
   role: userRoleEnum("role").notNull().default("USER"),
   status: userStatusEnum("status").notNull().default("PENDING"),
   emailVerified: timestamp("email_verified", {
@@ -219,7 +219,6 @@ export const creditTransactions = createTable(
       .references(() => users.id),
     type: transactionTypeEnum("type").notNull(),
     amount: integer("amount").notNull(), // Number of credits added or used
-    creditsAfter: integer("credits_after").notNull(), // Balance after transaction
 
     // Purchase-specific fields (null for USAGE transactions)
     stripePaymentId: varchar("stripe_payment_id", { length: 255 }),
@@ -229,7 +228,8 @@ export const creditTransactions = createTable(
 
     // Usage-specific fields (null for PURCHASE transactions)
     speakingTestId: varchar("speaking_test_id", { length: 255 }).references(() => speakingTests.id),
-    creditCost: integer("credit_cost"), // How many credits this test consumed
+    minutesCost: integer("minutes_cost"), // How many minutes this test consumed
+    minutesAfter: integer("minutes_after").notNull(), // Balance after transaction
 
     status: transactionStatusEnum("status").notNull().default("PENDING"),
     metadata: jsonb("metadata").$type<TransactionMetadata>(), // For any additional flexible data

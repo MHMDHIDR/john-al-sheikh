@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { generateMetadata } from "@/components/custom/seo";
-import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
 import { api } from "@/trpc/server";
 

@@ -28,6 +28,7 @@ declare module "next-auth" {
       goalBand: number;
       hobbies: string[];
       gender: string;
+      minutes: number;
       age: number;
     } & DefaultSession["user"];
   }
@@ -361,6 +362,7 @@ export const authConfig = {
           goalBand: userData?.goalBand ?? 0,
           hobbies: userData?.hobbies ?? [],
           gender: userData?.gender ?? "male",
+          minutes: userData?.minutes ?? 0,
           age: userData?.age ?? 0,
           profileCompleted: userData?.profileCompleted ?? false,
         },

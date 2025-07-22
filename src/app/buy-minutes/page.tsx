@@ -1,7 +1,7 @@
 import { env } from "@/env";
-import { creditPackages } from "@/lib/stripe-client";
+import { minutePackages } from "@/lib/stripe-client";
 import { api } from "@/trpc/server";
-import CreditPackages from "./credit-packages";
+import MinutePackages from "./credit-packages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,10 +19,10 @@ export default async function BuyCreditsPage({
 
   const checkoutSessions: Record<string, string> = {};
 
-  for (const packageId of Object.keys(creditPackages)) {
+  for (const packageId of Object.keys(minutePackages)) {
     try {
       const { checkoutUrl } = await api.payments.createCheckoutSession({
-        packageId: packageId as keyof typeof creditPackages,
+        packageId: packageId as keyof typeof minutePackages,
       });
 
       if (checkoutUrl) {
@@ -52,7 +52,7 @@ export default async function BuyCreditsPage({
       )}
 
       <div className="flex items-center justify-center w-full">
-        <CreditPackages checkoutSessions={checkoutSessions} />
+        <MinutePackages checkoutSessions={checkoutSessions} />
       </div>
     </div>
   );

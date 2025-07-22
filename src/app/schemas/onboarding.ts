@@ -13,7 +13,7 @@ export const onboardingSchema = z.object({
     .regex(/^[a-zA-Z0-9_-]{3,20}$/, "اسم المستخدم يجب أن يحتوي على أحرف إنجليزية وأرقام فقط"),
   email: z.string().email("يرجى إدخال بريد إلكتروني صحيح").optional(),
   gender: z.enum(["male", "female"], {
-    invalid_type_error: "يرجى اختيار النوع",
+    error: () => "يرجى اختيار النوع",
   }),
   goalBand: z
     .number({

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import ConversationUI from "@/components/custom/conversation-ui";
 import { env } from "@/env";
+import { isEnoughMinutesForGeneralEnglish } from "@/lib/is-enough-minutes";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import type { UserProfile } from "@/components/custom/full-speaking-recorder-button";
@@ -31,13 +32,12 @@ export default async function GeneralEnglishPage() {
     redirect("/onboarding");
   }
 
-  // Check if user has enough credits to proceed with the general English speaking
-  const credits = await api.payments.getUserCredits();
+  // Check if user has enough minutes to proceed with the general English speaking
+  const minutes = await api.payments.getUserMinutes();
 
-  // If user doesn't have enough credits, redirect to buy-credits page
-  if (credits < 1) {
-    redirect("/buy-credits");
-    return null;
+  // If user doesn't have enough minutes, redirect to buy-minutes page
+  if (!isEnoughMinutesForGeneralEnglish(minutes)) {
+    redirect("/buy-minutes");
   }
 
   const userProfile: UserProfile = {

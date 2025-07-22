@@ -9,7 +9,7 @@ import {
   enhanceTransactions,
   extractUserEmails,
 } from "@/lib/payments";
-import { creditPackages, stripe } from "@/lib/stripe";
+import { minutePackages, stripe } from "@/lib/stripe";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
 import { creditTransactions, users } from "@/server/db/schema";
@@ -20,14 +20,14 @@ type UserCountry = { ip: string; country: string };
 export const paymentsRouter = createTRPCRouter({
   /** Create a Stripe checkout session for the user to purchase credits */
   createCheckoutSession: protectedProcedure
-    .input(z.object({ packageId: z.enum(["fiveCredits", "fifteenCredits", "twentyCredits"]) }))
+    .input(z.object({ packageId: z.enum(["fiveMinutes", "tenMinutes", "fifteenMinutes"]) }))
     .mutation(async ({ ctx, input }) => {
       const { packageId } = input;
       const { session } = ctx;
       const userId = session.user.id;
       const userEmail = session.user.email ?? "";
 
-      const packageInfo = creditPackages[packageId];
+      const packageInfo = minutePackages[packageId];
 
       const cookieStore = await cookies();
       const datafastVisitorId = cookieStore.get("datafast_visitor_id")?.value;
@@ -45,11 +45,11 @@ export const paymentsRouter = createTRPCRouter({
         ],
         mode: "payment",
         success_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.NEXT_PUBLIC_APP_URL}/buy-credits?cancelled=true`,
+        cancel_url: `${env.NEXT_PUBLIC_APP_URL}/buy-minutes?cancelled=true`,
         metadata: {
           userId,
           packageId,
-          credits: packageInfo.credits.toString(),
+          minutes: packageInfo.minutes.toString(),
           packageName: packageInfo.name,
           datafast_visitor_id: datafastVisitorId,
           datafast_session_id: datafastSessionId,
@@ -91,39 +91,25 @@ export const paymentsRouter = createTRPCRouter({
       const { session } = ctx;
       const userId = session.user.id;
 
-      // Retrieve the checkout session from Stripe
-      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-
-      if (!checkoutSession || checkoutSession.payment_status !== "paid") {
-        console.error(`Session ${sessionId} payment status is not paid`);
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Payment not completed",
-        });
-      }
-
-      // Validate that the metadata has expected values
-      const metadataUserId = checkoutSession.metadata?.userId;
-
-      if (!metadataUserId) {
-        console.error("Session is missing userId in metadata");
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid session: missing user information",
-        });
-      }
-
-      // Check if session was already processed by looking up the transaction
-      const existingTransaction = await db.query.creditTransactions.findFirst({
+      // Check if transaction has already been processed
+      const existingTransaction = await ctx.db.query.creditTransactions.findFirst({
         where: eq(creditTransactions.stripePaymentId, sessionId),
       });
-
       if (existingTransaction) {
         return { success: true, alreadyProcessed: true };
       }
 
-      // Get user current credits
-      const user = await db.query.users.findFirst({
+      // Retrieve the Stripe session
+      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+      if (!checkoutSession || checkoutSession.payment_status !== "paid") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Checkout session not found or not paid",
+        });
+      }
+
+      // Get user current minutes
+      const user = await ctx.db.query.users.findFirst({
         where: eq(users.id, userId),
       });
 
@@ -132,23 +118,23 @@ export const paymentsRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
-      const creditsToAdd = Number(checkoutSession.metadata?.credits ?? 0);
-      const packageName = checkoutSession.metadata?.packageName ?? "Credit Package";
-      const newCreditBalance = user.credits + creditsToAdd;
+      const minutesToAdd = Number(checkoutSession.metadata?.minutes ?? 0);
+      const packageName = checkoutSession.metadata?.packageName ?? "Minutes Package";
+      const newMinuteBalance = user.minutes + minutesToAdd;
 
       try {
-        // Begin transaction to update user credits and create transaction record
-        await db.transaction(async tx => {
-          // Update user credits
-          await tx.update(users).set({ credits: newCreditBalance }).where(eq(users.id, userId));
+        // Begin transaction to update user minutes and create transaction record
+        await ctx.db.transaction(async tx => {
+          // Update user minutes
+          await tx.update(users).set({ minutes: newMinuteBalance }).where(eq(users.id, userId));
 
           // Create transaction record
           await tx.insert(creditTransactions).values({
             userId,
             type: "PURCHASE",
-            amount: creditsToAdd,
-            creditCost: creditsToAdd,
-            creditsAfter: newCreditBalance,
+            amount: minutesToAdd,
+            minutesCost: minutesToAdd,
+            minutesAfter: newMinuteBalance,
             stripePaymentId: sessionId,
             packageName,
             priceInCents: checkoutSession.amount_total ?? 0,
@@ -168,7 +154,7 @@ export const paymentsRouter = createTRPCRouter({
           });
         });
 
-        return { success: true, creditsAdded: creditsToAdd };
+        return { success: true, minutesAdded: minutesToAdd };
       } catch (error) {
         console.error(
           `Error in db transaction: ${error instanceof Error ? error.message : String(error)}`,
@@ -182,9 +168,9 @@ export const paymentsRouter = createTRPCRouter({
 
   /** Use credits for a speaking test */
   useCreditsForTest: protectedProcedure
-    .input(z.object({ speakingTestId: z.string(), creditCost: z.number().default(1) }))
+    .input(z.object({ speakingTestId: z.string(), minutesCost: z.number().default(1) }))
     .mutation(async ({ ctx, input }) => {
-      const { speakingTestId, creditCost } = input;
+      const { speakingTestId, minutesCost } = input;
       const { session } = ctx;
       const userId = session.user.id;
 
@@ -200,29 +186,29 @@ export const paymentsRouter = createTRPCRouter({
         });
       }
 
-      // Check if user has enough credits
-      if (user.credits < creditCost) {
+      // Check if user has enough minutes
+      if (user.minutes < minutesCost) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Insufficient credits",
+          message: "Insufficient minutes",
         });
       }
 
-      const newCreditBalance = user.credits - creditCost;
+      const newCreditBalance = user.minutes - minutesCost;
 
-      // Begin transaction to update user credits and create transaction record
+      // Begin transaction to update user minutes and create transaction record
       await db.transaction(async tx => {
-        // Update user credits
-        await tx.update(users).set({ credits: newCreditBalance }).where(eq(users.id, userId));
+        // Update user minutes
+        await tx.update(users).set({ minutes: newCreditBalance }).where(eq(users.id, userId));
 
         // Create transaction record
         await tx.insert(creditTransactions).values({
           userId,
           type: "USAGE",
-          amount: -creditCost,
-          creditsAfter: newCreditBalance,
+          amount: -minutesCost,
+          minutesAfter: newCreditBalance,
           speakingTestId,
-          creditCost,
+          minutesCost,
           status: "COMPLETED",
           metadata: {
             testType: "MOCK", // Default to MOCK, this can be updated based on actual test type
@@ -234,10 +220,10 @@ export const paymentsRouter = createTRPCRouter({
     }),
 
   /**
-   * Get user's credit balance
+   * Get user's minutes balance
    * @returns {number} The user's credit balance
    */
-  getUserCredits: protectedProcedure.query(async ({ ctx }) => {
+  getUserMinutes: protectedProcedure.query(async ({ ctx }) => {
     const { session } = ctx;
     const userId = session.user.id;
 
@@ -247,7 +233,7 @@ export const paymentsRouter = createTRPCRouter({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    return user.credits;
+    return user.minutes;
   }),
 
   getTransactionHistory: protectedProcedure.query(async ({ ctx }) => {
@@ -289,7 +275,7 @@ export const paymentsRouter = createTRPCRouter({
         gender: true,
         email: true,
         displayName: true,
-        credits: true,
+        minutes: true,
         role: true,
       },
     });

@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { creditsLabel } from "@/lib/credits-label";
 import { formatPrice } from "@/lib/format-price";
-import { creditPackages } from "@/lib/stripe-client";
+import { minutesLabel } from "@/lib/minutes-label";
+import { minutePackages } from "@/lib/stripe-client";
 import type { PackageInfo } from "@/lib/stripe-client";
 
-export default function CreditPackages({
+export default function MinutePackages({
   checkoutSessions,
 }: {
   checkoutSessions: Record<string, string>;
@@ -32,7 +32,7 @@ export default function CreditPackages({
 
   return (
     <div className="grid gap-6 lg:gap-0 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-      {Object.entries(creditPackages).map(([id, packageInfo]) => (
+      {Object.entries(minutePackages).map(([id, packageInfo]) => (
         <PackageCard key={id} packageInfo={packageInfo} onPurchase={() => handlePurchase(id)} />
       ))}
     </div>
@@ -45,7 +45,7 @@ type PackageCardProps = {
 };
 
 function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
-  const { name, description, features, credits, popular } = packageInfo;
+  const { name, description, features, minutes, popular } = packageInfo;
 
   return (
     <Card
@@ -73,8 +73,7 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
       <CardContent className="flex-grow px-6 pb-0 pt-2">
         <div className="mb-6 flex flex-col items-center">
           <div className="flex items-baseline justify-center">
-            <span className="text-4xl font-bold">{formatPrice({ price: credits })}</span>
-            <span className="text-gray-500 dark:text-gray-200 text-base ml-1">مرة واحدة</span>
+            <span className="text-4xl font-bold">{formatPrice({ price: minutes / 5 })}</span>
           </div>
           <small className="mt-2 text-xs">{description}</small>
         </div>
@@ -97,7 +96,7 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
           variant={popular ? "pressable" : "outline"}
           onClick={onPurchase}
         >
-          أحصل على <strong>{credits}</strong> {creditsLabel({ credits })}
+          أحصل على <strong>{minutes}</strong> {minutesLabel({ credits: minutes })}
         </Button>
       </CardFooter>
     </Card>

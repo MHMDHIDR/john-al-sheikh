@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
     try {
       // Extract metadata
       const userId = session.metadata?.userId;
-      const creditsToAdd = Number(session.metadata?.credits ?? 0);
-      const packageName = session.metadata?.packageName ?? "Credit Package";
+      const minutesToAdd = Number(session.metadata?.minutes ?? 0);
+      const packageName = session.metadata?.packageName ?? "Minutes Package";
 
-      if (!userId || !creditsToAdd) {
+      if (!userId || !minutesToAdd) {
         console.error("Missing required metadata in Stripe session", session.metadata);
         return NextResponse.json({ success: false, error: "Missing metadata" }, { status: 400 });
       }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, alreadyProcessed: true });
       }
 
-      // Get user current credits
+      // Get user current minutes
       const user = await db.query.users.findFirst({
         where: eq(users.id, userId),
       });
@@ -62,20 +62,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
       }
 
-      const newCreditBalance = user.credits + creditsToAdd;
+      const newMinuteBalance = user.minutes + minutesToAdd;
 
       try {
         // Begin transaction to update user credits and create transaction record
         await db.transaction(async tx => {
-          // Update user credits
-          await tx.update(users).set({ credits: newCreditBalance }).where(eq(users.id, userId));
+          // Update user minutes
+          await tx.update(users).set({ minutes: newMinuteBalance }).where(eq(users.id, userId));
 
           // Create transaction record
           await tx.insert(creditTransactions).values({
             userId,
             type: "PURCHASE",
-            amount: creditsToAdd,
-            creditsAfter: newCreditBalance,
+            amount: minutesToAdd,
+            minutesCost: minutesToAdd,
+            minutesAfter: newMinuteBalance,
             stripePaymentId: session.id,
             packageName,
             priceInCents: session.amount_total ?? 0,

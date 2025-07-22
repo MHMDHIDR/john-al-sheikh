@@ -10,4 +10,4 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
 
 // Re-export PriceIDs from stripe-client for compatibility
 export { PriceIDs };
-export { Credits, creditPackages, type PackageInfo } from "./stripe-client";
+export { Minutes, minutePackages, type PackageInfo } from "./stripe-client";
