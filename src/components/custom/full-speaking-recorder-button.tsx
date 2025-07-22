@@ -402,7 +402,7 @@ const FullSpeakingRecorderButton = forwardRef<
     return () => {
       window.removeEventListener("beforeunload", handleUnload);
     };
-  }, [lastDeductedMinute, callId, user.id]);
+  }, [lastDeductedMinute, callId, user.id, deductUserMinutes]);
 
   // Check if the message contains any test conclusion phrases
   const isTestConclusionMessage = useCallback((content: string) => {
@@ -667,8 +667,6 @@ const FullSpeakingRecorderButton = forwardRef<
     },
     getSessionStartTime: () => sessionStartTimeRef.current,
   }));
-
-  const liveMinutesUsed = secondsToMinutes(elapsedSeconds);
 
   return (
     <>
