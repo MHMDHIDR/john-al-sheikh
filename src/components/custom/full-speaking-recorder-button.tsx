@@ -346,11 +346,9 @@ const FullSpeakingRecorderButton = forwardRef<
       let initialDeducted = 0;
       const saved = sessionStorage.getItem(`live-minutes-${user.id}`);
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          initialElapsed = parsed.elapsedSeconds || 0;
-          initialDeducted = parsed.lastDeductedMinute || 0;
-        } catch {}
+        const parsed = JSON.parse(saved) as { elapsedSeconds: number; lastDeductedMinute: number };
+        initialElapsed = parsed.elapsedSeconds ?? 0;
+        initialDeducted = parsed.lastDeductedMinute ?? 0;
       }
       setElapsedSeconds(initialElapsed);
       setLastDeductedMinute(initialDeducted);
@@ -391,16 +389,13 @@ const FullSpeakingRecorderButton = forwardRef<
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          totalMinutes = secondsToMinutes(parsed.elapsedSeconds || 0);
+          totalMinutes = secondsToMinutes(parsed.elapsedSeconds ?? 0);
         } catch {}
       }
       if (totalMinutes > lastDeductedMinute) {
         const toDeduct = totalMinutes - lastDeductedMinute;
         if (toDeduct > 0) {
-          deductUserMinutes.mutate({
-            minutes: toDeduct,
-            callId: callId || undefined,
-          });
+          deductUserMinutes.mutate({ minutes: toDeduct, callId });
         }
       }
       sessionStorage.removeItem(`live-minutes-${user.id}`);
