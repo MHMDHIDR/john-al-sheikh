@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/custom/icons";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
+import { Badge } from "@/components/ui/badge";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 import { auth } from "@/server/auth";
@@ -39,8 +40,11 @@ export default async function SubscribePage() {
               <span className="block">{env.NEXT_PUBLIC_APP_NAME}</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-700 max-w-lg mt-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
-              سنساعدك على الوصول للدرجة التي ترغب بها في امتحان الايلتس
+            <p className="text-lg sm:text-xl text-gray-700 max-w-lg mt-2 text-balance animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+              سنساعدك على تحسين مهارة المحادثة باللغة الإنجليزية بالتحدث مع
+              <Badge className="mx-1" asChild>
+                {env.NEXT_PUBLIC_APP_NAME}
+              </Badge>
             </p>
           </div>
         </div>
@@ -50,7 +54,7 @@ export default async function SubscribePage() {
         </div>
 
         <p className="text-sm text-gray-500 animate-in fade-in duration-700 delay-500">
-          إنضم إلى مجتمع مهتم بإمتحانات الايلتس واحصل على إرشادات من خبراء
+          إنضم إلى مجتمع مهتم بتحسين مهارات المحادثة باللغة الإنجليزية وأحصل على إرشادات من خبراء
         </p>
       </div>
     </main>

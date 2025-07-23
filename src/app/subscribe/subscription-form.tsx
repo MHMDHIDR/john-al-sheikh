@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -165,6 +166,25 @@ export function SubscriptionForm({ className }: { className?: string }) {
               )}
             </Button>
           </form>
+
+          <p className="text-sm text-gray-500 select-none pt-2">
+            بالمتابعة، أنت توافق على
+            <Link
+              href="/terms"
+              target="_blank"
+              className="text-blue-500 inline-flex px-1 hover:underline"
+            >
+              شروط الخدمة
+            </Link>
+            و
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="text-blue-500 inline-flex px-1 hover:underline"
+            >
+              سياسة الخصوصية
+            </Link>
+          </p>
         </Form>
       )}
     </div>
