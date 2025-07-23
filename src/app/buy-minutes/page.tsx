@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import { minutePackages } from "@/lib/stripe-client";
 import { api } from "@/trpc/server";
-import MinutePackages from "./credit-packages";
+import MinutePackages from "./minutes-packages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
