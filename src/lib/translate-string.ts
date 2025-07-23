@@ -21,7 +21,7 @@ export const translateSring = (string: string) => {
       return "تكملة بيانات المستخدم";
     }
     case "buy-minutes": {
-      return "شراء رصيد نقاط";
+      return "شراء رصيد دقائق";
     }
     case "speaking-test-results": {
       return "نتائج اختبار المحادثة";

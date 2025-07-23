@@ -40,7 +40,7 @@ export default async function BuyCreditsPage({
           قوي مستواك في محادثات اللغة الإنجليزية
         </h1>
         <p className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl text-balance">
-          شراء رصيد نقاط للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
+          شراء رصيد دقائق للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
           مستواك
         </p>
       </div>
