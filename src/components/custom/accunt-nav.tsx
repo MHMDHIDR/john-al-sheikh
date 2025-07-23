@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconClock,
   IconCreditCard,
   IconHome,
   IconMenu3,
@@ -13,8 +14,10 @@ import {
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import { SignoutButton } from "@/components/custom/signout-button";
 import { AvatarFallback, AvatarImage, Avatar as AvatarWrapper } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Sheet,
   SheetClose,
@@ -33,34 +37,37 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { checkRoleAccess } from "@/lib/check-role-access";
+import { MINUTES_IN_MS } from "@/lib/constants";
 import { fallbackUsername, truncateUsername } from "@/lib/fallback-username";
 import {
   isEnoughMinutesForGeneralEnglish,
   isEnoughMinutesForMockTest,
 } from "@/lib/is-enough-minutes";
+import { minutesLabel } from "@/lib/minutes-label";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/server/db/schema";
-import type { AppRouter } from "@/server/api/root";
-import type { inferRouterOutputs } from "@trpc/server";
+import { api } from "@/trpc/react";
 import type { Session } from "next-auth";
 
-type AccountNavProps = {
-  user: Session["user"];
-  minutes: inferRouterOutputs<AppRouter>["payments"]["getUserMinutes"];
-};
+export default function AccountNav({ user }: { user: Session["user"] }) {
+  const { callStatus } = useGlobalVapiConversation();
+  const isCallActive = callStatus === "ACTIVE";
+  const { data: minutes } = api.payments.getUserMinutes.useQuery(undefined, {
+    refetchInterval: isCallActive ? 5000 : MINUTES_IN_MS * 2,
+    refetchOnWindowFocus: isCallActive,
+  });
 
-export default function AccountNav({ user, minutes }: AccountNavProps) {
   const NAV_ITEMS = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
     { href: "/account", icon: IconUser, label: "الحساب" },
     { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
     {
-      href: isEnoughMinutesForMockTest(minutes) ? "/mock-test" : "/buy-minutes",
+      href: isEnoughMinutesForMockTest(minutes ?? 0) ? "/mock-test" : "/buy-minutes",
       icon: IconSpeakerphone,
       label: "اختبار المحادثة",
     },
     {
-      href: isEnoughMinutesForGeneralEnglish(minutes) ? "/general-english" : "/buy-minutes",
+      href: isEnoughMinutesForGeneralEnglish(minutes ?? 0) ? "/general-english" : "/buy-minutes",
       icon: IconPhoneCalling,
       label: "محادثة عامة بالإنجليزي",
     },
@@ -73,6 +80,33 @@ export default function AccountNav({ user, minutes }: AccountNavProps) {
 
   return (
     <div className="flex gap-2">
+      {minutes && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Badge
+              className="text-xs flex items-center gap-x-1 font-semibold py-0 rounded-full select-none cursor-pointer hover:bg-green-600 transition-colors"
+              variant={"success"}
+            >
+              <strong className="hidden md:inline-flex">رصيد الدقائق: </strong>
+              <IconClock size={14} />
+              {minutes} {minutesLabel({ credits: minutes })}
+            </Badge>
+          </PopoverTrigger>
+          <PopoverContent className="w-fit py-2 px-1 mx-auto text-sm" side="bottom" align="center">
+            <div className="flex items-center gap-x-1">
+              <IconClock size={16} className="text-green-600" />
+              <span>
+                لديك {minutes} {minutesLabel({ credits: minutes })} متوفرة حالياً
+              </span>
+            </div>
+            <Link href="/buy-minutes" className="w-full inline-flex justify-center">
+              <span className="text-2xs text-blue-600 hover:underline hover:text-blue-600/80 underline-offset-6 hover:decoration-wavy">
+                انقر للحصول على المزيد من الدقائق
+              </span>
+            </Link>
+          </PopoverContent>
+        </Popover>
+      )}
       <Sheet>
         <SheetTrigger asChild>
           <Button
