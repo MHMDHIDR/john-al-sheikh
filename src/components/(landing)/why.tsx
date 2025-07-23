@@ -1,16 +1,19 @@
 import { MapPin } from "lucide-react";
+import Image from "next/image";
 import { Card } from "../ui/card";
+import type { LucideIcon } from "lucide-react";
 
 interface FeatureCardProps {
+  icon: string;
   title: string;
   description: string;
 }
 
-function FeatureCard({ title, description }: FeatureCardProps) {
+function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
     <div className="bg-white rounded-3xl p-8 text-center space-y-4">
-      <div className="mx-auto w-16 h-16 bg-[#1C1C1C] rounded-full flex items-center justify-center">
-        <MapPin className="text-white size-8" />
+      <div className="mx-auto size-16 rounded-full flex items-center justify-center">
+        <Image src={icon} alt={title} width={64} height={64} />
       </div>
       <h3 className="text-2xl font-bold text-[#1C1C1C]" style={{ direction: "rtl" }}>
         {title}
@@ -37,16 +40,19 @@ export default function Why() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard
+            icon="/london.png"
             title="مدرب عربي أصيل من لندن"
             description="يفهم تحدياتك الثقافية واللغوية ويتحدث معك بلهجة بريطانية أصيلة"
           />
           <FeatureCard
-            title="مدرب عربي أصيل من لندن"
+            icon="/help.png"
+            title="مساعدة مباشرة"
             description="يفهم تحدياتك الثقافية واللغوية ويتحدث معك بلهجة بريطانية أصيلة"
           />
           <FeatureCard
-            title="مدرب عربي أصيل من لندن"
-            description="يفهم تحدياتك الثقافية واللغوية ويتحدث معك بلهجة بريطانية أصيلة"
+            icon="/suggest.png"
+            title="يقترح تحسينات"
+            description="يقترح تحسينات لتحسين مهاراتك اللغوية والثقافية"
           />
         </div>
       </Card>
