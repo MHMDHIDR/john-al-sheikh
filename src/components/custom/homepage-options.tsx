@@ -1,12 +1,13 @@
 import clsx from "clsx";
 import Image from "next/image";
-import { HomePageInteractiveGridPattern } from "@/components/custom/quick-speaking-test";
+import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   isEnoughMinutesForGeneralEnglish,
   isEnoughMinutesForMockTest,
 } from "@/lib/is-enough-minutes";
+import { cn } from "@/lib/utils";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 
@@ -18,12 +19,21 @@ export default async function HomepagePagesOptions() {
 
   return (
     <div
-      className={clsx("grid gap-3 place-items-center", {
+      className={clsx("grid gap-3 md:mx-14 mx-3 place-items-center", {
         "grid-cols-1": !session,
         "grid-cols-1 md:grid-cols-2": session,
       })}
     >
-      <HomePageInteractiveGridPattern />
+      <InteractiveGridPattern
+        className={cn(
+          "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+          "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-30",
+        )}
+        width={40}
+        height={40}
+        squares={[30, 30]}
+        squaresClassName="hover:fill-blue-200"
+      />
       <Card
         className="z-10 w-full border min-h-56 md:min-h-68 m-4 md:mt-40 bg-gradient-to-br from-purple-50 to-purple-100 transition-all dark:from-purple-900 dark:to-purple-800 hover:from-purple-100 hover:to-purple-200 hover:dark:from-purple-800 hover:dark:to-purple-700"
         href={isEnoughMinutesForGeneralEnglish(minutes) ? "/general-english" : "/buy-minutes"}

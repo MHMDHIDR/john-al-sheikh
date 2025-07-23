@@ -74,6 +74,8 @@
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
     "drizzle-orm": "^0.41.0",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "html-to-image": "^1.11.13",
     "libphonenumber-js": "^1.12.10",
     "lucide-react": "^0.503.0",

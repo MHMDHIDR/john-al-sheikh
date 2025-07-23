@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
-import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
+import LandingPage from "@/components/(landing)/landing";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 
@@ -22,7 +22,7 @@ export default async function Home() {
   const HomepagePagesOptions = dynamic(() => import("@/components/custom/homepage-options"));
 
   return (
-    <main className="relative select-none max-xs:-my-10 -my-20 flex h-screen px-3 flex-col items-center justify-center overflow-hidden">
+    <main className="relative select-none">
       {session && (
         <div className="flex flex-col justify-center items-center mt-10">
           <h1 className="text-lg md:text-2xl text-center text-gray-500">
@@ -32,7 +32,7 @@ export default async function Home() {
         </div>
       )}
 
-      {!session ? <QuickSpeakingTest /> : <HomepagePagesOptions />}
+      {!session ? <LandingPage /> : <HomepagePagesOptions />}
     </main>
   );
 }

@@ -7,7 +7,6 @@ import { ButtonRecord } from "@/components/custom/button-record";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { TimerQuickSpeakingTest } from "@/components/custom/timer-quick-speaking-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
-import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { useToast } from "@/hooks/use-toast";
 import { MAX_RECORDING_TIME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -337,102 +336,86 @@ export function QuickSpeakingTest() {
   }, [mediaRecorder, isRecording]);
 
   return (
-    <>
-      <HomePageInteractiveGridPattern />
+    <div
+      className="w-full max-w-2xl space-y-8 text-right z-10 mx-auto mt-6 mb-10"
+      id="quick-speaking"
+    >
+      <div className="text-center">
+        <h1 className="mb-5 text-2xl font-bold">اختبار المحادثة السريع</h1>
+        <p className="mb-2 font-black text-3xl text-blue-600 dark:text-blue-400">
+          <AuroraText className="mx-2">
+            <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
+          </AuroraText>
+        </p>
 
-      <div className="w-full max-w-2xl space-y-8 text-right z-10 relative">
-        <div className="text-center">
-          <h1 className="mb-5 text-2xl font-bold">اختبار المحادثة السريع</h1>
-          <p className="mb-2 font-black text-3xl text-blue-600 dark:text-blue-400">
-            <AuroraText className="mx-2">
-              <span className="font-normal mx-2">موضوع المحادثة</span>&quot;{currentPrompt}&quot;
-            </AuroraText>
-          </p>
-
-          {isRecording && (
-            <div className="my-6 flex flex-col items-center">
-              <TimerQuickSpeakingTest
-                isRunning={isRecording}
-                onTimeUp={handleTimeUp}
-                totalSeconds={MAX_RECORDING_TIME}
-              />
-            </div>
-          )}
-
-          {isProcessing && (
-            <div className="my-8 flex flex-col items-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-t-primary"></div>
-              <p className="mt-2 font-medium text-gray-600">جاري تحليل إجابتك...</p>
-            </div>
-          )}
-
-          <div className="my-5 flex justify-center">
-            <ButtonRecord
-              isRecording={isRecording}
-              onClick={() => setShowQuickTipsDialog(true)}
-              disabled={
-                isRecording ||
-                isProcessing ||
-                transcribeAudioMutation.isPending ||
-                analyzeIELTSSpeakingMutation.isPending
-              }
+        {isRecording && (
+          <div className="my-6 flex flex-col items-center">
+            <TimerQuickSpeakingTest
+              isRunning={isRecording}
+              onTimeUp={handleTimeUp}
+              totalSeconds={MAX_RECORDING_TIME}
             />
           </div>
+        )}
 
-          {!isRecording && !isProcessing && (
-            <label
-              className="block text-accent-foreground/75 cursor-pointer"
-              htmlFor="recording-button"
-            >
-              إضغط لبدأ المحادثة
-            </label>
-          )}
+        {isProcessing && (
+          <div className="my-8 flex flex-col items-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-t-primary"></div>
+            <p className="mt-2 font-medium text-gray-600">جاري تحليل إجابتك...</p>
+          </div>
+        )}
+
+        <div className="my-5 flex justify-center">
+          <ButtonRecord
+            isRecording={isRecording}
+            onClick={() => setShowQuickTipsDialog(true)}
+            disabled={
+              isRecording ||
+              isProcessing ||
+              transcribeAudioMutation.isPending ||
+              analyzeIELTSSpeakingMutation.isPending
+            }
+          />
         </div>
 
-        <ConfirmationDialog
-          open={showQuickTipsDialog}
-          onOpenChange={setShowQuickTipsDialog}
-          title="نصيحة سريعة"
-          description={
-            <ul className="text-right list-decimal">
-              <li className="text-gray-500">
-                يجب أن تتحدث لمدة <strong>{MAX_RECORDING_TIME}</strong> ثانية.{" "}
-              </li>
-              <li className="text-red-400 font-bold text-sm">
-                يجب أن تتحدث في نفس موضوع المحادثة بلغة انجليزية واضحة في الميكروفون.
-              </li>
-            </ul>
-          }
-          buttonText="مـوافق"
-          buttonClass="bg-yellow-600 hover:bg-yellow-700"
-          onConfirm={handleToggleRecording}
-        />
-
-        <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
-          <h2 className="mb-2 text-lg font-medium drop-shadow-sm">التعليمات:</h2>
-          <ul className="list-disc space-y-2 drop-shadow-sm">
-            <li>تحدث بوضوح في الميكروفون</li>
-            <li>حاول استخدام مجموعة متنوعة من المفردات والتراكيب النحوية</li>
-            <li>قم بهيكلة إجابتك مع مقدمة وصلب الموضوع وخاتمة</li>
-            <li>استخدم أمثلة محددة لدعم إجابتك</li>
-          </ul>
-        </div>
+        {!isRecording && !isProcessing && (
+          <label
+            className="block text-accent-foreground/75 cursor-pointer"
+            htmlFor="recording-button"
+          >
+            إضغط لبدأ المحادثة
+          </label>
+        )}
       </div>
-    </>
-  );
-}
 
-export function HomePageInteractiveGridPattern() {
-  return (
-    <InteractiveGridPattern
-      className={cn(
-        "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
-        "absolute inset-x-0 inset-y-0 h-full w-full z-0 opacity-30",
-      )}
-      width={40}
-      height={40}
-      squares={[30, 30]}
-      squaresClassName="hover:fill-blue-200"
-    />
+      <ConfirmationDialog
+        open={showQuickTipsDialog}
+        onOpenChange={setShowQuickTipsDialog}
+        title="نصيحة سريعة"
+        description={
+          <ul className="text-right list-decimal">
+            <li className="text-gray-500">
+              يجب أن تتحدث لمدة <strong>{MAX_RECORDING_TIME}</strong> ثانية.{" "}
+            </li>
+            <li className="text-red-400 font-bold text-sm">
+              يجب أن تتحدث في نفس موضوع المحادثة بلغة انجليزية واضحة في الميكروفون.
+            </li>
+          </ul>
+        }
+        buttonText="مـوافق"
+        buttonClass="bg-yellow-600 hover:bg-yellow-700"
+        onConfirm={handleToggleRecording}
+      />
+
+      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-md py-4 px-8 shadow-md ring-1 ring-white/30">
+        <h2 className="mb-2 text-lg font-medium drop-shadow-sm">التعليمات:</h2>
+        <ul className="list-disc space-y-2 drop-shadow-sm">
+          <li>تحدث بوضوح في الميكروفون</li>
+          <li>حاول استخدام مجموعة متنوعة من المفردات والتراكيب النحوية</li>
+          <li>قم بهيكلة إجابتك مع مقدمة وصلب الموضوع وخاتمة</li>
+          <li>استخدم أمثلة محددة لدعم إجابتك</li>
+        </ul>
+      </div>
+    </div>
   );
 }

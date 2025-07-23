@@ -48,7 +48,7 @@ export function Success({ className }: { className?: string }): JSX.Element {
             strokeWidth="4"
           />
           <polyline
-            className="status__icon--success-path"
+            className="status__icon--successPath"
             id="Path-2"
             points="19 38.8036813 31.1020744 54.8046875 63.299221 28"
             stroke="#A5DC86"
