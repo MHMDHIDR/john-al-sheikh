@@ -41,7 +41,7 @@ const testimonials: Testimonial[] = [
 export default function Testimonials() {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
-  const plugin = React.useRef(Autoplay({ delay: 4000, stopOnInteraction: true }));
+  const plugin = React.useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
 
   React.useEffect(() => {
     if (!api) {
@@ -77,7 +77,7 @@ export default function Testimonials() {
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
           setApi={setApi}
-          opts={{ loop: true }}
+          opts={{ loop: true, direction: "rtl" }}
         >
           <CarouselContent>
             {testimonials.map((testimonial, index) => (
@@ -91,9 +91,9 @@ export default function Testimonials() {
                       <Image
                         src={testimonial.avatar}
                         alt={testimonial.author}
-                        width={48}
-                        height={48}
-                        className="rounded-full object-cover flex-shrink-0"
+                        width={40}
+                        height={40}
+                        className="rounded-full size-10 object-cover shadow-md"
                         draggable={false}
                       />
                       <div className="font-semibold text-gray-900">{testimonial.author}</div>

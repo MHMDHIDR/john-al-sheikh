@@ -21,6 +21,7 @@ export default function Hero() {
           height={380}
           priority
           className="object-contain hidden md:block z-10"
+          draggable={false}
         />
         <div className="relative z-10 text-center max-w-4xl px-4 space-y-8 py-20">
           <h1 className="md:text-5xl text-3xl font-bold leading-loose">
