@@ -91,15 +91,3 @@ export function testGmailNormalization(email: string): string {
   const normalized = normalizeGmailAddress(email);
   return normalized;
 }
-
-/**
- * Examples of Gmail variations that are treated as the same:
- * - user@gmail.com
- * - u.s.e.r@gmail.com
- * - user+test@gmail.com
- * - user+test+more@gmail.com
- * - USER@gmail.com
- * - User@gmail.com
- *
- * All of these would normalize to: user@gmail.com
- */

@@ -11,6 +11,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
@@ -183,7 +184,7 @@ export default function NewsletterEmailTemplate({
 
               <Text style={{ textAlign: "center", fontSize: "11px", margin: "10px 0" }}>
                 <Link
-                  href={`${process.env.NEXT_PUBLIC_APP_URL}/articles`}
+                  href={`${process.env.NEXT_PUBLIC_APP_URL}/articles/${createSlug(subject)}`}
                   style={{ color: "#999", textDecoration: "underline" }}
                 >
                   لقراءة النشرة على منصة {process.env.NEXT_PUBLIC_APP_NAME}

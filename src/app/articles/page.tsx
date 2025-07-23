@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { generateMetadata } from "@/components/custom/seo";
+import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import { api } from "@/trpc/server";
 
@@ -31,7 +32,7 @@ export default async function Articles() {
           newsletters.map((item: NewsletterType) => (
             <Link
               key={item.id}
-              href={`/articles/${item.id}`}
+              href={`/articles/${createSlug(item.subject)}`}
               className="flex flex-row-reverse items-center hover:bg-muted/20 rounded-2xl duration-200 border border-gray-100 overflow-hidden group h-full"
             >
               <div className="flex-1 p-2 pr-4 flex flex-col justify-center">

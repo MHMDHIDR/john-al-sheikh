@@ -10,3 +10,13 @@ export function createSlug(txt: string) {
     .replace(/-+/g, "-") // collapse dashes replace with one dash
     .toLowerCase(); //
 }
+
+/**
+ * Unslugify a slug, making the text from (this-is-text) => (this is text)
+ * @param slug the slug to unslugify
+ * @returns the unslugified text
+ */
+export function unslugifyArabic(slug: string) {
+  const decodedSlug = decodeURIComponent(slug);
+  return decodedSlug.replace(/-/g, " ");
+}
