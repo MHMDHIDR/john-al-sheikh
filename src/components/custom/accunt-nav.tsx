@@ -36,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { CallStatus } from "@/hooks/use-vapi-conversation";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { MINUTES_IN_MS } from "@/lib/constants";
 import { fallbackUsername, truncateUsername } from "@/lib/fallback-username";
@@ -51,7 +52,7 @@ import type { Session } from "next-auth";
 
 export default function AccountNav({ user }: { user: Session["user"] }) {
   const { callStatus } = useGlobalVapiConversation();
-  const isCallActive = callStatus === "ACTIVE";
+  const isCallActive = callStatus === CallStatus.ACTIVE;
   const { data: minutes } = api.payments.getUserMinutes.useQuery(undefined, {
     refetchInterval: isCallActive ? 5000 : MINUTES_IN_MS * 2,
     refetchOnWindowFocus: isCallActive,

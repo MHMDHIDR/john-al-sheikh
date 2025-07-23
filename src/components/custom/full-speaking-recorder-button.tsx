@@ -328,10 +328,10 @@ const FullSpeakingRecorderButton = forwardRef<
   const deductUserMinutes = api.payments.deductUserMinutes.useMutation();
 
   // Live minute deduction state
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [lastDeductedMinute, setLastDeductedMinute] = useState(0);
   const lastDeductedMinuteRef = useRef(0);
   const deductionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedSecondsRef = useRef(0);
 
   function secondsToMinutes(seconds: number) {
     // 0:00–1:39 → 1, 1:40–2:39 → 2, etc.
@@ -350,27 +350,24 @@ const FullSpeakingRecorderButton = forwardRef<
         initialElapsed = parsed.elapsedSeconds ?? 0;
         initialDeducted = parsed.lastDeductedMinute ?? 0;
       }
-      setElapsedSeconds(initialElapsed);
+      elapsedSecondsRef.current = initialElapsed;
       setLastDeductedMinute(initialDeducted);
       lastDeductedMinuteRef.current = initialDeducted;
       deductionTimerRef.current = setInterval(() => {
-        setElapsedSeconds(prev => {
-          const next = prev + 1;
-          const minutesNow = secondsToMinutes(next);
-          if (minutesNow > lastDeductedMinuteRef.current) {
-            deductUserMinutes.mutate({ minutes: 1, callId });
-            setLastDeductedMinute(minutesNow);
-            lastDeductedMinuteRef.current = minutesNow;
-          }
-          sessionStorage.setItem(
-            `live-minutes-${user.id}`,
-            JSON.stringify({
-              elapsedSeconds: next,
-              lastDeductedMinute: lastDeductedMinuteRef.current,
-            }),
-          );
-          return next;
-        });
+        elapsedSecondsRef.current += 1;
+        const minutesNow = secondsToMinutes(elapsedSecondsRef.current);
+        if (minutesNow > lastDeductedMinuteRef.current) {
+          deductUserMinutes.mutate({ minutes: 1, callId });
+          setLastDeductedMinute(minutesNow);
+          lastDeductedMinuteRef.current = minutesNow;
+        }
+        sessionStorage.setItem(
+          `live-minutes-${user.id}`,
+          JSON.stringify({
+            elapsedSeconds: elapsedSecondsRef.current,
+            lastDeductedMinute: lastDeductedMinuteRef.current,
+          }),
+        );
       }, 1000);
     }
     return () => {
@@ -386,10 +383,12 @@ const FullSpeakingRecorderButton = forwardRef<
     const handleUnload = () => {
       const saved = sessionStorage.getItem(`live-minutes-${user.id}`);
       let totalMinutes = 0;
+      let elapsed = elapsedSecondsRef.current;
       if (saved) {
         const parsed = JSON.parse(saved) as { elapsedSeconds: number };
-        totalMinutes = secondsToMinutes(parsed.elapsedSeconds ?? 0);
+        elapsed = parsed.elapsedSeconds ?? elapsed;
       }
+      totalMinutes = secondsToMinutes(elapsed);
       if (totalMinutes > lastDeductedMinute) {
         const toDeduct = totalMinutes - lastDeductedMinute;
         if (toDeduct > 0) {
