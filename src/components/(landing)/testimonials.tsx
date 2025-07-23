@@ -3,7 +3,6 @@
 import Autoplay from "embla-carousel-autoplay";
 import { Dot } from "lucide-react";
 import Image from "next/image";
-import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import type { CarouselApi } from "@/components/ui/carousel";
