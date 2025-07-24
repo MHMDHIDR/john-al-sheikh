@@ -3,6 +3,7 @@
 import Autoplay from "embla-carousel-autoplay";
 import { Dot } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import type { CarouselApi } from "@/components/ui/carousel";
@@ -38,11 +39,12 @@ const testimonials: Testimonial[] = [
 ];
 
 export default function Testimonials() {
-  const [api, setApi] = React.useState<CarouselApi>();
-  const [current, setCurrent] = React.useState(0);
-  const plugin = React.useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
-  React.useEffect(() => {
+  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+
+  useEffect(() => {
     if (!api) {
       return;
     }
@@ -111,7 +113,7 @@ export default function Testimonials() {
             <button
               key={index}
               onClick={() => scrollTo(index)}
-              className={`size-3 rounded-full transition-colors duration-200 ${
+              className={`size-3 rounded-full cursor-pointer hover:bg-gray-800 transition-all duration-200 ${
                 index === current ? "bg-gray-800 w-6" : "bg-gray-300"
               }`}
               aria-label={`Go to testimonial ${index + 1}`}

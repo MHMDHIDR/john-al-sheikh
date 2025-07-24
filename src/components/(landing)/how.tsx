@@ -21,30 +21,32 @@ export default function How() {
         <div className="relative z-10 space-y-6 text-right px-8">
           <h2 className="text-5xl font-black">كيف يعمل {env.NEXT_PUBLIC_APP_NAME}؟</h2>
           <p className="text-xl text-gray-600">
-            ثلاث خطوات بسيطة لبدء رحلتك في إتقان المحادثة الإنجليزية
+            أربع خطوات بسيطة لبدء رحلتك في إتقان المحادثة الإنجليزية
           </p>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[380px] z-20">
-          <div className="relative w-full">
-            <Image
-              src="/iphone.svg"
-              alt="iPhone mockup"
-              width={280}
-              height={350}
-              className="w-full h-auto z-100"
-              priority
-            />
-            <div className="absolute top-[3%] left-[6%] right-[6%] bottom-[3%] rounded-[38px] overflow-clip">
+        <div className="relative mx-auto w-full max-w-[380px]">
+          <div className="relative max-w-sm overflow-hidden">
+            <div className="absolute z-10 inset-0 overflow-clip">
               <video
                 src="/how.mp4"
-                className="min-w-full min-h-full object-cover"
+                className="w-full h-full rounded-[70px] object-cover"
                 autoPlay
                 loop
                 playsInline
                 muted
               />
             </div>
+
+            <Image
+              src="/iphone.svg"
+              alt="iPhone mockup"
+              width={380}
+              height={780}
+              className="relative z-20 w-full h-auto"
+              priority
+              draggable={false}
+            />
           </div>
         </div>
       </div>
