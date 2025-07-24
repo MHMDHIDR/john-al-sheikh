@@ -13,14 +13,14 @@ export default function Hero() {
         fill
         priority
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Image
           src="/john-al-shiekh-character.png"
           alt="John Al-Sheikh character"
           width={380}
           height={380}
           priority
-          className="object-contain hidden md:block z-10"
+          className="object-contain hidden mx-auto md:block z-10"
           draggable={false}
         />
         <div className="relative z-10 text-center max-w-4xl px-4 space-y-8 py-20">

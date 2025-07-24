@@ -4,7 +4,7 @@ import { Card } from "../ui/card";
 
 export default function How() {
   return (
-    <section className="relative p-1.5 md:p-10 scroll-mt-20" id="how-it-works">
+    <section className="relative p-1.5 md:p-10 scroll-mt-20 max-sm:mt-10" id="how-it-works">
       <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2">
         <Card className="max-h-96 min-h-56 h-76 shadow-sm bg-blue-100 rounded-lg">
           <Image
@@ -18,8 +18,10 @@ export default function How() {
       </div>
 
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        <div className="relative z-10 space-y-6 text-right px-8">
-          <h2 className="text-5xl font-black">كيف يعمل {env.NEXT_PUBLIC_APP_NAME}؟</h2>
+        <div className="relative z-10 space-y-6 text-center md:text-right px-8">
+          <h2 className="md:text-5xl text-4xl text-pretty font-black">
+            كيف يعمل {env.NEXT_PUBLIC_APP_NAME}؟
+          </h2>
           <p className="text-xl text-gray-600">
             أربع خطوات بسيطة لبدء رحلتك في إتقان المحادثة الإنجليزية
           </p>
