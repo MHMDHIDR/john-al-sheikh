@@ -9,7 +9,6 @@ import { TimerQuickSpeakingTest } from "@/components/custom/timer-quick-speaking
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { useToast } from "@/hooks/use-toast";
 import { MAX_RECORDING_TIME } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 const prompts = [
@@ -337,7 +336,7 @@ export function QuickSpeakingTest() {
 
   return (
     <div
-      className="w-full max-w-2xl space-y-8 text-right z-10 mx-auto mt-6 mb-10"
+      className="w-full max-w-2xl space-y-8 text-right z-10 mx-auto mt-6 mb-10 scroll-mt-10"
       id="quick-speaking"
     >
       <div className="text-center">
