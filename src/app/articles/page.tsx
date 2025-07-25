@@ -3,6 +3,7 @@ import Link from "next/link";
 import { generateMetadata } from "@/components/custom/seo";
 import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
+import { truncate } from "@/lib/truncate";
 import { api } from "@/trpc/server";
 
 type NewsletterType = Awaited<ReturnType<typeof api.newsletter.getAllNewsletters>>[number];
@@ -37,7 +38,7 @@ export default async function Articles() {
             >
               <div className="flex-1 p-2 pr-4 flex flex-col justify-center">
                 <h2 className="text-2xl font-bold text-gray-900 mb-1 group-hover:text-primary-700 transition-colors truncate">
-                  {item.subject ?? "بدون عنوان"}
+                  {truncate(item.subject, 33) ?? "بدون عنوان"}
                 </h2>
                 <p className="text-gray-600 text-base mb-2 line-clamp-2">
                   {item.content?.replace(/<[^>]+>/g, "").slice(0, 120) ?? "لا يوجد محتوى"}
