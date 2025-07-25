@@ -13,9 +13,6 @@ import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
 
-export const dynamic = "force-static";
-export const revalidate = 600;
-
 type ArticleProps = { params: Promise<{ slug: string }> };
 
 function getShareUrl(slug: string) {
