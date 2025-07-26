@@ -10,13 +10,13 @@ import { newsletters } from "@/server/db/schema";
 export const newsletterRouter = createTRPCRouter({
   getAllNewsletters: publicProcedure.query(async () => {
     const results = await db.select().from(newsletters).orderBy(desc(newsletters.createdAt));
-    const blurNewsletterImage = await getBlurPlaceholder("/newsletter-header.png", 300, 90);
 
-    return results.map(newsletter => ({
-      ...newsletter,
-      image: "/newsletter-header.png",
-      blurImage: blurNewsletterImage,
-    }));
+    return Promise.all(
+      results.map(async newsletter => {
+        const blurNewsletterImage = await getBlurPlaceholder(newsletter.image, 300, 90);
+        return { ...newsletter, blurImage: blurNewsletterImage };
+      }),
+    );
   }),
 
   getNewsletterBySlug: publicProcedure
@@ -34,11 +34,7 @@ export const newsletterRouter = createTRPCRouter({
         });
       }
 
-      const blurNewsletterImage = await getBlurPlaceholder("/newsletter-header.png", 300, 90);
-      return {
-        ...newsletter,
-        image: "/newsletter-header.png",
-        blurImage: blurNewsletterImage,
-      };
+      const blurNewsletterImage = await getBlurPlaceholder(newsletter.image, 300, 90);
+      return { ...newsletter, blurImage: blurNewsletterImage };
     }),
 });

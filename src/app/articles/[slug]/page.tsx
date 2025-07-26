@@ -59,6 +59,9 @@ export async function generateStaticParams() {
   return newsletters.map(newsletter => ({ slug: createSlug(newsletter.subject) }));
 }
 
+export const dynamic = "force-static";
+export const revalidate = 600;
+
 export default async function Article({ params }: ArticleProps) {
   const { slug } = await params;
   let newsletter = null;
