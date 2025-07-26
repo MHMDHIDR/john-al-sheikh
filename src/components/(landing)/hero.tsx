@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Hero() {
   return (
-    <section className="relative flex flex-col items-center justify-center py-6 md:py-16 w-full bg-[#1C1C1C] text-white overflow-hidden">
+    <section className="relative flex flex-col items-center justify-center py-6 max-sm:h-screen md:py-16 w-full bg-black/90 text-white overflow-hidden">
       <Image
         src="/john-al-shiekh-mustache.svg"
         alt="Background pattern"
@@ -38,7 +38,7 @@ export default function Hero() {
             <Link href="#quick-speaking">
               <Button
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 px-8 py-6 text-lg rounded-full"
+                className="bg-blue-600 hover:bg-blue-700 px-8 py-6 text-sm lg:text-base xl:text-lg rounded-full"
               >
                 <Mic className="mr-2 size-5" />
                 ابدأ محادثتك الأولى مجاناً
@@ -49,7 +49,7 @@ export default function Hero() {
               <Button
                 variant="outline"
                 size="lg"
-                className="bg-transparent border-2 border-white hover:bg-white/10 hover:text-white px-8 py-6 text-lg rounded-full"
+                className="bg-transparent border-2 border-white hover:bg-white/10 hover:text-white px-8 py-6 text-sm lg:text-base xl:text-lg rounded-full"
               >
                 <PlayCircle className="ml-2 size-5" />
                 شاهد كيف يعمل
