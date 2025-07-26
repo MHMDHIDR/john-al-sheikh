@@ -10,7 +10,7 @@ import { api } from "@/trpc/server";
 type NewsletterType = Awaited<ReturnType<typeof api.newsletter.getAllNewsletters>>[number];
 
 export const dynamic = "force-static";
-export const revalidate = 600;
+export const revalidate = 300;
 export const metadata = generateMetadata({ title: `نشرة المقالات` });
 
 export default async function Articles() {

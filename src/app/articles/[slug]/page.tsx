@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 type ArticleProps = { params: Promise<{ slug: string }> };
 
 function getShareUrl(slug: string) {
-  const baseUrl = env.NEXT_PUBLIC_APP_URL || "https://localhost:3000";
+  const baseUrl = env.NEXT_PUBLIC_APP_URL || "https://www.john-al-shiekh.live";
   return `${baseUrl}/articles/${slug}`;
 }
 
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: ArticleProps): Promise<Metada
     return {
       title,
       description,
-      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"),
+      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "https://www.john-al-shiekh.live"),
       openGraph: {
         title,
         description,
@@ -60,7 +60,7 @@ export async function generateStaticParams() {
 }
 
 export const dynamic = "force-static";
-export const revalidate = 600;
+export const revalidate = 300;
 
 export default async function Article({ params }: ArticleProps) {
   const { slug } = await params;
