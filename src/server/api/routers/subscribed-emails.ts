@@ -21,6 +21,7 @@ const newsletterSchema = z.object({
   ),
   ctaButtonLabel: z.string().optional(),
   ctaUrl: z.string().optional(),
+  image: z.string().min(1, "صورة النشرة البريدية مطلوبة"),
 });
 
 export const subscribedEmailsRouter = createTRPCRouter({
@@ -175,6 +176,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
           content: input.content,
           ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
           ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
+          image: input.image,
         })
         .returning();
       if (!newsletter)

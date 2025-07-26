@@ -291,6 +291,7 @@ export const newsletters = createTable("newsletter", {
     .$defaultFn(() => crypto.randomUUID()),
   subject: varchar("subject", { length: 255 }).notNull(),
   content: text("content").notNull(),
+  image: varchar("image", { length: 255 }).default("/newsletter-header.png").notNull(),
   ctaUrl: varchar("cta_url", { length: 255 }),
   ctaButtonLabel: varchar("cta_button_label", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),

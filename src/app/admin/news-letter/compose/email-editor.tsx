@@ -13,11 +13,13 @@ import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import clsx from "clsx";
-import { Check, Loader2, Users } from "lucide-react";
+import { Check, ImageIcon, Loader2, Users } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
 import { ConfirmationDialog } from "@/components/custom/data-table/confirmation-dialog";
 import { EditorMenu } from "@/components/custom/editor-menu";
+import { FileUpload } from "@/components/custom/file-upload";
 import { CustomButton } from "@/components/custom/tiptap-custom-button";
 import {
   Accordion,
@@ -46,6 +48,7 @@ import { Label } from "@/components/ui/label";
 import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
+import { formatCompactDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
@@ -64,6 +67,53 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   const [isRendering, setIsRendering] = useState(false);
   const [ctaUrl, setCtaUrl] = useState<string>(`${env.NEXT_PUBLIC_APP_URL}/signin`);
   const [ctaButtonLabel, setCtaButtonLabel] = useState<string>("زيارة المنصة");
+  const [files, setFiles] = useState<Array<File>>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [image, setImage] = useState<string>("");
+
+  const optimizeImageMutation = api.optimizeImage.optimizeImage.useMutation();
+  const uploadFilesMutation = api.S3.uploadFiles.useMutation();
+
+  const handleFilesSelected = (selectedFiles: Array<File>) => {
+    setFiles(selectedFiles);
+  };
+
+  const optimizAndUploadImage = async (file: File) => {
+    if (!file) return null;
+
+    // Convert file to base64
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // Optimize image
+    const optimizedBase64 = await optimizeImageMutation.mutateAsync({
+      base64,
+      quality: 70,
+    });
+
+    // Prepare file data for S3 upload
+    const fileData = [
+      {
+        name: file.name.replace(/\.[^.]+$/, ".webp"),
+        type: "image/webp",
+        size: optimizedBase64.length,
+        lastModified: file.lastModified,
+        base64: optimizedBase64,
+      },
+    ];
+
+    // Upload to S3
+    const uploadedUrls = await uploadFilesMutation.mutateAsync({
+      entityId: `newsletter-images/${formatCompactDate()}`,
+      fileData,
+    });
+
+    return uploadedUrls[0];
+  };
 
   const { success, error: errorToast } = useToast();
 
@@ -204,20 +254,40 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       return;
     }
 
+    if (!image && (!files.length || !files[0])) {
+      errorToast("يرجى اختيار صورة للنشرة البريدية");
+      return;
+    }
+
     try {
+      setIsUploading(true);
+      let imageUrl = image;
+
+      if (files.length > 0 && files[0]) {
+        const uploadedUrl = await optimizAndUploadImage(files[0]);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+
       await sendNewsletter.mutateAsync({
         subject: subject.trim(),
         content,
         recipients: selectedRecipients,
         ctaUrl,
         ctaButtonLabel,
+        image: imageUrl,
       });
 
       // Reset form after successful send
       setSubject("");
       editor.commands.clearContent();
+      setFiles([]);
+      setImage("");
     } catch (error) {
       console.error("Error sending newsletter:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -253,13 +323,14 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           customContent={previewContent}
           ctaUrl={ctaUrl}
           ctaButtonLabel={ctaButtonLabel}
+          image={files.length > 0 && files[0] ? URL.createObjectURL(files[0]) : image}
         />,
       ).then(html => {
         setNewsletterHtml(html);
         setIsRendering(false);
       });
     }
-  }, [isPreview, subject, previewContent, ctaUrl, ctaButtonLabel]);
+  }, [isPreview, subject, previewContent, ctaUrl, ctaButtonLabel, files, image]);
 
   if (!editor) {
     return (
@@ -370,11 +441,11 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
               variant="default"
               className={clsx("min-w-[120px]", {
                 "opacity-50 cursor-not-allowed disabled:pointer-events-auto":
-                  sendNewsletter.isPending || !isFormValid,
+                  sendNewsletter.isPending || !isFormValid || isUploading,
               })}
-              disabled={sendNewsletter.isPending || !isFormValid}
+              disabled={sendNewsletter.isPending || !isFormValid || isUploading}
             >
-              {sendNewsletter.isPending ? (
+              {sendNewsletter.isPending || isUploading ? (
                 <>
                   <Loader2 className="size-4 animate-spin mr-2" />
                   جاري الإرسال...
@@ -385,6 +456,22 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Newsletter Image Field */}
+      <div className="rounded-lg border bg-background p-6">
+        <label className="block text-sm font-medium mb-4">صورة النشرة البريدية</label>
+        <div className="flex flex-col items-center select-none gap-4">
+          <FileUpload
+            onFilesSelected={handleFilesSelected}
+            disabled={isUploading || isPreview}
+            file={files.length > 0 && files[0] ? files[0] : null}
+            isNewsletter
+          />
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">
+          يرجى اختيار صورة جذابة للنشرة البريدية. الأبعاد المثالية: 1080 × 285 Pixels
+        </p>
       </div>
 
       {/* Accordion for optional CTA fields */}

@@ -76,7 +76,7 @@ export default async function Article({ params }: ArticleProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 py-10 px-2">
-      <div className="w-full max-w-3xl rounded-xl border border-gray-100 overflow-hidden">
+      <div className="w-full max-w-3xl rounded-xl pt-3 px-2 border border-gray-100 overflow-hidden">
         <Link
           href="/articles"
           className="inline-flex items-center self-start mb-3 gap-2 p-2 rounded-full bg-primary-50 text-primary-700 font-semibold text-xs hover:bg-primary-100 transition-colors border border-primary-200 shadow-sm"
@@ -97,7 +97,7 @@ export default async function Article({ params }: ArticleProps) {
             draggable={false}
           />
         </div>
-        <h1 className="text-lg md:text-3xl select-none underline underline-offset-8 decoration-wavy font-bold text-gray-900 my-2 text-center">
+        <h1 className="text-lg md:text-3xl select-none underline underline-offset-9 decoration-wavy font-bold text-gray-900 my-2 text-center">
           {newsletter.subject ?? "بدون عنوان"}
         </h1>
 

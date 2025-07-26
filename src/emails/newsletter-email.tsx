@@ -23,12 +23,14 @@ export type NewsletterEmailProps = {
   ctaUrl: string;
   ctaButtonLabel?: string;
   unsubscribeToken?: string;
+  image?: string;
 };
 
 export default function NewsletterEmailTemplate({
   senderName = "فريق المنصة",
   name = "مشتركنا العزيز",
   subject,
+  image = process.env.NEXT_PUBLIC_APP_URL + "/newsletter-header.png",
   customContent,
   ctaUrl,
   ctaButtonLabel = "زيارة المنصة",
@@ -79,7 +81,7 @@ export default function NewsletterEmailTemplate({
           <Section style={headerSection}>
             <div style={gradientOverlay}>
               <Img
-                src={process.env.NEXT_PUBLIC_APP_URL + "/newsletter-header.png"}
+                src={image}
                 width="100%"
                 height="350"
                 alt={process.env.NEXT_PUBLIC_APP_NAME}

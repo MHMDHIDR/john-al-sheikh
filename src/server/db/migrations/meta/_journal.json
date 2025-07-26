@@ -78,6 +78,13 @@
       "when": 1753193112111,
       "tag": "0010_panoramic_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1753541496762,
+      "tag": "0011_fearless_the_order",
+      "breakpoints": true
     }
   ]
 }

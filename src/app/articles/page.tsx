@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { generateMetadata } from "@/components/custom/seo";
+import { env } from "@/env";
 import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import { truncate } from "@/lib/truncate";
@@ -25,7 +26,9 @@ export default async function Articles() {
 
   return (
     <div className="container mx-auto py-8 select-none">
-      <h1 className="text-3xl font-bold mb-8 text-center">نشرة المقالات</h1>
+      <h1 className="text-3xl leading-10 m-0 font-bold mb-8 text-center">
+        نشرة {env.NEXT_PUBLIC_APP_NAME}
+      </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {newsletters.length === 0 ? (
           <div className="col-span-2 text-center text-gray-500">لا يوجد نشرات متاحة حالياً.</div>

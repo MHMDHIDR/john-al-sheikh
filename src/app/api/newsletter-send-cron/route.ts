@@ -64,6 +64,7 @@ export async function GET(request: Request) {
           senderName: "فريق المنصة",
           name: item.recipientName,
           subject: newsletter.subject,
+          image: newsletter.image,
           customContent: newsletter.content,
           ctaUrl: newsletter.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
           ctaButtonLabel: newsletter.ctaButtonLabel ?? "زيارة المنصة",

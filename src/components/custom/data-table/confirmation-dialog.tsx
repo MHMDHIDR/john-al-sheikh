@@ -36,7 +36,7 @@ export function ConfirmationDialog({
           <AlertDialogTitle className="mb-4">{title}</AlertDialogTitle>
           <AlertDialogDescription asChild>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex ltr">
+        <AlertDialogFooter className="flex ltr gap-1.5">
           <AlertDialogCancel variant={"destructive"} className="sm:ml-auto">
             إلغاء
           </AlertDialogCancel>
