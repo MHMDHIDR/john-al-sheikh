@@ -1,4 +1,4 @@
-import { Mic, PlayCircle } from "lucide-react";
+import { Mic, Mouse, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,10 @@ export default function Hero() {
           width={380}
           height={380}
           priority
-          className="object-contain hidden mx-auto md:block z-10"
+          className="object-contain mx-auto z-10 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96"
           draggable={false}
         />
-        <div className="relative z-10 text-center max-w-4xl px-4 space-y-8 py-20">
+        <div className="relative z-10 text-center max-w-4xl px-4 space-y-8 pt-20 pb-2">
           <h1 className="md:text-5xl text-3xl font-bold leading-loose">
             تحدث الإنجليزية بثقة
             <br />
@@ -58,6 +58,9 @@ export default function Hero() {
           </div>
         </div>
       </div>
+      <Link href="#why" className="flex items-center justify-center pt-10">
+        <Mouse className="size-7 stroke-1 opacity-75 animate-bounce" />
+      </Link>
     </section>
   );
 }

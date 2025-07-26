@@ -5,7 +5,7 @@ import { Card } from "../ui/card";
 export default function How() {
   return (
     <section className="relative p-1.5 md:p-10 scroll-mt-20 max-sm:mt-10" id="how-it-works">
-      <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2">
+      <div className="absolute hidden md:block left-10 right-10 top-1/2 -translate-y-1/2">
         <Card className="max-h-96 min-h-56 h-76 shadow-sm bg-blue-100 rounded-lg">
           <Image
             src="/john-al-shiekh-mustache.svg"

@@ -21,7 +21,7 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 
 export default function Why() {
   return (
-    <section className="p-1.5 md:p-10">
+    <section className="p-1.5 md:p-10 scroll-mt-10" id="why">
       <Card className="p-6 shadow-sm bg-purple-200 rounded-lg">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl font-bold text-[#1C1C1C]">لماذا جون آل-شيخ؟</h2>
@@ -34,17 +34,17 @@ export default function Why() {
           <FeatureCard
             icon="/london.png"
             title="مدرب عربي أصيل من لندن"
-            description="مدرب متخصص نشأ وترعرع في لندن، يجمع بين فهم عميق للثقافة العربية وإتقان اللهجة البريطانية الأصيلة. يساعدك على التواصل بثقة مع بالنطق البرطاني وويفهم التحديات الفريدة التي تواجه المتعلمين العرب"
+            description="مدرب متخصص من لندن يجمع بين فهم الثقافة العربية وإتقان اللهجة البريطانية الأصيلة"
           />
           <FeatureCard
             icon="/help.png"
             title="دعم فوري ومخصص"
-            description="احصل على مساعدة مباشرة ولحظية في تصحيح الأخطاء وتحسين النطق. نظام تفاعلي ذكي يتكيف مع مستواك ويقدم الدعم المناسب في الوقت المناسب، مع التركيز على نقاط ضعفك الشخصية"
+            description="مساعدة مباشرة في تصحيح الأخطاء وتحسين النطق مع نظام تفاعلي يتكيف مع مستواك"
           />
           <FeatureCard
             icon="/suggest.png"
             title="اقتراحات ذكية ومتطورة"
-            description="تحليل دقيق لأدائك مع اقتراحات عملية لتطوير مهاراتك في المحادثة والنطق. يقدم خطة تعلم مشخصة تتطور معك، مع تمارين مستهدفة لتحسين طلاقتك وثقتك في التحدث باللغة الإنجليزية"
+            description="تحليل دقيق لأدائك مع خطة تعلم مشخصة وتمارين مستهدفة لزيادة طلاقتك وثقتك"
           />
         </div>
       </Card>
