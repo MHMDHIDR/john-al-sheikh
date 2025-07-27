@@ -18,6 +18,7 @@ type ConfirmationDialogProps = {
   buttonText: string;
   buttonClass?: string;
   onConfirm: () => void;
+  cancelVariant?: "destructive" | "active";
 };
 
 export function ConfirmationDialog({
@@ -28,6 +29,7 @@ export function ConfirmationDialog({
   buttonText,
   buttonClass,
   onConfirm,
+  cancelVariant = "destructive",
 }: ConfirmationDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -37,7 +39,7 @@ export function ConfirmationDialog({
           <AlertDialogDescription asChild>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex ltr gap-1.5">
-          <AlertDialogCancel variant={"destructive"} className="sm:ml-auto">
+          <AlertDialogCancel variant={cancelVariant} className="sm:ml-auto">
             إلغاء
           </AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className={buttonClass}>

@@ -41,7 +41,7 @@ export default function StickyCtaBar() {
           </p>
         </div>
 
-        <Link href="#quick-speaking">
+        <Link href="/general-english">
           <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl">
             <Mic className="mr-2 size-4" />
             ابدأ الآن

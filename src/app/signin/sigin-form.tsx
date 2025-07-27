@@ -79,7 +79,14 @@ export default function SiginForm() {
                 </Label>
                 {!state.success && <span className="text-red-700">{state.message}</span>}
                 {state.success && <span className="text-green-700">{state.message}</span>}
-                <Input type="email" name="email" id="email" placeholder="البريد الإلكتروني" />
+                <Input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="البريد الإلكتروني"
+                  required
+                  autoComplete="email"
+                />
                 <Button
                   className={clsx(
                     "w-full h-10 cursor-pointer bg-gray-200 dark:bg-gray-800 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700",

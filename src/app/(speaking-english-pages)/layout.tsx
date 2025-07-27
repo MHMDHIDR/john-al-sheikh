@@ -285,15 +285,18 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       <ConfirmationDialog
         open={showExitConfirmation}
         onOpenChange={handleExitCancel}
-        title="انهاء الاختبار"
+        title="إنهاء الإختبار"
         description={
-          <div className="text-red-600 font-semibold">
-            سيتم إنهاء الاختبار الخاص بك إذا غادرت هذه الصفحة. هل أنت متأكد؟
-          </div>
+          <p className="text-red-600 font-semibold">
+            سيتم إنهاء الاختبار الخاص بك إذا غادرت هذه الصفحة. هل أنت متأكد؟ سيتم{" "}
+            <strong>إنهاء الإختبار</strong> وفقدان الدقائق المنقضية في الإختبار ولن تتحصل على نتيجة
+            الإختبار إذا قمت بإنهاء الإختبار الآنّ
+          </p>
         }
-        buttonText="نعم، إنهاء الاختبار"
+        buttonText="نعم، إنهاء الإختبار"
         buttonClass="bg-red-600 hover:bg-red-700 text-white"
         onConfirm={handleExitConfirm}
+        cancelVariant="active"
       />
     </>
   );

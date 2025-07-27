@@ -28,7 +28,7 @@ export default async function SignInPage({
   const error = searchParamsProp.error;
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen md:-mt-20">
+    <main className="flex flex-col items-center justify-center h-screen -mt-14 md:-mt-20">
       {callbackUrl && (
         <Card className="mb-4 mx-2 select-none flex items-center gap-x-3 rounded-lg border-l-4 border-l-red-500 bg-red-50 p-2.5 dark:bg-red-950/50">
           <AlertCircle className="size-5 text-red-500" />
@@ -37,7 +37,7 @@ export default async function SignInPage({
               تنبيه الوصول
             </CardTitle>
             <CardContent className="p-0">
-              <p className="text-sm text-red-600 dark:text-red-300">
+              <p className="text-sm text-red-600 dark:text-red-300 text-pretty">
                 الرجاء تسجيل الدخول للوصول إلى{" "}
                 <strong>{translateSring(callbackUrlPageName)}</strong>
               </p>

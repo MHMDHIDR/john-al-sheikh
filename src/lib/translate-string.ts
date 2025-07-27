@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * A function to replace the string with the arabic string
  * @param string the string to be replaced
@@ -12,7 +14,7 @@ export const translateSring = (string: string) => {
       return "اختبار المحادثة التجريبي";
     }
     case "general-english": {
-      return "المحادثة العامة";
+      return `المحادثة مع ${env.NEXT_PUBLIC_APP_NAME}`;
     }
     case "account": {
       return "الحساب";
