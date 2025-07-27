@@ -294,9 +294,6 @@ export const authConfig = {
             user => user.email && normalizeGmailAddress(user.email) === normalizedEmail,
           );
 
-          console.log("normalizedEmail: ", normalizedEmail);
-          console.log("existingUser: ", existingUser);
-
           if (existingUser) {
             // Patch the user object so NextAuth uses the existing user
             user.id = existingUser.id;
