@@ -1,11 +1,21 @@
+import crypto from "crypto";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { z } from "zod";
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { speakingTests, users } from "@/server/db/schema";
+import type {
+  EnhancedFeedback,
+  GrammarAnalysis,
+  LegacyFeedback,
+  NativenessAnalysis,
+  ProgressionMetrics,
+  VocabularyAnalysis,
+  WordAnalysis,
+} from "@/server/db/schema";
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
@@ -26,29 +36,14 @@ type IELTSFeedback = {
   improvementTips: string[];
 };
 
-type analyzeFullIELTSConversationFeedback = {
-  overall: string;
-  fluencyAndCoherence: number;
-  lexicalResource: number;
-  grammaticalRangeAndAccuracy: number;
-  pronunciation: number;
-  band: IELTSFeedback["band"];
-  feedback: {
-    overall: string;
-    fluencyAndCoherence: string;
-    lexicalResource: string;
-    grammaticalRangeAndAccuracy: string;
-    pronunciation: string;
-  };
-  strengths: IELTSFeedback["strengths"];
-  areasToImprove: IELTSFeedback["areasToImprove"];
-  improvementTips: IELTSFeedback["improvementTips"];
-};
-
 // Define the success type for analyzeFullIELTSConversation
 type AnalyzeFullIELTSSuccess = {
   success: true;
-  feedback: analyzeFullIELTSConversationFeedback;
+  feedback: {
+    band: number;
+    feedback: EnhancedFeedback | LegacyFeedback;
+    wordUsage: Record<string, WordAnalysis>;
+  };
 };
 
 // Define the error type for analyzeFullIELTSConversation
@@ -59,6 +54,324 @@ type AnalyzeFullIELTSError = {
 
 // Union type for all possible responses
 type AnalyzeFullIELTSResponse = AnalyzeFullIELTSSuccess | AnalyzeFullIELTSError;
+
+// Define types for API responses
+interface GrammarAPIResponse {
+  analysis?: Array<{
+    error: string;
+    correction: string;
+    explanation: string;
+    category: string;
+    context: string;
+    arabicExplanation: string;
+  }>;
+  score?: string | number;
+}
+
+interface VocabularyAPIResponse {
+  wordUsage?: Record<string, WordAnalysis>;
+  commonPatterns?: Array<{
+    pattern: string;
+    frequency: number;
+    suggestions: string[];
+    arabicExplanation: string;
+  }>;
+  diversityScore?: string | number;
+  overallScore?: string | number;
+}
+
+interface NativenessAPIResponse {
+  expressions?: Array<{
+    original: string;
+    britishAlternative: string;
+    context: string;
+    arabicExplanation: string;
+    category: string;
+  }>;
+  overallNativenessScore?: string | number;
+}
+
+// Helper function to safely extract JSON from OpenAI response
+function extractJSONFromResponse(content: string): Record<string, unknown> {
+  try {
+    // Clean up the content first
+    const cleanContent = content
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+      .replace(/\\+"/g, '\\"') // Fix escaped quotes
+      .trim();
+
+    // First, try to parse the entire content as JSON
+    return JSON.parse(cleanContent) as Record<string, unknown>;
+  } catch {
+    // If that fails, try to extract JSON from the content
+    const jsonRegex = /\{[\s\S]*\}/;
+    const jsonMatch = jsonRegex.exec(content);
+    if (jsonMatch) {
+      try {
+        const cleanJson = jsonMatch[0]
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+          .replace(/\\+"/g, '\\"') // Fix escaped quotes
+          .trim();
+        return JSON.parse(cleanJson) as Record<string, unknown>;
+      } catch {
+        // If JSON extraction fails, return a default structure
+        console.warn("Failed to parse JSON from OpenAI response:", content);
+        return {};
+      }
+    }
+    // If no JSON found, return empty object
+    return {};
+  }
+}
+
+// Enhanced analysis functions for modular processing
+async function analyzeGrammar(
+  content: string,
+  openai: OpenAI,
+): Promise<{ grammarAnalysis: GrammarAnalysis[]; grammarScore: number }> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert English grammar analyzer. Analyze the following text for grammatical errors and provide detailed feedback in Arabic.
+          Return a JSON object with the following structure:
+          {
+            "analysis": [{
+              "error": "The exact error text",
+              "correction": "The corrected version",
+              "explanation": "Technical explanation in English",
+              "category": "tense|structure|articles|prepositions",
+              "context": "The full sentence or phrase containing the error",
+              "arabicExplanation": "Detailed explanation in Arabic"
+            }],
+            "score": "Grammar score out of 10"
+          }`,
+      },
+      {
+        role: "user",
+        content,
+      },
+    ],
+  });
+
+  const result = extractJSONFromResponse(
+    response.choices[0]?.message.content ?? "{}",
+  ) as GrammarAPIResponse;
+
+  // Ensure grammarScore is a number
+  let grammarScore = 5;
+  if (result.score) {
+    if (typeof result.score === "string") {
+      // Extract number from strings like "5 out of 10" or "5"
+      const numberRegex = /(\d+(?:\.\d+)?)/;
+      const match = numberRegex.exec(result.score);
+      grammarScore = match?.[1] ? parseFloat(match[1]) : 5;
+    } else if (typeof result.score === "number") {
+      grammarScore = result.score;
+    }
+  }
+
+  return {
+    grammarAnalysis: (result.analysis ?? []) as GrammarAnalysis[],
+    grammarScore,
+  };
+}
+
+async function analyzeVocabulary(
+  content: string,
+  previousWordUsage: Record<string, WordAnalysis> | null,
+  openai: OpenAI,
+): Promise<{ vocabularyAnalysis: VocabularyAnalysis; vocabularyScore: number }> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert vocabulary analyzer. Analyze the following text for vocabulary usage and provide suggestions for improvement.
+          ${
+            previousWordUsage
+              ? "Consider the user's previous word usage history for personalized recommendations."
+              : ""
+          }
+          Return a JSON object with the following structure:
+          {
+            "wordUsage": {
+              "word": {
+                "frequency": "number of occurrences",
+                "contexts": ["sentences where the word appears"],
+                "alternatives": ["suggested alternative words"],
+                "category": "basic|intermediate|advanced"
+              }
+            },
+            "commonPatterns": [{
+              "pattern": "identified pattern",
+              "frequency": "number of occurrences",
+              "suggestions": ["alternative expressions"],
+              "arabicExplanation": "explanation in Arabic"
+            }],
+            "diversityScore": "vocabulary diversity score out of 10",
+            "overallScore": "vocabulary richness score out of 10"
+          }`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify({ text: content, previousWordUsage }),
+      },
+    ],
+  });
+
+  const result = extractJSONFromResponse(
+    response.choices[0]?.message.content ?? "{}",
+  ) as VocabularyAPIResponse;
+
+  // Extract numeric scores from string format
+  const extractScore = (scoreValue: unknown): number => {
+    if (!scoreValue) return 5;
+    if (typeof scoreValue === "string" && scoreValue.length > 0) {
+      const numberRegex = /(\d+(?:\.\d+)?)/;
+      const match = numberRegex.exec(scoreValue);
+      return match?.[1] ? parseFloat(match[1]) : 5;
+    } else if (typeof scoreValue === "number") {
+      return scoreValue;
+    }
+    return 5;
+  };
+
+  return {
+    vocabularyAnalysis: {
+      wordUsage: result.wordUsage ?? {}, //as Record<string, WordAnalysis>,
+      commonPatterns: (result.commonPatterns ?? []) as VocabularyAnalysis["commonPatterns"],
+      diversityScore: extractScore(result.diversityScore),
+    },
+    vocabularyScore: extractScore(result.overallScore),
+  };
+}
+
+async function analyzeNativeness(
+  content: string,
+  openai: OpenAI,
+): Promise<{ nativenessAnalysis: NativenessAnalysis; nativenessScore: number }> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    temperature: 0,
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert in British English. Analyze the following text for nativeness and provide suggestions for more natural British English expressions.
+          Return a JSON object with the following structure:
+          {
+            "expressions": [{
+              "original": "original phrase",
+              "britishAlternative": "more natural British expression",
+              "context": "full context",
+              "arabicExplanation": "explanation in Arabic",
+              "category": "formal|informal|idiom|colloquial"
+            }],
+            "overallNativenessScore": "score out of 10"
+          }`,
+      },
+      {
+        role: "user",
+        content,
+      },
+    ],
+  });
+
+  const result = extractJSONFromResponse(
+    response.choices[0]?.message.content ?? "{}",
+  ) as NativenessAPIResponse;
+
+  // Extract numeric score from string format
+  const extractScore = (scoreValue: unknown): number => {
+    if (!scoreValue) return 5;
+    if (typeof scoreValue === "string" && scoreValue.length > 0) {
+      const numberRegex = /(\d+(?:\.\d+)?)/;
+      const match = numberRegex.exec(scoreValue);
+      return match?.[1] ? parseFloat(match[1]) : 5;
+    } else if (typeof scoreValue === "number") {
+      return scoreValue;
+    }
+    return 5;
+  };
+
+  const nativenessScore = extractScore(result.overallNativenessScore);
+
+  return {
+    nativenessAnalysis: {
+      expressions: (result.expressions ?? []) as NativenessAnalysis["expressions"],
+      overallNativenessScore: nativenessScore,
+    },
+    nativenessScore,
+  };
+}
+
+async function calculateProgressionMetrics(
+  currentAnalysis: {
+    grammarScore: number;
+    vocabularyScore: number;
+    nativenessScore: number;
+  },
+  previousTests: Array<{
+    id: string;
+    grammarScore: number;
+    vocabularyScore: number;
+    nativenessScore: number;
+  }>,
+): Promise<ProgressionMetrics> {
+  const previousTest = previousTests[0];
+
+  const metrics: ProgressionMetrics = {
+    vocabularyDiversity: currentAnalysis.vocabularyScore,
+    grammarAccuracy: currentAnalysis.grammarScore,
+    expressionComplexity:
+      Math.round(((currentAnalysis.vocabularyScore + currentAnalysis.nativenessScore) / 2) * 10) /
+      10,
+    nativelikeSpeaking: currentAnalysis.nativenessScore,
+    historicalComparison: {
+      improvement: 0,
+      comparisonPoints: [],
+    },
+  };
+
+  if (previousTest) {
+    metrics.historicalComparison = {
+      improvement:
+        (currentAnalysis.grammarScore +
+          currentAnalysis.vocabularyScore +
+          currentAnalysis.nativenessScore -
+          (previousTest.grammarScore +
+            previousTest.vocabularyScore +
+            previousTest.nativenessScore)) /
+        3,
+      previousTestId: previousTest.id,
+      comparisonPoints: [
+        {
+          aspect: "Grammar",
+          previous: previousTest.grammarScore,
+          current: currentAnalysis.grammarScore,
+          change: currentAnalysis.grammarScore - previousTest.grammarScore,
+        },
+        {
+          aspect: "Vocabulary",
+          previous: previousTest.vocabularyScore,
+          current: currentAnalysis.vocabularyScore,
+          change: currentAnalysis.vocabularyScore - previousTest.vocabularyScore,
+        },
+        {
+          aspect: "Nativeness",
+          previous: previousTest.nativenessScore,
+          current: currentAnalysis.nativenessScore,
+          change: currentAnalysis.nativenessScore - previousTest.nativenessScore,
+        },
+      ],
+    };
+  }
+
+  return metrics;
+}
 
 export const openaiRouter = createTRPCRouter({
   /** ==> Only used for Quick Speaking Test Proceedure */
@@ -340,39 +653,31 @@ export const openaiRouter = createTRPCRouter({
         }),
         topic: z.string(),
         band: z.number().optional(),
-        feedback: z
-          .object({
-            strengths: z.object({
-              summary: z.string(),
-              points: z.array(z.string()),
-            }),
-            areasToImprove: z.object({
-              errors: z.array(
-                z.object({
-                  mistake: z.string(),
-                  correction: z.string(),
-                }),
-              ),
-            }),
-            improvementTips: z.array(z.string()),
-          })
-          .optional(),
+        feedback: z.record(z.string(), z.unknown()).optional(), // More specific than `any`
         callId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const { feedback } = input;
+        const validBand =
+          input.band && !isNaN(parseFloat(input.band.toString())) ? input.band : 5.0;
+
+        // Keep it simple - just use the input data as-is
+        console.log("Saving speaking test with minimal processing...");
+
         return await ctx.db.transaction(async tx => {
-          // Insert the speaking test into the database
+          // Simple insert - just save the essential data
           const [result] = await tx
             .insert(speakingTests)
             .values({
+              id: crypto.randomUUID(),
               userId: input.userId,
               type: input.type,
               transcription: input.transcription,
               topic: input.topic,
-              band: input.band,
-              feedback: input.feedback,
+              band: validBand,
+              feedback: feedback,
               callId: input.callId,
             })
             .returning();
@@ -401,7 +706,7 @@ export const openaiRouter = createTRPCRouter({
       }
     }),
 
-  analyzeFullIELTSConversation: publicProcedure
+  analyzeFullEnglishConversation: publicProcedure
     .input(
       z.object({
         conversation: z.array(
@@ -412,216 +717,180 @@ export const openaiRouter = createTRPCRouter({
           }),
         ),
         mode: z.enum(["mock-test", "general-english"]).default("mock-test"),
+        userId: z.string().optional(),
       }),
     )
-    .mutation(async ({ input }): Promise<AnalyzeFullIELTSResponse> => {
+    .mutation(async ({ input, ctx }): Promise<AnalyzeFullIELTSResponse> => {
       try {
-        // Extract candidate responses and examiner questions
+        // Extract and validate conversation data
         const candidateResponses = input.conversation
           .filter(msg => msg.role === "candidate")
-          .map(msg => msg.content)
-          .join("\n\n");
+          .map(msg => msg.content.trim())
+          .filter(content => content.length > 0);
 
-        // Ensure we have enough content to analyze
-        if (!candidateResponses || candidateResponses.trim().length < 50) {
+        // Examiner questions are extracted but not used - keeping for potential future use
+        // const _examinerQuestions = input.conversation
+        //   .filter(msg => msg.role === "examiner")
+        //   .map(msg => msg.content.trim());
+
+        // Validate conversation quality
+        const totalCandidateText = candidateResponses.join(" ");
+        const wordCount = totalCandidateText.split(/\s+/).filter(word => word.length > 0).length;
+
+        if (candidateResponses.length < 3 || wordCount < 30) {
           return {
             success: false as const,
-            error: "الإجابات غير كافية للتحليل",
+            error: "المحادثة قصيرة جداً أو غير مكتملة للتحليل",
           };
         }
 
-        // Prepare the full conversation for analysis
-        const conversationText = input.conversation
-          .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
-          .join("\n\n");
+        // Get previous tests for comparison if userId is provided
+        let previousTests: Array<{
+          id: string;
+          grammarScore: number;
+          vocabularyScore: number;
+          nativenessScore: number;
+          wordUsageHistory: Record<string, WordAnalysis>;
+        }> = [];
 
-        // Set up timeout to ensure we don't exceed Vercel's limits
-        // const timeoutPromise = new Promise<AnalyzeFullIELTSError>(resolve => {
-        //   setTimeout(() => {
-        //     resolve({
-        //       success: false as const,
-        //       error: "تجاوز المدة المسموحة للتحليل",
-        //     });
-        //   }, 60000); // 60 seconds to stay under Vercel's 10s limit
-        // });
-
-        // Choose the appropriate system prompt based on the mode
-        const systemPrompt =
-          input.mode === "mock-test"
-            ? `You are an expert IELTS speaking examiner. Analyze the following IELTS speaking test conversation.
-            First, understand the structure of the conversation - identify the three IELTS speaking test sections:
-            1. Introduction and general questions
-            2. Individual long turn (usually a topic the candidate must speak about)
-            3. Two-way discussion related to the topic
-            Then evaluate the candidate's performance based on the official IELTS criteria:
-            1. Fluency and Coherence (how smoothly they speak, whether they use connectives, ability to speak at length)
-            2. Lexical Resource (vocabulary range and accuracy)
-            3. Grammatical Range and Accuracy (variety of structures and grammatical accuracy)
-            4. Pronunciation (clarity, intonation, accent)
-            Provide your feedback in Arabic language in the following JSON format:
-            {
-              "band": number, // Overall score (1-9, decimals allowed)
-              "fluencyAndCoherence": number,
-              "lexicalResource": number,
-              "grammaticalRangeAndAccuracy": number,
-              "pronunciation": number,
-              "feedback": {
-                "overall": "إجمالي التقييم العام (3-4 جمل)",
-                "fluencyAndCoherence": "تحليل الطلاقة والتماسك (جملة أو جملتين)",
-                "lexicalResource": "تحليل الثروة اللغوية (جملة أو جملتين)",
-                "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملة أو جملتين)",
-                "pronunciation": "تحليل النطق (جملة أو جملتين)"
-              },
-              "strengths": {
-                "summary": "ملخص نقاط القوة باللغة العربية",
-                "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3"]
-              },
-              "areasToImprove": {
-                "errors": [
-                  {
-                    "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
-                    "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
-                  },
-                  {
-                    "mistake": "مثال آخر على خطأ أو مشكلة",
-                    "correction": "كيفية تحسين هذه النقطة"
-                  }
-                ]
-              },
-              "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين"]
-            }
-            Be fair but critical in your assessment. The feedback should be helpful and specific.
-            Make sure to include at least 2-3 specific examples of errors with corrections, and 3-4 improvement tips.
-            Include quotes from the candidate's responses to illustrate the errors.
-            The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`
-            : `You are an expert English language coach specializing in conversational English assessment.
-            Analyze the following English conversation between a coach (EXAMINER) and a learner (CANDIDATE).
-
-            Evaluate the learner's performance on a scale of 1-100 in these categories:
-            1. Fluency and Natural Expression (how smoothly they converse, use of fillers, hesitations)
-            2. Vocabulary Usage (range, appropriateness, and variety of expressions)
-            3. Grammatical Accuracy (sentence structure, tense usage, common errors)
-            4. Pronunciation and Intonation (clarity, stress patterns, natural rhythm)
-            5. Conversation Skills (ability to maintain discussion, ask questions, express opinions)
-
-            Pay special attention to:
-            - Common grammatical errors that affect communication
-            - Vocabulary limitations or repetitions
-            - Pronunciation patterns that might affect comprehension
-            - Conversation flow and the learner's ability to elaborate on topics
-
-            Provide your feedback in Arabic language in the following JSON format:
-            {
-              "band": number, // Overall score (1-100)
-              "fluencyAndCoherence": number, // Score out of 100
-              "lexicalResource": number, // Score out of 100
-              "grammaticalRangeAndAccuracy": number, // Score out of 100
-              "pronunciation": number, // Score out of 100
-              "feedback": {
-                "overall": "إجمالي التقييم العام (3-4 جمل)",
-                "fluencyAndCoherence": "تحليل الطلاقة والتعبير الطبيعي (جملتين)",
-                "lexicalResource": "تحليل استخدام المفردات (جملتين)",
-                "grammaticalRangeAndAccuracy": "تحليل الدقة النحوية (جملتين)",
-                "pronunciation": "تحليل النطق والتنغيم (جملتين)"
-              },
-              "strengths": {
-                "summary": "ملخص نقاط القوة باللغة العربية",
-                "points": ["نقطة قوة 1", "نقطة قوة 2", "نقطة قوة 3", "نقطة قوة 4"]
-              },
-              "areasToImprove": {
-                "errors": [
-                  {
-                    "mistake": "الخطأ أو المشكلة في الكلام مع أمثلة محددة من المحادثة",
-                    "correction": "التصحيح أو النصيحة لتحسين هذه النقطة"
-                  },
-                  {
-                    "mistake": "مثال آخر على خطأ أو مشكلة",
-                    "correction": "كيفية تحسين هذه النقطة"
-                  },
-                  {
-                    "mistake": "مثال ثالث على خطأ أو مشكلة",
-                    "correction": "كيفية تحسين هذه النقطة"
-                  },
-                  {
-                    "mistake": "مثال رابع على خطأ أو مشكلة",
-                    "correction": "كيفية تحسين هذه النقطة"
-                  }
-                ]
-              },
-              "improvementTips": ["نصيحة 1 للتحسين", "نصيحة 2 للتحسين", "نصيحة 3 للتحسين", "نصيحة 4 للتحسين", "نصيحة 5 للتحسين"]
-            }
-
-            Be encouraging but thorough in your assessment. The feedback should be detailed and actionable.
-            Make sure to include at least 4 specific examples of errors with corrections, and 5 improvement tips.
-            Include direct quotes from the learner's responses to illustrate points.
-            Focus on everyday conversational English rather than academic or test-oriented language.
-            The JSON must be properly formatted with no extra text or explanation outside the JSON structure.`;
-
-        // Create the analysis request with the appropriate system prompt
-        const userContent =
-          input.mode === "mock-test"
-            ? `IELTS Speaking Test Conversation:\n\n${conversationText}\n\nPlease analyze this IELTS speaking test based on the criteria.`
-            : `English Conversation Practice:\n\n${conversationText}\n\nPlease analyze this English conversation practice based on the criteria.`;
-
-        // Create a more streamlined analysis request
-        const analysisPromise = openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          temperature: 0,
-          max_tokens: 600, // Increased slightly to accommodate more detailed feedback for general-english
-          response_format: { type: "json_object" }, // Force JSON format for faster parsing
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
+        if (input.userId) {
+          const tests = await ctx.db.query.speakingTests.findMany({
+            where: eq(speakingTests.userId, input.userId),
+            orderBy: [desc(speakingTests.createdAt)],
+            limit: 5,
+            columns: {
+              id: true,
+              grammarScore: true,
+              vocabularyScore: true,
+              nativenessScore: true,
+              wordUsageHistory: true,
             },
-            {
-              role: "user",
-              content: userContent,
-            },
-          ],
-        });
+          });
 
-        // Race the analysis against the timeout
-        // const result = await Promise.race([analysisPromise, timeoutPromise]);
-        const result = await analysisPromise;
-
-        // If we got a timeout result
-        // if ("error" in result) {
-        //   return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
-        // }
-
-        const analysisText = result.choices[0]?.message.content ?? "";
-
-        try {
-          // Parse the JSON response
-          const feedback = JSON.parse(analysisText.trim()) as analyzeFullIELTSConversationFeedback;
-
-          // For general-english mode, normalize the band score to match the expected range (1-9)
-          if (input.mode === "general-english" && feedback.band > 9) {
-            feedback.band = Number(((feedback.band / 100) * 9).toFixed(1));
-            feedback.fluencyAndCoherence = Number(
-              ((feedback.fluencyAndCoherence / 100) * 9).toFixed(1),
-            );
-            feedback.lexicalResource = Number(((feedback.lexicalResource / 100) * 9).toFixed(1));
-            feedback.grammaticalRangeAndAccuracy = Number(
-              ((feedback.grammaticalRangeAndAccuracy / 100) * 9).toFixed(1),
-            );
-            feedback.pronunciation = Number(((feedback.pronunciation / 100) * 9).toFixed(1));
-          }
-
-          return {
-            success: true as const,
-            feedback,
-          };
-        } catch (parseError) {
-          console.error("Failed to parse JSON response:", parseError);
-          return provideFallbackIELTSAnalysis(candidateResponses, input.mode);
+          previousTests = tests
+            .filter(
+              (
+                test,
+              ): test is typeof test & {
+                grammarScore: number;
+                vocabularyScore: number;
+                nativenessScore: number;
+              } =>
+                test.grammarScore !== null &&
+                test.vocabularyScore !== null &&
+                test.nativenessScore !== null,
+            )
+            .map(test => ({
+              id: test.id,
+              grammarScore: test.grammarScore,
+              vocabularyScore: test.vocabularyScore,
+              nativenessScore: test.nativenessScore,
+              wordUsageHistory: test.wordUsageHistory ?? {}, //as Record<string, WordAnalysis>,
+            }));
         }
+
+        // Get combined previous word usage for personalized analysis
+        const previousWordUsage = previousTests.reduce(
+          (acc, test) => ({ ...acc, ...test.wordUsageHistory }),
+          {} as Record<string, WordAnalysis>,
+        );
+
+        // Perform parallel analysis using different specialized functions
+        const [grammarResult, vocabularyResult, nativenessResult] = await Promise.all([
+          analyzeGrammar(totalCandidateText, openai),
+          analyzeVocabulary(totalCandidateText, previousWordUsage, openai),
+          analyzeNativeness(totalCandidateText, openai),
+        ]);
+
+        // Calculate progression metrics
+        const progressionMetrics = await calculateProgressionMetrics(
+          {
+            grammarScore: grammarResult.grammarScore,
+            vocabularyScore: vocabularyResult.vocabularyScore,
+            nativenessScore: nativenessResult.nativenessScore,
+          },
+          previousTests,
+        );
+
+        // Calculate unique and new words
+        const currentWords = new Set(
+          totalCandidateText
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(word => word.length > 2),
+        );
+        const previousWordsSet = new Set(Object.keys(previousWordUsage));
+        const newWords = Array.from(currentWords).filter(word => !previousWordsSet.has(word));
+
+        // Build enhanced feedback structure
+        const enhancedFeedback: EnhancedFeedback = {
+          originalText: totalCandidateText,
+          grammarAnalysis: grammarResult.grammarAnalysis,
+          vocabularyAnalysis: vocabularyResult.vocabularyAnalysis,
+          nativenessAnalysis: nativenessResult.nativenessAnalysis,
+          progressionMetrics,
+          overallFeedback: {
+            strengths: [
+              `أظهرت قدرة جيدة على التواصل بـ ${currentWords.size} كلمة فريدة`,
+              `استخدمت ${newWords.length} كلمة جديدة لم تستخدمها من قبل`,
+              grammarResult.grammarScore > 7 ? "دقة نحوية ممتازة" : "دقة نحوية جيدة",
+            ],
+            areasToImprove: [
+              grammarResult.grammarScore < 6
+                ? "يحتاج تحسين في القواعد النحوية"
+                : "تحسين طفيف في القواعد مطلوب",
+              vocabularyResult.vocabularyScore < 6
+                ? "زيادة تنوع المفردات"
+                : "استخدام مفردات أكثر تقدماً",
+              nativenessResult.nativenessScore < 6
+                ? "تحسين الطبيعية في التعبير"
+                : "استخدام تعبيرات بريطانية أكثر",
+            ],
+            nextSteps: [
+              "ممارسة المحادثة يومياً لمدة 15 دقيقة",
+              "قراءة النصوص البريطانية والاستماع للبودكاست",
+              "التركيز على استخدام مرادفات للكلمات المتكررة",
+              "مراجعة القواعد النحوية الأساسية",
+            ],
+            arabicSummary: `لقد أظهرت مستوى ${
+              (grammarResult.grammarScore +
+                vocabularyResult.vocabularyScore +
+                nativenessResult.nativenessScore) /
+                3 >
+              6
+                ? "جيد"
+                : "متوسط"
+            } في اللغة الإنجليزية. استخدمت ${currentWords.size} كلمة فريدة منها ${newWords.length} كلمة جديدة. ${
+              previousTests.length > 0
+                ? progressionMetrics.historicalComparison.improvement > 0
+                  ? "لقد تحسن أداؤك مقارنة بالاختبار السابق."
+                  : "أداؤك مستقر مقارنة بالاختبار السابق."
+                : "هذا اختبارك الأول، استمر في الممارسة!"
+            }`,
+          },
+        };
+
+        // Calculate overall band score
+        const overallScore =
+          (grammarResult.grammarScore +
+            vocabularyResult.vocabularyScore +
+            nativenessResult.nativenessScore) /
+          3;
+        const band = Math.max(1, Math.min(9, overallScore * 0.9)); // Convert to IELTS band scale
+
+        return {
+          success: true as const,
+          feedback: {
+            band: Math.round(band * 2) / 2, // Round to nearest 0.5
+            feedback: enhancedFeedback,
+            wordUsage: vocabularyResult.vocabularyAnalysis.wordUsage,
+          },
+        };
       } catch (error) {
         console.error("Analysis error:", error);
         return {
           success: false as const,
-          error: "حدث خطأ أثناء تحليل المحادثة",
+          error: "حدث خطأ أثناء تحليل المحادثة. يرجى المحاولة مرة أخرى.",
         };
       }
     }),
@@ -660,68 +929,5 @@ function provideFallbackResponse() {
       ],
     },
     rawAnalysis: "تم تجاوز وقت المعالجة، هذا تقييم أساسي مؤقت. ننصح بإعادة المحاولة.",
-  };
-}
-
-// New helper function for IELTS conversation analysis fallback
-function provideFallbackIELTSAnalysis(
-  candidateText: string,
-  mode: "mock-test" | "general-english" = "mock-test",
-): AnalyzeFullIELTSSuccess {
-  // Simple heuristic: estimate based on text length and complexity
-  let estimatedBand = 5.5; // Default mid-range score
-
-  // Very simple scoring heuristic based on text length
-  if (candidateText.length > 500) estimatedBand += 0.5;
-  if (candidateText.length > 1000) estimatedBand += 0.5;
-
-  // Check for complex vocabulary (very simplified)
-  const complexWords = ["therefore", "however", "nevertheless", "consequently", "furthermore"];
-  complexWords.forEach(word => {
-    if (candidateText.toLowerCase().includes(word)) estimatedBand += 0.1;
-  });
-
-  // Cap at reasonable bounds
-  estimatedBand = Math.min(Math.max(estimatedBand, 4.0), 7.5);
-
-  // For general-english mode, we might want to use a different scale originally (0-100)
-  // but we normalize it to the IELTS scale (1-9) for consistency in the database
-  const normalizedBand =
-    mode === "general-english" ? Math.min(Math.max(estimatedBand, 4.0), 7.5) : estimatedBand;
-
-  return {
-    success: true as const,
-    feedback: {
-      band: normalizedBand,
-      fluencyAndCoherence: normalizedBand,
-      lexicalResource: normalizedBand,
-      grammaticalRangeAndAccuracy: normalizedBand,
-      pronunciation: normalizedBand,
-      overall: "تقييم أولي بناءً على بيانات محدودة",
-      feedback: {
-        overall: "تقييم أولي بناءً على بيانات محدودة",
-        fluencyAndCoherence: "طلاقة متوسطة",
-        lexicalResource: "مفردات مناسبة",
-        grammaticalRangeAndAccuracy: "دقة نحوية متوسطة",
-        pronunciation: "نطق مقبول",
-      },
-      strengths: {
-        summary: "أظهر المتحدث قدرة على التواصل باللغة الإنجليزية",
-        points: ["القدرة على التعبير عن الأفكار الأساسية", "استخدام مفردات مناسبة للموضوع"],
-      },
-      areasToImprove: {
-        errors: [
-          {
-            mistake: "بعض الأخطاء النحوية",
-            correction: "مراجعة قواعد الأزمنة والجمل المركبة",
-          },
-        ],
-      },
-      improvementTips: [
-        "تنويع المفردات والتعبيرات",
-        "ممارسة النطق بشكل أكثر وضوحاً",
-        "تطوير مهارات الربط بين الجمل",
-      ],
-    },
   };
 }

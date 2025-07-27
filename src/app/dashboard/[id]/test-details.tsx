@@ -1,11 +1,18 @@
 "use client";
 
-import { Calendar, ExternalLink, Medal } from "lucide-react";
+import clsx from "clsx";
+import { Calendar, ExternalLink, GitCommitHorizontal, Medal, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/custom/audio-player";
 import EmptyState from "@/components/custom/empty-state";
+import {
+  GrammarImprovementChart,
+  InteractiveTranscript,
+  VocabularyProgressChart,
+  WordCloud,
+} from "@/components/custom/feedback";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
@@ -21,6 +28,13 @@ import { formatDate } from "@/lib/format-date";
 import { formatTestType } from "@/lib/format-test-type";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
+import type {
+  EnhancedFeedback,
+  FeedbackType,
+  LegacyFeedback,
+  LegacyFeedbackWithProgress,
+  SpeakingTest,
+} from "@/server/db/schema";
 import type { inferRouterOutputs } from "@trpc/server";
 
 type TestDetailsProps = {
@@ -29,16 +43,156 @@ type TestDetailsProps = {
   recordingUrl?: string | null;
 };
 
+const FeedbackSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+  <div>
+    <h3 className="text-lg font-semibold mb-2 flex items-center">
+      {icon}
+      <span className="ml-2">{title}</span>
+    </h3>
+    <div className="space-y-4">{children}</div>
+  </div>
+);
+
+const TranscriptView = ({ transcription }: { transcription: SpeakingTest["transcription"] }) => {
+  if (!transcription?.messages || transcription.messages.length === 0) {
+    return (
+      <EmptyState>
+        <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
+          لا يوجد تسجيل نصي لهذه المحادثة
+        </p>
+      </EmptyState>
+    );
+  }
+
+  const messageGroups = transcription.messages.reduce<
+    Array<{
+      role: "user" | "examiner";
+      messages: Array<(typeof transcription.messages)[number]>;
+    }>
+  >((acc, message) => {
+    const lastGroup = acc[acc.length - 1];
+    if (lastGroup && lastGroup.role === message.role) {
+      lastGroup.messages.push(message);
+    } else {
+      acc.push({ role: message.role, messages: [message] });
+    }
+    return acc;
+  }, []);
+
+  return (
+    <div className="space-y-4 mt-6">
+      {messageGroups.map((group, groupIndex) => (
+        <div
+          key={groupIndex}
+          className={`p-4 rounded-lg flex gap-2.5 ${
+            group.role === "examiner" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"
+          }`}
+        >
+          <div className="flex-shrink-0">
+            <Badge variant={group.role === "user" ? "default" : "secondary"}>
+              {group.role === "user" ? "المستخدم" : "الممتحن"}
+            </Badge>
+          </div>
+          <div className="flex-1 space-y-2">
+            {group.messages.map((message, messageIndex) => (
+              <p key={messageIndex} className="text-sm ltr">
+                {message.content}
+              </p>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+function isEnhancedFeedback(feedback: FeedbackType): feedback is EnhancedFeedback {
+  return (
+    "grammarAnalysis" in feedback &&
+    "vocabularyAnalysis" in feedback &&
+    "nativenessAnalysis" in feedback &&
+    "progressionMetrics" in feedback &&
+    "overallFeedback" in feedback
+  );
+}
+
+function isLegacyFeedbackWithProgress(
+  feedback: LegacyFeedback,
+): feedback is LegacyFeedbackWithProgress {
+  return feedback.progressionDataPoints !== undefined;
+}
+
+function renderEnhancedMetrics(feedback: EnhancedFeedback) {
+  return (
+    <FeedbackSection title="مؤشرات التقدم" icon={<TrendingUp className="text-yellow-500 mx-1" />}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">
+            {feedback.vocabularyAnalysis.diversityScore.toString()}
+          </p>
+          <p className="text-sm text-gray-600">تنوع المفردات</p>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">
+            {feedback.progressionMetrics.grammarAccuracy.toString()}
+          </p>
+          <p className="text-sm text-gray-600">دقة القواعد</p>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">
+            {feedback.nativenessAnalysis.overallNativenessScore.toString()}
+          </p>
+          <p className="text-sm text-gray-600">مستوى التحدث كالبريطانيين</p>
+        </div>
+      </div>
+    </FeedbackSection>
+  );
+}
+
+function renderLegacyMetrics(feedback: LegacyFeedbackWithProgress) {
+  const { uniqueWordsUsed, newWordsLearned, grammaticalErrorRate } = feedback.progressionDataPoints;
+  return (
+    <FeedbackSection title="مؤشرات التقدم" icon={<TrendingUp className="text-yellow-500 mx-1" />}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">{uniqueWordsUsed}</p>
+          <p className="text-sm text-gray-600">كلمة فريدة</p>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">{newWordsLearned}</p>
+          <p className="text-sm text-gray-600">كلمة جديدة</p>
+        </div>
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-2xl font-bold">{grammaticalErrorRate}%</p>
+          <p className="text-sm text-gray-600">معدل الأخطاء</p>
+        </div>
+      </div>
+    </FeedbackSection>
+  );
+}
+
+function renderProgressMetrics(feedback: FeedbackType) {
+  if (isEnhancedFeedback(feedback)) {
+    return renderEnhancedMetrics(feedback);
+  }
+  const legacyFeedback = feedback;
+  if (isLegacyFeedbackWithProgress(legacyFeedback)) {
+    return renderLegacyMetrics(legacyFeedback);
+  }
+  return null;
+}
+
 export default function TestDetails({ details, minutes, recordingUrl }: TestDetailsProps) {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
 
-  // Get the active tab from the URL or default to "results"
   const activeTab = searchParams.get("view") ?? "results";
-
   const isEnoughMinutes = minutes > 5;
 
-  // Handle tab change by updating URL without navigation
   const handleTabChange = useCallback(
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -48,12 +202,13 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
     [searchParams],
   );
 
-  // Sync URL with tab view
   useEffect(() => {
     if (searchParams.get("view") !== activeTab) {
       handleTabChange(activeTab);
     }
   }, [activeTab, searchParams, handleTabChange]);
+
+  const feedback = details.feedback;
 
   return (
     <main className="min-h-screen p-4 md:p-8" dir="rtl">
@@ -103,7 +258,6 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
               <div>
                 <span>{formatTestType(details.type)}</span>
               </div>
-
               <Badge variant={"outline"} className="flex items-center gap-2">
                 <Medal className="size-4 text-yellow-500" />
                 <span className="text-blue-500">{details.band?.toString() ?? "0.0"}</span>
@@ -118,11 +272,20 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
           onValueChange={handleTabChange}
           className="mt-8"
         >
-          <TabsList className="grid w-full md:w-auto rtl grid-cols-3 md:grid-cols-3 gap-0 md:gap-2.5">
+          <TabsList
+            className={clsx("grid w-full md:w-auto rtl gap-0 md:gap-2.5", {
+              "grid-cols-2": !isLegacyFeedbackWithProgress(feedback as LegacyFeedback),
+              "grid-cols-3": isLegacyFeedbackWithProgress(feedback as LegacyFeedback),
+            })}
+          >
             <TabsTrigger value="results">
               {isMobile ? "ملخص النتيجة" : "ملخص عام للنتيجة"}
             </TabsTrigger>
-            <TabsTrigger value="feedback">{isMobile ? "نصائح" : "التعليقات والنصائح"}</TabsTrigger>
+            {isLegacyFeedbackWithProgress(feedback as LegacyFeedback) && (
+              <TabsTrigger value="feedback">
+                {isMobile ? "نصائح" : "التعليقات والنصائح"}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="transcript">المحادثـــة</TabsTrigger>
           </TabsList>
 
@@ -135,7 +298,7 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-sm:p-2">
-                {details.feedback ? (
+                {feedback ? (
                   <>
                     <div className="flex justify-center mb-8 select-none">
                       <div className="inline-flex items-center justify-center h-32 w-32 rounded-full bg-blue-50 border-4 border-blue-500">
@@ -148,52 +311,129 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                       </div>
                     </div>
 
-                    <div className="space-y-6">
-                      {details.feedback.strengths.points &&
-                        details.feedback.strengths.points.length > 0 && (
-                          <div>
-                            <h3 className="text-lg font-semibold mb-2">التقييم العام</h3>
-                            <div className="space-y-2">
-                              {details.feedback.strengths.points.map((point, index) => (
-                                <div key={index} className="flex items-start">
-                                  <div className="ml-2 mt-1 text-green-500 shrink-0">✓</div>
-                                  <p>{point}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                    {isEnhancedFeedback(feedback) ? (
+                      <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>تطور المفردات</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <VocabularyProgressChart metrics={feedback.progressionMetrics} />
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>تحسن القواعد</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <GrammarImprovementChart metrics={feedback.progressionMetrics} />
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>المفردات المستخدمة</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <WordCloud wordUsage={feedback.vocabularyAnalysis.wordUsage} />
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>تحليل النص</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <InteractiveTranscript feedback={feedback} />
+                          </CardContent>
+                        </Card>
+
+                        <div className="space-y-6">
+                          <FeedbackSection
+                            title="التقييم العام"
+                            icon={<TrendingUp className="text-green-500 mx-1" />}
+                          >
+                            {feedback.overallFeedback.strengths.map((strength, index) => (
+                              <div key={index} className="flex items-start">
+                                <div className="ml-2 mt-1 text-green-500 shrink-0">✓</div>
+                                <p>{strength}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
+
+                          <FeedbackSection
+                            title="مجالات التحسين"
+                            icon={<GitCommitHorizontal className="text-red-500 mx-1" />}
+                          >
+                            {feedback.overallFeedback.areasToImprove.map((area, index) => (
+                              <div key={index} className="flex items-start">
+                                <div className="ml-2 mt-1 text-red-500 shrink-0">•</div>
+                                <p>{area}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
+
+                          <FeedbackSection
+                            title="الخطوات القادمة"
+                            icon={<TrendingUp className="text-blue-500 mx-1" />}
+                          >
+                            {feedback.overallFeedback.nextSteps.map((step, index) => (
+                              <div key={index} className="flex items-start">
+                                <div className="ml-2 mt-1 text-blue-500 shrink-0">→</div>
+                                <p>{step}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
+                        </div>
+                      </div>
+                    ) : (
+                      // Legacy feedback display
+                      <div className="space-y-6">
+                        {feedback.strengths && (
+                          <FeedbackSection
+                            title="التقييم العام"
+                            icon={<TrendingUp className="text-green-500 mx-1" />}
+                          >
+                            {feedback.strengths.points.map((point, index) => (
+                              <div key={index} className="flex items-start">
+                                <div className="ml-2 mt-1 text-green-500 shrink-0">✓</div>
+                                <p>{point}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
                         )}
 
-                      {details.feedback.areasToImprove?.errors &&
-                        details.feedback.areasToImprove.errors.length > 0 && (
-                          <div>
-                            <h3 className="text-lg font-semibold mb-2">مجالات التحسين</h3>
-                            <div className="space-y-4">
-                              {details.feedback.areasToImprove.errors.map((error, index) => (
-                                <div key={index} className="border-r-4 border-yellow-500 pr-4">
-                                  <p className="font-medium text-red-600 mb-1">{error.mistake}</p>
-                                  <p className="text-green-600">{error.correction}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                        {feedback.areasToImprove && (
+                          <FeedbackSection
+                            title="مجالات التحسين"
+                            icon={<GitCommitHorizontal className="text-red-500 mx-1" />}
+                          >
+                            {feedback.areasToImprove.errors.map((error, index) => (
+                              <div key={index} className="border-r-4 border-yellow-500 pr-4">
+                                <p className="font-medium text-red-600 mb-1">{error.mistake}</p>
+                                <p className="text-green-600">{error.correction}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
                         )}
 
-                      {details.feedback.improvementTips &&
-                        details.feedback.improvementTips.length > 0 && (
-                          <div>
-                            <h3 className="text-lg font-semibold mb-2">نصائح للتحسين</h3>
-                            <div className="space-y-2">
-                              {details.feedback.improvementTips.map((tip, index) => (
-                                <div key={index} className="flex items-center">
-                                  <div className="ml-2 mt-1 text-blue-500 shrink-0">●</div>
-                                  <p>{tip}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                        {feedback.improvementTips && (
+                          <FeedbackSection
+                            title="نصائح للتحسين"
+                            icon={<TrendingUp className="text-blue-500 mx-1" />}
+                          >
+                            {feedback.improvementTips.map((tip, index) => (
+                              <div key={index} className="flex items-center">
+                                <div className="ml-2 mt-1 text-blue-500 shrink-0">•</div>
+                                <p>{tip}</p>
+                              </div>
+                            ))}
+                          </FeedbackSection>
                         )}
-                    </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-center py-10">
@@ -213,60 +453,8 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-sm:p-2">
-                {details.feedback ? (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">ملخص نقاط القوة</h3>
-                      <ul>
-                        {details.feedback.strengths.summary &&
-                          details.feedback.strengths.points.map((line, index) => (
-                            <li key={index}>{line}</li>
-                          ))}
-                      </ul>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">مجالات التحسين</h3>
-                      {details.feedback.areasToImprove?.errors &&
-                      details.feedback.areasToImprove.errors.length > 0 ? (
-                        <div className="space-y-6">
-                          {details.feedback.areasToImprove.errors.map((error, index) => (
-                            <div key={index}>
-                              <div className="bg-red-50 dark:bg-red-100 border-r-4 border-red-500 p-4 mb-2">
-                                <p className="font-medium dark:text-red-700">{error.mistake}</p>
-                              </div>
-                              <div className="bg-green-50 dark:bg-green-100 border-r-4 border-green-500 p-4">
-                                <p className="font-medium text-green-700">التصحيح:</p>
-                                <p className="dark:text-green-700">{error.correction}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p>لا توجد مجالات محددة للتحسين</p>
-                      )}
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">نصائح للتحسين</h3>
-                      {details.feedback.improvementTips &&
-                      details.feedback.improvementTips.length > 0 ? (
-                        <div className="bg-blue-50 dark:bg-blue-100 dark:text-blue-800 p-4 rounded-md">
-                          <ul className="space-y-2 list-disc list-inside">
-                            {details.feedback.improvementTips.map((tip, index) => (
-                              <li key={index}>{tip}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p>لا توجد نصائح محددة للتحسين</p>
-                      )}
-                    </div>
-                  </div>
+                {feedback ? (
+                  <div className="space-y-6">{renderProgressMetrics(feedback)}</div>
                 ) : (
                   <div className="text-center py-10">
                     <p>لا تتوفر تعليقات أو ملاحظات لهذا الاختبار</p>
@@ -286,42 +474,7 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
               </CardHeader>
               <CardContent className="max-sm:p-2">
                 {recordingUrl && <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />}
-
-                {details.transcription?.messages && details.transcription.messages.length > 0 ? (
-                  <div className="space-y-2 mt-6">
-                    {details.transcription.messages.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg flex gap-1.5 ${
-                          message.role === "examiner"
-                            ? "bg-blue-100 text-blue-900"
-                            : "bg-green-100 text-green-900"
-                        }`}
-                      >
-                        <div className="flex-shrink-0">
-                          <Badge
-                            variant={message.role === "user" ? "default" : "secondary"}
-                            className="flex-col "
-                          >
-                            {message.role === "user" ? "المستخدم" : "الممتحن"}
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {message.timestamp}
-                            </span>
-                          </Badge>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm ltr">{message.content}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState>
-                    <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
-                      لا يوجد تسجيل نصي لهذه المحادثة
-                    </p>
-                  </EmptyState>
-                )}
+                <TranscriptView transcription={details.transcription} />
               </CardContent>
             </Card>
           </TabsContent>

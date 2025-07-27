@@ -9,6 +9,7 @@ import { env } from "@/env";
 import { formatDate } from "@/lib/format-date";
 import { generateOgMetadata, truncateText } from "@/lib/og-image";
 import { api } from "@/trpc/server";
+import type { EnhancedFeedback, FeedbackType, LegacyFeedback } from "@/server/db/schema";
 import type { Metadata } from "next";
 
 export type TestResultProps = {
@@ -19,6 +20,14 @@ type FeedbackAreasToImprove = {
   mistake: string;
   correction: string;
 };
+
+function isEnhancedFeedback(feedback: FeedbackType): feedback is EnhancedFeedback {
+  return "overallFeedback" in feedback;
+}
+
+function isLegacyFeedback(feedback: FeedbackType): feedback is LegacyFeedback {
+  return "strengths" in feedback;
+}
 
 export async function generateMetadata({ params }: TestResultProps): Promise<Metadata> {
   const { username, testId } = await params;
@@ -101,59 +110,115 @@ export default async function TestResultPage({ params }: TestResultProps) {
           <CardContent className="max-sm:p-1.5 pt-4">
             {testData.feedback ? (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">ملخص نقاط القوة</h3>
-                  <ul>
-                    {testData.feedback.strengths.summary &&
-                      testData.feedback.strengths.points.map((line: string, index: number) => (
-                        <li key={index}>{line}</li>
-                      ))}
-                  </ul>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">مجالات التحسين</h3>
-                  {testData.feedback.areasToImprove?.errors &&
-                  testData.feedback.areasToImprove.errors.length > 0 ? (
-                    <div className="space-y-6">
-                      {testData.feedback.areasToImprove.errors.map(
-                        (error: FeedbackAreasToImprove, index: number) => (
-                          <div key={index}>
-                            <div className="bg-red-50 dark:bg-red-100 border-r-4 border-red-500 p-4 mb-2">
-                              <p className="font-medium dark:text-red-700">{error.mistake}</p>
-                            </div>
-                            <div className="bg-green-50 dark:bg-green-100 border-r-4 border-green-500 p-4">
-                              <p className="font-medium text-green-700">التصحيح:</p>
-                              <p className="dark:text-green-700">{error.correction}</p>
-                            </div>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  ) : (
-                    <p>لا توجد مجالات محددة للتحسين</p>
-                  )}
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">نصائح للتحسين</h3>
-                  {testData.feedback.improvementTips &&
-                  testData.feedback.improvementTips.length > 0 ? (
-                    <div className="bg-blue-50 dark:bg-blue-100 dark:text-blue-800 p-4 rounded-md">
-                      <ul className="space-y-2 list-disc list-inside">
-                        {testData.feedback.improvementTips.map((tip: string, index: number) => (
-                          <li key={index}>{tip}</li>
-                        ))}
+                {isEnhancedFeedback(testData.feedback) ? (
+                  // Enhanced feedback display
+                  <>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">نقاط القوة</h3>
+                      <ul className="space-y-1">
+                        {testData.feedback.overallFeedback.strengths.map(
+                          (strength: string, index: number) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-green-500 mr-2">✓</span>
+                              {strength}
+                            </li>
+                          ),
+                        )}
                       </ul>
                     </div>
-                  ) : (
-                    <p>لا توجد نصائح محددة للتحسين</p>
-                  )}
-                </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">مجالات التحسين</h3>
+                      <ul className="space-y-1">
+                        {testData.feedback.overallFeedback.areasToImprove.map(
+                          (area: string, index: number) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-red-500 mr-2">•</span>
+                              {area}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">الخطوات القادمة</h3>
+                      <ul className="space-y-1">
+                        {testData.feedback.overallFeedback.nextSteps.map(
+                          (step: string, index: number) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-blue-500 mr-2">→</span>
+                              {step}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+                  </>
+                ) : isLegacyFeedback(testData.feedback) ? (
+                  // Legacy feedback display
+                  <>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">ملخص نقاط القوة</h3>
+                      <ul>
+                        {testData.feedback.strengths?.summary &&
+                          testData.feedback.strengths?.points?.map(
+                            (line: string, index: number) => <li key={index}>{line}</li>,
+                          )}
+                      </ul>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">مجالات التحسين</h3>
+                      {testData.feedback.areasToImprove?.errors &&
+                      testData.feedback.areasToImprove.errors.length > 0 ? (
+                        <div className="space-y-6">
+                          {testData.feedback.areasToImprove.errors.map(
+                            (error: FeedbackAreasToImprove, index: number) => (
+                              <div key={index}>
+                                <div className="bg-red-50 dark:bg-red-100 border-r-4 border-red-500 p-4 mb-2">
+                                  <p className="font-medium dark:text-red-700">{error.mistake}</p>
+                                </div>
+                                <div className="bg-green-50 dark:bg-green-100 border-r-4 border-green-500 p-4">
+                                  <p className="font-medium text-green-700">التصحيح:</p>
+                                  <p className="dark:text-green-700">{error.correction}</p>
+                                </div>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <p>لا توجد مجالات محددة للتحسين</p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">نصائح للتحسين</h3>
+                      {testData.feedback.improvementTips &&
+                      testData.feedback.improvementTips.length > 0 ? (
+                        <div className="bg-blue-50 dark:bg-blue-100 dark:text-blue-800 p-4 rounded-md">
+                          <ul className="space-y-2 list-disc list-inside">
+                            {testData.feedback.improvementTips.map((tip: string, index: number) => (
+                              <li key={index}>{tip}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p>لا توجد نصائح محددة للتحسين</p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p>تنسيق غير معروف للتعليقات</p>
+                )}
               </div>
             ) : (
               <div className="text-center py-10">

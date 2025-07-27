@@ -323,7 +323,7 @@ const FullSpeakingRecorderButton = forwardRef<
     });
 
   const isConnected = callStatus === CallStatus.ACTIVE;
-  const analyzeFullIELTSConversation = api.openai.analyzeFullIELTSConversation.useMutation();
+  const analyzeFullEnglishConversation = api.openai.analyzeFullEnglishConversation.useMutation();
   const saveSpeakingTest = api.openai.saveSpeakingTest.useMutation();
   const deductUserMinutes = api.payments.deductUserMinutes.useMutation();
 
@@ -442,9 +442,10 @@ const FullSpeakingRecorderButton = forwardRef<
       const topic = topicMessage?.content ?? "IELTS Speaking Test";
 
       // Use the new procedure that analyzes the full conversation
-      const analysis = await analyzeFullIELTSConversation.mutateAsync({
+      const analysis = await analyzeFullEnglishConversation.mutateAsync({
         conversation: messages,
         mode,
+        userId: user.id,
       });
 
       if (analysis.success && analysis.feedback) {
@@ -458,17 +459,15 @@ const FullSpeakingRecorderButton = forwardRef<
           }));
 
           // Save to database
+          const validBand =
+            analysis.feedback.band && !isNaN(analysis.feedback.band) ? analysis.feedback.band : 5.0;
           const savedTest = await saveSpeakingTest.mutateAsync({
             userId: user.id,
             type: mode === "mock-test" ? "MOCK" : "PRACTICE",
             transcription: { messages: transformedMessages },
             topic: topic,
-            band: analysis.feedback.band,
-            feedback: {
-              strengths: analysis.feedback.strengths,
-              areasToImprove: analysis.feedback.areasToImprove,
-              improvementTips: analysis.feedback.improvementTips,
-            },
+            band: validBand,
+            feedback: analysis.feedback.feedback,
             callId,
           });
 
@@ -498,7 +497,7 @@ const FullSpeakingRecorderButton = forwardRef<
     }
   }, [
     messages,
-    analyzeFullIELTSConversation,
+    analyzeFullEnglishConversation,
     saveSpeakingTest,
     clearTest,
     router,

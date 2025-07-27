@@ -4,7 +4,6 @@ import { generateMetadata } from "@/components/custom/seo";
 import { env } from "@/env";
 import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
-import { truncate } from "@/lib/truncate";
 import { api } from "@/trpc/server";
 
 type NewsletterType = Awaited<ReturnType<typeof api.newsletter.getAllNewsletters>>[number];

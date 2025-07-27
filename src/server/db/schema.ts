@@ -47,6 +47,163 @@ export type UserRoleType = keyof typeof UserRole;
 export type PageContent = typeof pageContent.$inferSelect;
 export type ContentType = (typeof contentTypeEnum.enumValues)[number];
 
+export type WordAnalysis = {
+  word: string;
+  frequency: number;
+  contexts: string[];
+  alternatives: string[];
+  category: "basic" | "intermediate" | "advanced";
+};
+
+export type GrammarAnalysis = {
+  error: string;
+  correction: string;
+  explanation: string;
+  category: "tense" | "structure" | "articles" | "prepositions";
+  context: string;
+  arabicExplanation: string;
+};
+
+export type VocabularyAnalysis = {
+  wordUsage: Record<string, WordAnalysis>;
+  commonPatterns: Array<{
+    pattern: string;
+    frequency: number;
+    suggestions: string[];
+    arabicExplanation: string;
+  }>;
+  diversityScore: number;
+};
+
+export type NativenessAnalysis = {
+  expressions: Array<{
+    original: string;
+    britishAlternative: string;
+    context: string;
+    arabicExplanation: string;
+    category: "formal" | "informal" | "idiom" | "colloquial";
+  }>;
+  overallNativenessScore: number;
+};
+
+export type ProgressionMetrics = {
+  vocabularyDiversity: number;
+  grammarAccuracy: number;
+  expressionComplexity: number;
+  nativelikeSpeaking: number;
+  historicalComparison: {
+    improvement: number;
+    previousTestId?: string;
+    comparisonPoints: Array<{
+      aspect: string;
+      previous: number;
+      current: number;
+      change: number;
+    }>;
+  };
+};
+
+export type LegacyProgressionData = {
+  uniqueWordsUsed: number;
+  newWordsLearned: number;
+  grammaticalErrorRate: number;
+};
+
+export type LegacyFeedbackBase = {
+  originalText?: string;
+  grammaticalFeedback?: Array<{
+    error: string;
+    correction: string;
+    explanation: string;
+  }>;
+  vocabularyFeedback?: Array<{
+    originalWord: string;
+    suggestedAlternatives: string[];
+    context: string;
+  }>;
+  nativenessFeedback?: Array<{
+    originalPhrase: string;
+    britishEnglishAlternative: string;
+    explanation: string;
+  }>;
+  overallPositiveComments?: string[];
+  strengths?: {
+    summary: string;
+    points: string[];
+  };
+  areasToImprove?: {
+    errors: Array<{
+      mistake: string;
+      correction: string;
+    }>;
+  };
+  improvementTips?: string[];
+};
+
+export type LegacyFeedbackWithProgress = LegacyFeedbackBase & {
+  progressionDataPoints: LegacyProgressionData;
+};
+
+export type LegacyFeedback = LegacyFeedbackBase & {
+  progressionDataPoints?: LegacyProgressionData;
+};
+
+export type EnhancedFeedback = {
+  originalText: string;
+  grammarAnalysis: Array<{
+    error: string;
+    correction: string;
+    explanation: string;
+    category: "tense" | "structure" | "articles" | "prepositions";
+    context: string;
+    arabicExplanation: string;
+  }>;
+  vocabularyAnalysis: {
+    wordUsage: Record<string, WordAnalysis>;
+    commonPatterns: Array<{
+      pattern: string;
+      frequency: number;
+      suggestions: string[];
+      arabicExplanation: string;
+    }>;
+    diversityScore: number;
+  };
+  nativenessAnalysis: {
+    expressions: Array<{
+      original: string;
+      britishAlternative: string;
+      context: string;
+      arabicExplanation: string;
+      category: "formal" | "informal" | "idiom" | "colloquial";
+    }>;
+    overallNativenessScore: number;
+  };
+  progressionMetrics: {
+    vocabularyDiversity: number;
+    grammarAccuracy: number;
+    expressionComplexity: number;
+    nativelikeSpeaking: number;
+    historicalComparison: {
+      improvement: number;
+      previousTestId?: string;
+      comparisonPoints: Array<{
+        aspect: string;
+        previous: number;
+        current: number;
+        change: number;
+      }>;
+    };
+  };
+  overallFeedback: {
+    strengths: string[];
+    areasToImprove: string[];
+    nextSteps: string[];
+    arabicSummary: string;
+  };
+};
+
+export type FeedbackType = EnhancedFeedback | LegacyFeedback;
+
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
     .notNull()
@@ -143,37 +300,29 @@ export const rateLimits = createTable("rate_limit", {
 });
 export type RateLimits = typeof rateLimits.$inferSelect;
 
-export const speakingTests = createTable("speaking_test", {
-  id: varchar("id", { length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  userId: varchar("user_id", { length: 255 })
-    .notNull()
-    .references(() => users.id),
-  type: speakingTestEnum("type").notNull().default("MOCK"),
-  transcription: jsonb("transcription").$type<{
-    messages: Array<{
-      role: "examiner" | "user";
-      content: string;
-      timestamp: string;
-    }>;
-  }>(),
+export const speakingTests = createTable("speaking_tests", {
+  id: varchar("id", { length: 255 }).primaryKey().notNull(),
+  userId: varchar("user_id", { length: 255 }).notNull(),
+  type: speakingTestEnum("type").notNull(),
+  transcription: jsonb("transcription")
+    .$type<{
+      messages: Array<{ role: "examiner" | "user"; content: string; timestamp: string }>;
+    }>()
+    .notNull(),
   topic: varchar("topic", { length: 255 }).notNull(),
   band: decimal("band", { precision: 3, scale: 1 }).$type<number>(),
-  feedback: jsonb("feedback").$type<{
-    strengths: {
-      summary: string;
-      points: string[];
-    };
-    areasToImprove: {
-      errors: Array<{
-        mistake: string;
-        correction: string;
-      }>;
-    };
-    improvementTips: string[];
-  }>(),
+  feedback: jsonb("feedback").$type<FeedbackType>(),
+  vocabularyScore: decimal("vocabulary_score", { precision: 3, scale: 1 }).$type<number>(),
+  grammarScore: decimal("grammar_score", { precision: 3, scale: 1 }).$type<number>(),
+  nativenessScore: decimal("nativeness_score", { precision: 3, scale: 1 }).$type<number>(),
+  expressionComplexity: decimal("expression_complexity", {
+    precision: 3,
+    scale: 1,
+  }).$type<number>(),
+  wordUsageHistory: jsonb("word_usage_history").$type<Record<string, WordAnalysis>>(),
+  uniqueWordsCount: integer("unique_words_count"),
+  newWordsCount: integer("new_words_count"),
+  grammaticalErrorCount: integer("grammatical_error_count"),
   callId: varchar("call_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
