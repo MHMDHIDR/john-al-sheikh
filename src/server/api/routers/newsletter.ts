@@ -21,10 +21,12 @@ export const newsletterRouter = createTRPCRouter({
   getNewsletterBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
+      const decodedSlug = decodeURIComponent(input.slug);
+
       const [newsletter] = await db
         .select()
         .from(newsletters)
-        .where(eq(newsletters.slug, input.slug))
+        .where(eq(newsletters.slug, decodedSlug))
         .limit(1);
       if (!newsletter) {
         throw new TRPCError({
