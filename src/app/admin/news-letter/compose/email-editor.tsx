@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import NewsletterEmailTemplate from "@/emails/newsletter-email";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
+import { createArabicSlug } from "@/lib/create-slug";
 import { formatCompactDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
@@ -58,6 +59,7 @@ type EmailEditorProps = {
 export function EmailEditor({ emailList }: EmailEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [subject, setSubject] = useState("");
+  const [slug, setSlug] = useState("");
   const [selectedRecipients, setSelectedRecipients] =
     useState<Array<{ email: string; name: string }>>(emailList);
   const [isRecipientsDialogOpen, setIsRecipientsDialogOpen] = useState(false);
@@ -76,6 +78,14 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   const handleFilesSelected = (selectedFiles: Array<File>) => {
     setFiles(selectedFiles);
   };
+
+  // Auto-generate slug when subject changes
+  useEffect(() => {
+    if (subject.trim()) {
+      setSlug(createArabicSlug(subject.trim()));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject]);
 
   const optimizAndUploadImage = async (file: File) => {
     if (!file) return null;
@@ -242,6 +252,11 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
       return;
     }
 
+    if (!slug.trim() || slug.length <= 2) {
+      errorToast("يرجى إدخال رابط صحيح للنشرة البريدية");
+      return;
+    }
+
     const content = editor.getHTML();
     if (!content.trim() || content === "<p></p>") {
       errorToast("يرجى إدخال محتوى النشرة البريدية");
@@ -271,6 +286,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
 
       await sendNewsletter.mutateAsync({
         subject: subject.trim(),
+        slug: slug.trim(),
         content,
         recipients: selectedRecipients,
         ctaUrl,
@@ -280,6 +296,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
 
       // Reset form after successful send
       setSubject("");
+      setSlug("");
       editor.commands.clearContent();
       setFiles([]);
       setImage("");
@@ -303,11 +320,15 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
 
   const SUBJECT_MIN_LENGTH = 5;
   const SUBJECT_MAX_LENGTH = 100;
+  const SLUG_MIN_LENGTH = 2;
+  const SLUG_MAX_LENGTH = 100;
 
   const previewContent = editor?.getHTML() ?? "";
   const isFormValid =
     subject.trim().length > SUBJECT_MIN_LENGTH &&
     subject.trim().length < SUBJECT_MAX_LENGTH &&
+    slug.trim().length > SLUG_MIN_LENGTH &&
+    slug.trim().length < SLUG_MAX_LENGTH &&
     editor?.getText().trim() &&
     selectedRecipients.length > 0;
 
@@ -319,6 +340,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
           senderName="فريق المنصة"
           name="عزيزي المشترك"
           subject={subject ?? "نشرة جديدة"}
+          slug={slug}
           customContent={previewContent}
           ctaUrl={ctaUrl}
           ctaButtonLabel={ctaButtonLabel}
@@ -342,26 +364,57 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
   return (
     <div className="flex flex-col gap-6 rtl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex-1 w-full">
-          <label htmlFor="newsletter-subject" className="block text-sm font-medium mb-2">
-            عنوان النشرة البريدية
-          </label>
-          <input
-            id="newsletter-subject"
-            type="text"
-            placeholder="أدخل عنوان جذاب للنشرة البريدية..."
-            value={subject}
-            onChange={e => setSubject(e.target.value)}
-            className="w-full rounded-lg rtl border border-input bg-background px-4 py-3 text-sm
-                     ring-offset-background placeholder:text-muted-foreground
-                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                     focus-visible:ring-offset-2 transition-colors"
-            minLength={SUBJECT_MIN_LENGTH}
-            maxLength={SUBJECT_MAX_LENGTH}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {subject.length}/{SUBJECT_MAX_LENGTH} حرف
-          </p>
+        <div className="flex-1 w-full space-y-4">
+          <div>
+            <label htmlFor="newsletter-subject" className="block text-sm font-medium mb-2">
+              عنوان النشرة البريدية
+            </label>
+            <input
+              id="newsletter-subject"
+              type="text"
+              placeholder="أدخل عنوان جذاب للنشرة البريدية..."
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              className="w-full rounded-lg rtl border border-input bg-background px-4 py-3 text-sm
+                       ring-offset-background placeholder:text-muted-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                       focus-visible:ring-offset-2 transition-colors"
+              minLength={SUBJECT_MIN_LENGTH}
+              maxLength={SUBJECT_MAX_LENGTH}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {subject.length}/{SUBJECT_MAX_LENGTH} حرف
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="newsletter-slug" className="block text-sm font-medium mb-2">
+              رابط النشرة البريدية (Slug)
+            </label>
+            <div className="flex items-center gap-2" dir="ltr">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {env.NEXT_PUBLIC_APP_URL}/articles/
+              </span>
+              <input
+                id="newsletter-slug"
+                type="text"
+                placeholder="رابط-النشرة-البريدية"
+                value={slug}
+                onChange={e => setSlug(createArabicSlug(e.target.value))}
+                className="flex-1 rounded-lg ltr border border-input bg-background px-4 py-3 text-sm
+                           ring-offset-background placeholder:text-muted-foreground
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                           focus-visible:ring-offset-2 transition-colors"
+                minLength={SLUG_MIN_LENGTH}
+                maxLength={SLUG_MAX_LENGTH}
+                disabled
+                readOnly
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {slug.length}/{SLUG_MAX_LENGTH} حرف • سيتم تنظيف الرابط تلقائياً
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

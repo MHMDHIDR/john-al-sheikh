@@ -11,7 +11,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { createSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import type { CSSProperties } from "react";
 
@@ -19,6 +18,7 @@ export type NewsletterEmailProps = {
   name: string | null | undefined;
   senderName: string;
   subject: string;
+  slug?: string;
   customContent: string;
   ctaUrl: string;
   ctaButtonLabel?: string;
@@ -30,6 +30,7 @@ export default function NewsletterEmailTemplate({
   senderName = "فريق المنصة",
   name = "مشتركنا العزيز",
   subject,
+  slug,
   image = process.env.NEXT_PUBLIC_APP_URL + "/newsletter-header.png",
   customContent,
   ctaUrl,
@@ -186,7 +187,11 @@ export default function NewsletterEmailTemplate({
 
               <Text style={{ textAlign: "center", fontSize: "11px", margin: "10px 0" }}>
                 <Link
-                  href={`${process.env.NEXT_PUBLIC_APP_URL}/articles/${createSlug(subject)}`}
+                  href={
+                    slug
+                      ? `${process.env.NEXT_PUBLIC_APP_URL}/articles/${slug}`
+                      : `${process.env.NEXT_PUBLIC_APP_URL}/articles`
+                  }
                   style={{ color: "#999", textDecoration: "underline" }}
                 >
                   لقراءة النشرة على منصة {process.env.NEXT_PUBLIC_APP_NAME}

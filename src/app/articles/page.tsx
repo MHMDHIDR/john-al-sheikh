@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { generateMetadata } from "@/components/custom/seo";
 import { env } from "@/env";
-import { createSlug } from "@/lib/create-slug";
+import { createArabicSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import { api } from "@/trpc/server";
 
@@ -32,7 +32,7 @@ export default async function Articles() {
           newsletters.map((item: NewsletterType) => (
             <Link
               key={item.id}
-              href={`/articles/${createSlug(item.subject)}`}
+              href={`/articles/${item.slug ?? createArabicSlug(item.subject)}`}
               className="flex flex-row-reverse items-stretch w-full max-w-full hover:bg-muted/20 rounded-2xl duration-200 border border-gray-100 overflow-hidden group min-h-[140px] h-[140px]"
             >
               <div className="flex-1 min-w-0 p-3 pr-4 flex flex-col justify-between">

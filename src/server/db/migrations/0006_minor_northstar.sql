@@ -1,1 +1,0 @@
-ALTER TABLE "jas_user" ADD COLUMN "is_newsletter_subscribed" boolean DEFAULT true NOT NULL;

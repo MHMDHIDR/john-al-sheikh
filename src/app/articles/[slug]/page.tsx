@@ -6,7 +6,7 @@ import { ShareButtons } from "@/app/articles/share-button";
 import { SubscriptionForm } from "@/app/subscribe/subscription-form";
 import { Logo } from "@/components/custom/icons";
 import { env } from "@/env";
-import { createSlug } from "@/lib/create-slug";
+import { createArabicSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
 import { getAllNewsletters } from "@/lib/get-newsletters";
 import { auth } from "@/server/auth";
@@ -56,7 +56,9 @@ export async function generateMetadata({ params }: ArticleProps): Promise<Metada
 
 export async function generateStaticParams() {
   const newsletters = await getAllNewsletters();
-  return newsletters.map(newsletter => ({ slug: createSlug(newsletter.subject) }));
+  return newsletters.map(newsletter => ({
+    slug: newsletter.slug ?? createArabicSlug(newsletter.subject),
+  }));
 }
 
 export const dynamic = "force-static";

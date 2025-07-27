@@ -1,7 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { unslugifyArabic } from "@/lib/create-slug";
 import { getBlurPlaceholder } from "@/lib/optimize-image";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { db } from "@/server/db";
@@ -25,7 +24,7 @@ export const newsletterRouter = createTRPCRouter({
       const [newsletter] = await db
         .select()
         .from(newsletters)
-        .where(eq(newsletters.subject, unslugifyArabic(input.slug)))
+        .where(eq(newsletters.slug, input.slug))
         .limit(1);
       if (!newsletter) {
         throw new TRPCError({

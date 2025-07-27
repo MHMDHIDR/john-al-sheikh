@@ -12,6 +12,7 @@ import type { newsletterStatusEnum, SubscribedEmail, Users } from "@/server/db/s
 
 const newsletterSchema = z.object({
   subject: z.string().min(1, "عنوان البريد الإلكتروني مطلوب"),
+  slug: z.string().min(2, "رابط النشرة البريدية مطلوب").max(255, "رابط النشرة البريدية طويل جداً"),
   content: z.string().min(1, "محتوى البريد الإلكتروني مطلوب"),
   recipients: z.array(
     z.object({
@@ -168,11 +169,26 @@ export const subscribedEmailsRouter = createTRPCRouter({
 
   sendNewsletter: protectedProcedure.input(newsletterSchema).mutation(async ({ input, ctx }) => {
     try {
+      // Check if slug already exists
+      const existingNewsletter = await ctx.db
+        .select()
+        .from(newsletters)
+        .where(eq(newsletters.slug, input.slug))
+        .limit(1);
+
+      if (existingNewsletter.length > 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "رابط النشرة البريدية مستخدم مسبقاً، يرجى اختيار رابط آخر",
+        });
+      }
+
       // Insert the newsletter campaign (one row)
       const [newsletter] = await ctx.db
         .insert(newsletters)
         .values({
           subject: input.subject,
+          slug: input.slug,
           content: input.content,
           ctaUrl: input.ctaUrl ?? `${env.NEXT_PUBLIC_APP_URL}/signin`,
           ctaButtonLabel: input.ctaButtonLabel ?? "زيارة المنصة",
@@ -197,6 +213,9 @@ export const subscribedEmailsRouter = createTRPCRouter({
       return { success: true };
     } catch (error) {
       console.error("Newsletter queueing error:", error);
+      if (error instanceof TRPCError) {
+        throw error; // Re-throw TRPC errors as-is
+      }
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "حدث خطأ أثناء جدولة النشرة البريدية للإرسال",

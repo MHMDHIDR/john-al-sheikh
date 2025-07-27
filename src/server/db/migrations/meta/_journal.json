@@ -5,99 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1746069300864,
-      "tag": "0000_bright_reavers",
+      "when": 1753641258073,
+      "tag": "0000_bent_hedge_knight",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1746125814521,
-      "tag": "0001_new_retro_girl",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1746136645879,
-      "tag": "0002_quiet_darkhawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1748906033912,
-      "tag": "0003_fresh_brood",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1749323577646,
-      "tag": "0004_military_mathemanic",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1749348428801,
-      "tag": "0005_opposite_dakota_north",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1752104578187,
-      "tag": "0006_minor_northstar",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1752441597960,
-      "tag": "0007_sudden_bastion",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1752534002286,
-      "tag": "0008_smart_mister_sinister",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1752536843699,
-      "tag": "0009_bent_mister_sinister",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1753193112111,
-      "tag": "0010_panoramic_lester",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1753541496762,
-      "tag": "0011_fearless_the_order",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1753622063549,
-      "tag": "0012_dry_ben_parker",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1753627611553,
-      "tag": "0013_grey_cannonball",
+      "when": 1753642738835,
+      "tag": "0001_square_proudstar",
       "breakpoints": true
     }
   ]

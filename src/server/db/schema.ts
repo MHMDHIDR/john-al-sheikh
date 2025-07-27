@@ -312,7 +312,7 @@ export const speakingTests = createTable("speaking_tests", {
   topic: varchar("topic", { length: 255 }).notNull(),
   band: decimal("band", { precision: 3, scale: 1 }).$type<number>(),
   feedback: jsonb("feedback").$type<FeedbackType>(),
-  vocabularyScore: decimal("vocabulary_score", { precision: 3, scale: 1 }).$type<number>(),
+  vocabularyScore: jsonb("vocabulary_score").$type<number>(),
   grammarScore: decimal("grammar_score", { precision: 3, scale: 1 }).$type<number>(),
   nativenessScore: decimal("nativeness_score", { precision: 3, scale: 1 }).$type<number>(),
   expressionComplexity: decimal("expression_complexity", {
@@ -412,26 +412,6 @@ export const subscribedEmails = createTable("subscribed_emails", {
 
 export type SubscribedEmail = typeof subscribedEmails.$inferSelect;
 
-// Authenticator table for Passkeys
-export const authenticators = createTable("authenticator", {
-  id: varchar("id", { length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  credentialID: varchar("credential_id", { length: 255 }).notNull().unique(),
-  userId: varchar("user_id", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
-  credentialPublicKey: text("credential_public_key").notNull(),
-  counter: integer("counter").notNull(),
-  credentialDeviceType: varchar("credential_device_type", { length: 255 }).notNull(),
-  credentialBackedUp: boolean("credential_backed_up").notNull(),
-  transports: varchar("transports", { length: 255 }),
-});
-
-export type Authenticator = typeof authenticators.$inferSelect;
-
 // Newsletter campaign table
 export const newsletters = createTable("newsletter", {
   id: varchar("id", { length: 255 })
@@ -439,6 +419,7 @@ export const newsletters = createTable("newsletter", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   subject: varchar("subject", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).default("slug").unique(),
   content: text("content").notNull(),
   image: varchar("image", { length: 255 }).default("/newsletter-header.png").notNull(),
   ctaUrl: varchar("cta_url", { length: 255 }),
@@ -473,7 +454,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   speakingTests: many(speakingTests),
   creditTransactions: many(creditTransactions),
-  authenticators: many(authenticators),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -502,8 +482,4 @@ export const creditTransactionsRelations = relations(creditTransactions, ({ one 
     fields: [creditTransactions.speakingTestId],
     references: [speakingTests.id],
   }),
-}));
-
-export const authenticatorsRelations = relations(authenticators, ({ one }) => ({
-  user: one(users, { fields: [authenticators.userId], references: [users.id] }),
 }));
