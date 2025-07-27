@@ -278,7 +278,7 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
 
           <TabsContent value="transcript" className="rtl">
             <Card>
-              <CardHeader>
+              <CardHeader className="p-0">
                 <CardTitle className="sr-only">المحادثة</CardTitle>
                 <CardDescription className="sr-only">
                   نص كامل للمحادثة خلال الاختبار

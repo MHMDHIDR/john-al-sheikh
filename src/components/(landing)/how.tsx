@@ -1,12 +1,12 @@
 import Image from "next/image";
+import { Card } from "@/components/ui/card";
 import { env } from "@/env";
-import { Card } from "../ui/card";
 
 export default function How() {
   return (
     <section className="relative p-1.5 md:p-10 scroll-mt-20 max-sm:mt-10" id="how-it-works">
       <div className="absolute hidden md:block left-10 right-10 top-1/2 -translate-y-1/2">
-        <Card className="max-h-96 min-h-56 h-76 shadow-sm bg-blue-100 rounded-lg">
+        <Card className="relative max-h-96 min-h-56 h-76 shadow-sm bg-blue-100 rounded-lg">
           <Image
             src="/john-al-shiekh-mustache.svg"
             alt="Background pattern"
@@ -40,15 +40,16 @@ export default function How() {
               />
             </div>
 
-            <Image
-              src="/iphone.svg"
-              alt="iPhone mockup"
-              width={380}
-              height={780}
-              className="relative z-20 w-full h-auto"
-              priority
-              draggable={false}
-            />
+            <div className="relative z-20 aspect-[380/780]">
+              <Image
+                src="/iphone.svg"
+                alt="iPhone mockup"
+                fill
+                sizes="(max-width: 380px) 100vw, 380px"
+                loading="lazy"
+                draggable={false}
+              />
+            </div>
           </div>
         </div>
       </div>

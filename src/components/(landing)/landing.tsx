@@ -1,5 +1,6 @@
 import Hero from "@/components/(landing)/hero";
 import How from "@/components/(landing)/how";
+import StickyCtaBar from "@/components/(landing)/sticky-cta-bar";
 import Testimonials from "@/components/(landing)/testimonials";
 import Why from "@/components/(landing)/why";
 import Footer from "@/components/custom/footer";
@@ -13,6 +14,7 @@ export default function LandingPage() {
       <How />
       <Testimonials />
       <QuickSpeakingTest />
+      <StickyCtaBar />
       <Footer />
     </>
   );

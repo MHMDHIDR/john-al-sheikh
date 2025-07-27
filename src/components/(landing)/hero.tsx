@@ -9,7 +9,7 @@ export default function Hero() {
       <Image
         src="/john-al-shiekh-mustache.svg"
         alt="Background pattern"
-        className="object-contain opacity-2 mx-auto w-full"
+        className="object-contain opacity-10 md:opacity-3 mx-auto w-full fixed"
         fill
         priority
       />

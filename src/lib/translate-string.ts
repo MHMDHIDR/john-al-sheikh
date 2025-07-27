@@ -23,9 +23,6 @@ export const translateSring = (string: string) => {
     case "buy-minutes": {
       return "شراء رصيد دقائق";
     }
-    case "speaking-test-results": {
-      return "نتائج اختبار المحادثة";
-    }
     case "dashboard": {
       return "لوحة المعلومات";
     }

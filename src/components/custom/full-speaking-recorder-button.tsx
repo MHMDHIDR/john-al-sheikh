@@ -474,20 +474,8 @@ const FullSpeakingRecorderButton = forwardRef<
 
           // Deduct credits for the completed test
           if (savedTest.id) {
-            // Create results object from the new structured feedback
-            const results = {
-              testId: savedTest?.id,
-              overallBand: analysis.feedback.band,
-              fluencyAndCoherence: analysis.feedback.fluencyAndCoherence,
-              lexicalResource: analysis.feedback.lexicalResource,
-              grammaticalRangeAndAccuracy: analysis.feedback.grammaticalRangeAndAccuracy,
-              pronunciation: analysis.feedback.pronunciation,
-              feedback: analysis.feedback.feedback,
-              testType: mode, // Add the test type to the results
-            };
-
-            // Save results to session storage
-            sessionStorage.setItem("ieltsResult", JSON.stringify(results));
+            // Navigate to dashboard with the test id
+            router.push(`/dashboard/${savedTest.id}`);
           }
         } catch (dbError) {
           console.error("Error saving to database:", dbError);
@@ -496,9 +484,6 @@ const FullSpeakingRecorderButton = forwardRef<
 
         // Clear test data
         clearTest();
-
-        // Navigate to results page
-        router.push("/speaking-test-results");
       } else {
         // Set error message and prevent further processing attempts
         setErrorMessage("فشل في تحليل نتائج الاختبار");
