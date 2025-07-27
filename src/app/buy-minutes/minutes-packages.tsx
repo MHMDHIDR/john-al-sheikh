@@ -59,9 +59,9 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
     >
       {popular && (
         <div className="absolute left-0 right-0 top-0 flex justify-center">
-          <Badge className="px-4 -mt-2 py-1 text-xs font-medium bg-amber-400/90 hover:bg-amber-400/90 text-amber-950 rounded-b-md border-0">
+          <Badge className="px-4 -mt-2 py-1 text-xs font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-b-md border-0 shadow-lg">
             <Star className="size-4 ml-2" />
-            <strong>الأكثر شعبية</strong>
+            <strong>الأفضل قيمة</strong>
           </Badge>
         </div>
       )}

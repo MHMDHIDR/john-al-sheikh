@@ -37,25 +37,11 @@ export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
       "وصول مستمر للخدمة",
     ],
   },
-  tenMinutes: {
-    id: "tenMinutes",
-    priceId: PriceIDs.tenMinutes,
-    name: "Pro",
-    description: "تحضير متكامل للنجاح المضمون",
-    minutes: Minutes.PLUS,
-    features: [
-      "أحصل على 50 دقيقة",
-      "محادثات تدريبية باللغة الإنجليزية",
-      "إحصائات تفصيلية لمتابعة الأداء",
-      "وصول مستمر للخدمة",
-      "الأولوية في الدعم",
-    ],
-  },
   fifteenMinutes: {
     id: "fifteenMinutes",
     priceId: PriceIDs.fifteenMinutes,
-    name: "Plus",
-    description: "من أكثر الباقات شعبية للمحادثات التدريبية",
+    name: "Pro",
+    description: "نحن على ثقة تامة من أنك ستحصل على أفضل النتائج",
     minutes: Minutes.PRO,
     features: [
       "أحصل على 75 دقيقة",
@@ -66,5 +52,19 @@ export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
       "الأولوية القصوى في الدعم",
     ],
     popular: true,
+  },
+  tenMinutes: {
+    id: "tenMinutes",
+    priceId: PriceIDs.tenMinutes,
+    name: "Plus",
+    description: "تحضير متكامل للنجاح المضمون",
+    minutes: Minutes.PLUS,
+    features: [
+      "أحصل على 50 دقيقة",
+      "محادثات تدريبية باللغة الإنجليزية",
+      "إحصائات تفصيلية لمتابعة الأداء",
+      "وصول مستمر للخدمة",
+      "الأولوية في الدعم",
+    ],
   },
 };

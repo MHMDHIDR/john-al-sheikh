@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Footer from "@/components/custom/footer";
 import { auth } from "@/server/auth";
 
 export default async function BuyMinutesLayout({ children }: { children: React.ReactNode }) {
@@ -9,5 +10,10 @@ export default async function BuyMinutesLayout({ children }: { children: React.R
     redirect("/signin?callbackUrl=/buy-minutes");
   }
 
-  return <>{children}</>;
+  return (
+    <div className="h-screen flex flex-col items-center justify-between md:mt-20 min-w-full">
+      {children}
+      <Footer />
+    </div>
+  );
 }
