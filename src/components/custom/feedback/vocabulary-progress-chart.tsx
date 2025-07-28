@@ -30,7 +30,7 @@ export function VocabularyProgressChart({ metrics }: VocabularyProgressChartProp
     <div className="space-y-4">
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={data} margin={{ top: 15, right: 0, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="vocabularyGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />

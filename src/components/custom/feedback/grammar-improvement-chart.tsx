@@ -32,7 +32,7 @@ export function GrammarImprovementChart({ metrics }: GrammarImprovementChartProp
     <div className="space-y-4">
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={data} margin={{ top: 15, right: 0, left: 0, bottom: 5 }}>
             <XAxis dataKey="name" axisLine={false} tickLine={false} />
             <YAxis domain={[0, 10]} axisLine={false} tickLine={false} />
             <Tooltip

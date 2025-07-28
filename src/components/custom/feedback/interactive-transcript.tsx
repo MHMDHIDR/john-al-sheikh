@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { EnhancedFeedback } from "@/server/db/schema";
 
 interface InteractiveTranscriptProps {
@@ -18,9 +18,6 @@ interface Highlight {
 }
 
 export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) {
-  const [hoveredHighlight, setHoveredHighlight] = useState<Highlight | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-
   // Combine all feedback into highlights
   const highlights: Highlight[] = [];
 
@@ -81,27 +78,43 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
       // Add the highlighted text
       const highlightClass =
         highlight.type === "grammar"
-          ? "border-b-2 border-red-400 border-dotted bg-red-50 cursor-help"
+          ? "border-b-2 border-red-400 border-dotted bg-red-50 cursor-help dark:text-background"
           : highlight.type === "vocabulary"
-            ? "border-b-2 border-blue-400 border-dotted bg-blue-50 cursor-help"
-            : "border-b-2 border-yellow-400 border-dotted bg-yellow-50 cursor-help";
+            ? "border-b-2 border-blue-400 border-dotted bg-blue-50 cursor-help dark:text-background"
+            : "border-b-2 border-yellow-400 border-dotted bg-yellow-50 cursor-help dark:text-background";
 
       segments.push(
-        <span
-          key={`highlight-${index}`}
-          className={highlightClass}
-          onMouseEnter={e => {
-            setHoveredHighlight(highlight);
-            const rect = e.currentTarget.getBoundingClientRect();
-            setTooltipPosition({
-              x: rect.left + rect.width / 2,
-              y: rect.top - 10,
-            });
-          }}
-          onMouseLeave={() => setHoveredHighlight(null)}
-        >
-          {highlight.original}
-        </span>,
+        <Popover key={`highlight-${index}`}>
+          <PopoverTrigger asChild>
+            <span className={highlightClass}>{highlight.original}</span>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-fit max-w-screen py-3 px-4 text-sm"
+            side="top"
+            align="center"
+          >
+            <div className="space-y-2">
+              <div className="font-semibold text-red-600">
+                قلت:{" "}
+                <mark className="bg-red-500 text-white" dir="auto">
+                  &ldquo;{highlight.original}&rdquo;
+                </mark>
+              </div>
+              <div className="font-semibold text-green-600">
+                بدلاً من ذلك:{" "}
+                <mark className="bg-green-500 text-white" dir="auto">
+                  &ldquo;{highlight.correction}&rdquo;
+                </mark>
+              </div>
+              <div className="text-sm text-foreground border-t pt-2">
+                {highlight.arabicExplanation}
+              </div>
+              {highlight.explanation && (
+                <div className="text-xs text-foreground italic ltr">{highlight.explanation}</div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>,
       );
 
       lastEnd = highlight.end;
@@ -117,8 +130,8 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
 
   return (
     <div className="relative">
-      <div className="bg-gray-50 border rounded-lg p-6 leading-relaxed text-base">
-        <div className="mb-4 text-sm text-gray-600">
+      <div className="bg-background border rounded-lg p-6 leading-relaxed text-base">
+        <div className="mb-4 text-sm text-foreground">
           <span>انقر على النص المميز لرؤية التصحيحات والاقتراحات</span>
         </div>
 
@@ -140,33 +153,6 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
           <span>طبيعية التعبير</span>
         </div>
       </div>
-
-      {/* Tooltip */}
-      {hoveredHighlight && (
-        <div
-          className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm"
-          style={{
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y}px`,
-            transform: "translate(-50%, -100%)",
-          }}
-        >
-          <div className="space-y-2">
-            <div className="font-semibold text-red-600">
-              قلت: &ldquo;{hoveredHighlight.original}&rdquo;
-            </div>
-            <div className="font-semibold text-green-600">
-              بدلاً من ذلك: &ldquo;{hoveredHighlight.correction}&rdquo;
-            </div>
-            <div className="text-sm text-gray-600 border-t pt-2">
-              {hoveredHighlight.arabicExplanation}
-            </div>
-            {hoveredHighlight.explanation && (
-              <div className="text-xs text-gray-500 italic">{hoveredHighlight.explanation}</div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -312,45 +312,45 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                     </div>
 
                     {isEnhancedFeedback(feedback) ? (
-                      <div className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <Card>
-                            <CardHeader>
+                            <CardHeader className="p-3 pb-0 text-center">
                               <CardTitle>تطور المفردات</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3">
                               <VocabularyProgressChart metrics={feedback.progressionMetrics} />
                             </CardContent>
                           </Card>
                           <Card>
-                            <CardHeader>
+                            <CardHeader className="p-3 pb-0 text-center">
                               <CardTitle>تحسن القواعد</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3">
                               <GrammarImprovementChart metrics={feedback.progressionMetrics} />
                             </CardContent>
                           </Card>
                         </div>
 
                         <Card>
-                          <CardHeader>
+                          <CardHeader className="p-3 pb-0 text-center">
                             <CardTitle>المفردات المستخدمة</CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-3">
                             <WordCloud wordUsage={feedback.vocabularyAnalysis.wordUsage} />
                           </CardContent>
                         </Card>
 
                         <Card>
-                          <CardHeader>
+                          <CardHeader className="p-3 pb-0 text-center">
                             <CardTitle>تحليل النص</CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-3">
                             <InteractiveTranscript feedback={feedback} />
                           </CardContent>
                         </Card>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                           <FeedbackSection
                             title="التقييم العام"
                             icon={<TrendingUp className="text-green-500 mx-1" />}
@@ -390,7 +390,7 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                       </div>
                     ) : (
                       // Legacy feedback display
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         {feedback.strengths && (
                           <FeedbackSection
                             title="التقييم العام"
