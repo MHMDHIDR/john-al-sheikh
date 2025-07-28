@@ -130,7 +130,7 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
 
   return (
     <div className="relative">
-      <div className="bg-background border rounded-lg p-6 leading-relaxed text-base">
+      <div className="bg-background border rounded-lg p-3 leading-relaxed text-base">
         <div className="mb-4 text-sm text-foreground">
           <span>انقر على النص المميز لرؤية التصحيحات والاقتراحات</span>
         </div>
