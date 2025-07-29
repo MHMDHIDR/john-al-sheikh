@@ -287,7 +287,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
         onOpenChange={handleExitCancel}
         title="إنهاء الإختبار"
         description={
-          <p className="text-red-600 font-semibold">
+          <p className="text-red-600 font-semibold text-justify leading-loose">
             سيتم إنهاء الاختبار الخاص بك إذا غادرت هذه الصفحة. هل أنت متأكد؟ سيتم{" "}
             <strong>إنهاء الإختبار</strong> وفقدان الدقائق المنقضية في الإختبار ولن تتحصل على نتيجة
             الإختبار إذا قمت بإنهاء الإختبار الآنّ

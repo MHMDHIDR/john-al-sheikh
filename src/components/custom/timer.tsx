@@ -420,7 +420,13 @@ export const Timer = memo(function Timer({
             : `${String(defaultMinutes).padStart(2, "0")}:${String(defaultSeconds).padStart(2, "0")}`}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {mode === "mock-test" ? "الوقت المنقضي" : isRunning ? "الوقت المتبقي" : "زمن المحادثة"}
+          {!isRunning
+            ? "إضغط لبدأ المحادثة"
+            : mode === "mock-test"
+              ? "الوقت المنقضي"
+              : isRunning
+                ? "الوقت المتبقي"
+                : "زمن المحادثة"}
         </div>
       </div>
 

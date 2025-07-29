@@ -9,6 +9,8 @@ export function getAllVapiKeysInOrder(): string[] {
   // Current key first, then previous keys in fallback order
   return [
     env.VAPI_PRIVATE_KEY,
+    env.VAPI_PRIVATE_KEY_UP_TO_29_JULY,
+    env.VAPI_PRIVATE_KEY_UP_TO_27_JULY,
     env.VAPI_PRIVATE_KEY_UP_TO_17_JULY,
     env.VAPI_PRIVATE_KEY_UP_TO_11_JULY,
     env.VAPI_PRIVATE_KEY_UP_TO_04_JULY,

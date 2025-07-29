@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq, isNotNull, sql } from "drizzle-orm";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { createVapiClient, getAllVapiKeysInOrder } from "@/lib/vapi.server.sdk";
@@ -49,7 +49,7 @@ export const vapiRouter = createTRPCRouter({
         .from(speakingTests)
         .innerJoin(users, eq(speakingTests.userId, users.id))
         .where(isNotNull(speakingTests.callId))
-        .orderBy(speakingTests.createdAt)
+        .orderBy(desc(speakingTests.createdAt))
         .limit(limit)
         .offset(offset);
 
