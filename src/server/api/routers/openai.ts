@@ -664,9 +664,6 @@ export const openaiRouter = createTRPCRouter({
         const validBand =
           input.band && !isNaN(parseFloat(input.band.toString())) ? input.band : 5.0;
 
-        // Keep it simple - just use the input data as-is
-        console.log("Saving speaking test with minimal processing...");
-
         return await ctx.db.transaction(async tx => {
           // Simple insert - just save the essential data
           const [result] = await tx

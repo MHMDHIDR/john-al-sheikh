@@ -629,8 +629,8 @@ const FullSpeakingRecorderButton = forwardRef<
             localStorage.removeItem("mic-permission-granted");
             return;
           }
-        } catch (permError) {
-          console.log("Permissions API not fully supported, using fallback method");
+        } catch (e) {
+          console.error("Permissions API not fully supported, using fallback method", e);
         }
       }
 
@@ -697,8 +697,7 @@ const FullSpeakingRecorderButton = forwardRef<
 
           permission.addEventListener("change", permissionChangeListener);
         } catch (error) {
-          // Permissions API not fully supported, skip listener
-          console.log("Permission change listener not supported");
+          console.error("Permission change listener not supported", error);
         }
       }
     };

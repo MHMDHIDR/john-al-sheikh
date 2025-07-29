@@ -40,7 +40,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
         ) ||
         (navigator.maxTouchPoints &&
           navigator.maxTouchPoints > 2 &&
-          /MacIntel/.test(navigator.platform))
+          navigator.platform.includes("MacIntel"))
       );
     };
 
@@ -174,7 +174,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
 
     try {
       window.sessionStorage.setItem(stateKey, JSON.stringify(initialState));
-    } catch (e) {
+    } catch {
       console.warn("Session storage not available");
     }
 
@@ -192,7 +192,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
 
       try {
         window.sessionStorage.setItem(stateKey, JSON.stringify(state));
-      } catch (e) {
+      } catch {
         // Ignore storage errors
       }
 
@@ -203,27 +203,28 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     const checkForReload = () => {
       if (!shouldPreventNavigation()) return;
 
-      try {
-        const storedState = window.sessionStorage.getItem(stateKey);
-        if (storedState) {
-          const state = JSON.parse(storedState);
-          const now = Date.now();
+      const storedState = window.sessionStorage.getItem(stateKey);
+      if (storedState) {
+        const state = JSON.parse(storedState) as {
+          startTime: number;
+          isTestActive: boolean;
+          pathname: string;
+          lastHeartbeat: number;
+        };
+        const now = Date.now();
 
-          // If there's a significant gap in heartbeats or if we detect a fresh page load
-          // after a very short time, it might be a reload
-          if (
-            now - state.lastHeartbeat > 3000 ||
-            (now - state.startTime < 1000 && state.startTime !== startTime)
-          ) {
-            // Potential reload detected
-            if (!pageStateRef.current.reloadAttempted) {
-              pageStateRef.current.reloadAttempted = true;
-              setShowExitConfirmation(true);
-            }
+        // If there's a significant gap in heartbeats or if we detect a fresh page load
+        // after a very short time, it might be a reload
+        if (
+          now - state.lastHeartbeat > 3000 ||
+          (now - state.startTime < 1000 && state.startTime !== startTime)
+        ) {
+          // Potential reload detected
+          if (!pageStateRef.current.reloadAttempted) {
+            pageStateRef.current.reloadAttempted = true;
+            setShowExitConfirmation(true);
           }
         }
-      } catch (e) {
-        // Ignore parsing errors
       }
     };
 
@@ -232,13 +233,14 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     pageStateRef.current.stateCheckInterval = setInterval(checkForReload, 500);
 
     return () => {
-      if (pageStateRef.current.heartbeatInterval) {
-        clearInterval(pageStateRef.current.heartbeatInterval);
-        pageStateRef.current.heartbeatInterval = null;
+      const currentState = pageStateRef.current;
+      if (currentState.heartbeatInterval) {
+        clearInterval(currentState.heartbeatInterval);
+        currentState.heartbeatInterval = null;
       }
-      if (pageStateRef.current.stateCheckInterval) {
-        clearInterval(pageStateRef.current.stateCheckInterval);
-        pageStateRef.current.stateCheckInterval = null;
+      if (currentState.stateCheckInterval) {
+        clearInterval(currentState.stateCheckInterval);
+        currentState.stateCheckInterval = null;
       }
     };
   }, [shouldPreventNavigation, pathname]);
@@ -262,7 +264,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       }
     };
 
-    const handlePageHide = (event: PageTransitionEvent) => {
+    const handlePageHide = () => {
       if (!pageStateRef.current.reloadAttempted) {
         pageStateRef.current.reloadAttempted = true;
         // For mobile, we can't prevent the navigation, but we can try to show the dialog
@@ -321,7 +323,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     let touchStartTime = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches && e.touches[0]) {
+      if (e.touches?.[0]) {
         startY = e.touches[0].clientY;
         startX = e.touches[0].clientX;
         touchStartTime = Date.now();
@@ -329,7 +331,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches && e.touches[0]) {
+      if (e.touches?.[0]) {
         const currentY = e.touches[0].clientY;
         const currentX = e.touches[0].clientX;
         const deltaY = currentY - startY;
@@ -354,8 +356,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
 
       // Detect rapid taps that might trigger refresh
       if (touchDuration < 200 && !pageStateRef.current.reloadAttempted) {
-        const target = e.target as HTMLElement;
-
         // Check if touch was near top of screen (potential address bar tap)
         if (startY < 100) {
           setTimeout(() => {
@@ -443,7 +443,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!shouldPreventNavigation()) return;
 
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = (_e: PopStateEvent) => {
       // Always prevent back/forward navigation during test
       window.history.pushState(null, "", pathname);
 
