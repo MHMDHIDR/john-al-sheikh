@@ -202,11 +202,11 @@ function IeltsAssistantConfig({
     model: {
       provider: "openai",
       model: "gpt-4o-mini",
-      temperature: 0.3,
+      temperature: 0.4,
       messages: [{ role: "system", content: systemPrompt }],
     },
     voice: { provider: "11labs", voiceId: "steve" },
-    transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
+    transcriber: { provider: "google", model: "gemini-2.5-flash", language: "English" },
   };
 }
 
@@ -608,6 +608,7 @@ const FullSpeakingRecorderButton = forwardRef<
       clearTest();
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
+        name: "John Al-Shiekh",
         silenceTimeoutSeconds: 100, // Allow 1.66 minutes of silence,
         maxDurationSeconds:
           mode === "mock-test"
@@ -616,9 +617,10 @@ const FullSpeakingRecorderButton = forwardRef<
         endCallMessage:
           mode === "general-english"
             ? "Thank you for our conversation! I hope you enjoyed practicing your English with me. Have a great day!"
-            : undefined,
+            : `Thanks for the conversation ${userProfile.name}! I hope you enjoyed practicing your English with me today.`,
         messagePlan: {
           idleMessages: [
+            "I'm here whenever you're ready to continue.",
             "Are you still there?",
             "May I remind we have limited time! Please speak up!",
             "Can you please continue speaking?",
@@ -628,7 +630,7 @@ const FullSpeakingRecorderButton = forwardRef<
           silenceTimeoutMessage: "As there is no response, I am ending the call now.",
           idleMessageResetCountOnUserSpeechEnabled: true,
         },
-        startSpeakingPlan: { waitSeconds: 3 },
+        startSpeakingPlan: { waitSeconds: 4 },
         backgroundDenoisingEnabled: true,
       });
     } catch (error) {
