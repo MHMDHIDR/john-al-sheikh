@@ -593,25 +593,48 @@ const FullSpeakingRecorderButton = forwardRef<
 
   const checkMicPermission = async () => {
     try {
-      // First check if permission was already granted
-      const permission = await navigator.permissions.query({
-        name: "microphone" as PermissionName,
-      });
-
-      if (permission.state === "granted") {
-        setHasPermission(true);
-        setErrorMessage("");
-        return;
+      // First check if we've stored the permission state locally
+      const storedPermission = localStorage.getItem("mic-permission-granted");
+      if (storedPermission === "true") {
+        // Double-check by trying to access the microphone briefly
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          setHasPermission(true);
+          setErrorMessage("");
+          return;
+        } catch {
+          // If we can't access it despite stored permission, clear the stored state
+          localStorage.removeItem("mic-permission-granted");
+        }
       }
 
-      // If permission is denied, don't automatically request
-      if (permission.state === "denied") {
-        setHasPermission(false);
-        setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون، يرجى تفعيل الميكروفون");
-        return;
+      // Try using the permissions API if available
+      if ("permissions" in navigator) {
+        try {
+          const permission = await navigator.permissions.query({
+            name: "microphone" as PermissionName,
+          });
+
+          if (permission.state === "granted") {
+            setHasPermission(true);
+            setErrorMessage("");
+            localStorage.setItem("mic-permission-granted", "true");
+            return;
+          }
+
+          if (permission.state === "denied") {
+            setHasPermission(false);
+            setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون، يرجى تفعيل الميكروفون");
+            localStorage.removeItem("mic-permission-granted");
+            return;
+          }
+        } catch (permError) {
+          console.log("Permissions API not fully supported, using fallback method");
+        }
       }
 
-      // If permission is prompt (not yet asked), we'll request it when user tries to start
+      // If permission is prompt or permissions API is not available, set as not granted
       setHasPermission(false);
     } catch (error) {
       console.error("Error checking microphone permission:", error);
@@ -627,12 +650,18 @@ const FullSpeakingRecorderButton = forwardRef<
       setErrorMessage("");
       setShowPermissionDialog(false);
 
+      // Store permission state for future checks
+      localStorage.setItem("mic-permission-granted", "true");
+
       // Clean up the stream when permission is granted
       stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       console.error("Error accessing microphone:", error);
       setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون، يرجى تفعيل الميكروفون");
       setShowPermissionDialog(true);
+
+      // Clear any stored permission state since access was denied
+      localStorage.removeItem("mic-permission-granted");
     }
   };
 
@@ -644,10 +673,62 @@ const FullSpeakingRecorderButton = forwardRef<
     }
   }, [permissionRequested]);
 
+  // Listen for permission changes if supported
+  useEffect(() => {
+    let permissionChangeListener: (() => void) | null = null;
+
+    const setupPermissionListener = async () => {
+      if ("permissions" in navigator) {
+        try {
+          const permission = await navigator.permissions.query({
+            name: "microphone" as PermissionName,
+          });
+
+          permissionChangeListener = () => {
+            if (permission.state === "granted") {
+              setHasPermission(true);
+              setErrorMessage("");
+              localStorage.setItem("mic-permission-granted", "true");
+            } else if (permission.state === "denied") {
+              setHasPermission(false);
+              localStorage.removeItem("mic-permission-granted");
+            }
+          };
+
+          permission.addEventListener("change", permissionChangeListener);
+        } catch (error) {
+          // Permissions API not fully supported, skip listener
+          console.log("Permission change listener not supported");
+        }
+      }
+    };
+
+    void setupPermissionListener();
+
+    return () => {
+      if (permissionChangeListener && "permissions" in navigator) {
+        navigator.permissions
+          .query({
+            name: "microphone" as PermissionName,
+          })
+          .then(permission => {
+            permission.removeEventListener("change", permissionChangeListener!);
+          })
+          .catch(() => {
+            // Ignore cleanup errors
+          });
+      }
+    };
+  }, []);
+
   const handleStartConversation = async () => {
     if (!hasPermission) {
-      setShowPermissionDialog(true);
-      return;
+      // Before showing dialog, try one more time to check permission
+      await checkMicPermission();
+      if (!hasPermission) {
+        setShowPermissionDialog(true);
+        return;
+      }
     }
 
     try {

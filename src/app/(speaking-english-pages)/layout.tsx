@@ -20,6 +20,61 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
   const originalPushRef = useRef<typeof router.push | null>(null);
   const originalReplaceRef = useRef<typeof router.replace | null>(null);
 
+  // Enhanced mobile state tracking
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const pageStateRef = useRef({
+    isActive: true,
+    lastActiveTime: Date.now(),
+    reloadAttempted: false,
+    heartbeatInterval: null as NodeJS.Timeout | null,
+    stateCheckInterval: null as NodeJS.Timeout | null,
+  });
+
+  // Detect mobile device and user interaction
+  useEffect(() => {
+    const checkMobile = () => {
+      return !!(
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        ) ||
+        (navigator.maxTouchPoints &&
+          navigator.maxTouchPoints > 2 &&
+          /MacIntel/.test(navigator.platform))
+      );
+    };
+
+    setIsMobile(checkMobile());
+
+    // Track user interactions for sticky activation
+    const trackInteraction = () => {
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+      }
+      pageStateRef.current.lastActiveTime = Date.now();
+    };
+
+    // Multiple event types to ensure we catch user interaction
+    const interactionEvents = [
+      "touchstart",
+      "touchend",
+      "click",
+      "keydown",
+      "scroll",
+      "mousemove",
+      "focus",
+    ];
+    interactionEvents.forEach(event => {
+      document.addEventListener(event, trackInteraction, { passive: true });
+    });
+
+    return () => {
+      interactionEvents.forEach(event => {
+        document.removeEventListener(event, trackInteraction);
+      });
+    };
+  }, [hasUserInteracted]);
+
   // Force test running state update
   useEffect(() => {
     if (callStatus === CallStatus.ACTIVE) {
@@ -61,6 +116,8 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     // Clear session storage directly as a fallback
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("mock_test_state");
+      // Clear our state tracking
+      window.sessionStorage.removeItem("test_page_state");
     }
   }, [endSession, mockTestStore]);
 
@@ -94,48 +151,322 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
   const handleExitCancel = useCallback(() => {
     setShowExitConfirmation(false);
     pendingUrl.current = null;
+    // Reset reload attempt flag
+    pageStateRef.current.reloadAttempted = false;
   }, []);
 
-  // Handle browser refresh and tab close
+  // Aggressive reload detection using multiple strategies
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (shouldPreventNavigation()) {
-        event.preventDefault();
-        event.returnValue = "";
+    if (!shouldPreventNavigation()) return;
+
+    const startTime = Date.now();
+    pageStateRef.current.isActive = true;
+    pageStateRef.current.lastActiveTime = startTime;
+
+    // Store initial state in session storage
+    const stateKey = "test_page_state";
+    const initialState = {
+      startTime,
+      isTestActive: true,
+      pathname,
+      lastHeartbeat: startTime,
+    };
+
+    try {
+      window.sessionStorage.setItem(stateKey, JSON.stringify(initialState));
+    } catch (e) {
+      console.warn("Session storage not available");
+    }
+
+    // Heartbeat system to detect page reload
+    const heartbeat = () => {
+      if (!shouldPreventNavigation()) return;
+
+      const now = Date.now();
+      const state = {
+        startTime,
+        isTestActive: true,
+        pathname,
+        lastHeartbeat: now,
+      };
+
+      try {
+        window.sessionStorage.setItem(stateKey, JSON.stringify(state));
+      } catch (e) {
+        // Ignore storage errors
+      }
+
+      pageStateRef.current.lastActiveTime = now;
+    };
+
+    // Check for reload detection
+    const checkForReload = () => {
+      if (!shouldPreventNavigation()) return;
+
+      try {
+        const storedState = window.sessionStorage.getItem(stateKey);
+        if (storedState) {
+          const state = JSON.parse(storedState);
+          const now = Date.now();
+
+          // If there's a significant gap in heartbeats or if we detect a fresh page load
+          // after a very short time, it might be a reload
+          if (
+            now - state.lastHeartbeat > 3000 ||
+            (now - state.startTime < 1000 && state.startTime !== startTime)
+          ) {
+            // Potential reload detected
+            if (!pageStateRef.current.reloadAttempted) {
+              pageStateRef.current.reloadAttempted = true;
+              setShowExitConfirmation(true);
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore parsing errors
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [shouldPreventNavigation]);
+    // Start heartbeat and checking intervals
+    pageStateRef.current.heartbeatInterval = setInterval(heartbeat, 1000);
+    pageStateRef.current.stateCheckInterval = setInterval(checkForReload, 500);
 
-  // Handle browser back/forward buttons
+    return () => {
+      if (pageStateRef.current.heartbeatInterval) {
+        clearInterval(pageStateRef.current.heartbeatInterval);
+        pageStateRef.current.heartbeatInterval = null;
+      }
+      if (pageStateRef.current.stateCheckInterval) {
+        clearInterval(pageStateRef.current.stateCheckInterval);
+        pageStateRef.current.stateCheckInterval = null;
+      }
+    };
+  }, [shouldPreventNavigation, pathname]);
+
+  // Enhanced beforeunload with all possible events
   useEffect(() => {
-    const handlePopState = () => {
-      if (shouldPreventNavigation()) {
-        // This will prevent the actual navigation
-        window.history.pushState(null, "", pathname);
+    if (!shouldPreventNavigation()) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (hasUserInteracted) {
+        // Standard preventDefault approach
+        event.preventDefault();
+        event.returnValue = "";
+
+        // Mobile-specific handling
+        if (isMobile) {
+          const message = "سيتم إنهاء الاختبار الخاص بك إذا غادرت هذه الصفحة. هل أنت متأكد؟";
+          event.returnValue = message;
+          return message;
+        }
+      }
+    };
+
+    const handlePageHide = (event: PageTransitionEvent) => {
+      if (!pageStateRef.current.reloadAttempted) {
+        pageStateRef.current.reloadAttempted = true;
+        // For mobile, we can't prevent the navigation, but we can try to show the dialog
+        // when the page becomes visible again
+        setTimeout(() => {
+          if (document.visibilityState === "visible" && shouldPreventNavigation()) {
+            setShowExitConfirmation(true);
+          }
+        }, 100);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      const now = Date.now();
+
+      if (document.visibilityState === "hidden") {
+        pageStateRef.current.isActive = false;
+        // Mark as potential reload attempt if it happens quickly
+        if (now - pageStateRef.current.lastActiveTime < 1000) {
+          pageStateRef.current.reloadAttempted = true;
+        }
+      } else if (document.visibilityState === "visible") {
+        const wasInactive = !pageStateRef.current.isActive;
+        pageStateRef.current.isActive = true;
+        pageStateRef.current.lastActiveTime = now;
+
+        // If we detected a reload attempt and page is now visible again, show dialog
+        if (pageStateRef.current.reloadAttempted && wasInactive && shouldPreventNavigation()) {
+          setTimeout(() => {
+            setShowExitConfirmation(true);
+          }, 100);
+        }
+      }
+    };
+
+    // Add all possible event listeners
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("unload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide as EventListener);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("unload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide as EventListener);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [shouldPreventNavigation, hasUserInteracted, isMobile]);
+
+  // Mobile-specific touch gesture prevention and detection
+  useEffect(() => {
+    if (!shouldPreventNavigation() || !isMobile) return;
+
+    let startY = 0;
+    let startX = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+        touchStartTime = Date.now();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+        const deltaY = currentY - startY;
+        const deltaX = Math.abs(currentX - startX);
+
+        // Prevent pull-to-refresh
+        if (deltaY > 0 && deltaX < 50 && window.scrollY === 0) {
+          e.preventDefault();
+
+          // Show confirmation dialog for significant pull-down
+          if (deltaY > 80 && !pageStateRef.current.reloadAttempted) {
+            pageStateRef.current.reloadAttempted = true;
+            setShowExitConfirmation(true);
+          }
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndTime = Date.now();
+      const touchDuration = touchEndTime - touchStartTime;
+
+      // Detect rapid taps that might trigger refresh
+      if (touchDuration < 200 && !pageStateRef.current.reloadAttempted) {
+        const target = e.target as HTMLElement;
+
+        // Check if touch was near top of screen (potential address bar tap)
+        if (startY < 100) {
+          setTimeout(() => {
+            if (document.visibilityState === "hidden") {
+              pageStateRef.current.reloadAttempted = true;
+            }
+          }, 100);
+        }
+      }
+    };
+
+    // Prevent common mobile refresh gestures
+    document.addEventListener("touchstart", handleTouchStart, { passive: false });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+    // Prevent pinch-to-zoom which can sometimes trigger refresh
+    const handleGestureStart = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", handleGestureStart, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("gesturestart", handleGestureStart);
+    };
+  }, [shouldPreventNavigation, isMobile]);
+
+  // Detect address bar interactions and page focus changes
+  useEffect(() => {
+    if (!shouldPreventNavigation()) return;
+
+    let focusLossTime = 0;
+
+    const handleFocus = () => {
+      const now = Date.now();
+      const timeSinceFocusLoss = now - focusLossTime;
+
+      // If focus was lost and regained quickly, might be refresh attempt
+      if (focusLossTime > 0 && timeSinceFocusLoss < 2000 && timeSinceFocusLoss > 100) {
+        if (!pageStateRef.current.reloadAttempted) {
+          pageStateRef.current.reloadAttempted = true;
+          setTimeout(() => {
+            if (shouldPreventNavigation()) {
+              setShowExitConfirmation(true);
+            }
+          }, 100);
+        }
+      }
+
+      pageStateRef.current.lastActiveTime = now;
+    };
+
+    const handleBlur = () => {
+      focusLossTime = Date.now();
+    };
+
+    // Detect window resize (address bar show/hide on mobile)
+    const handleResize = () => {
+      if (isMobile) {
+        const now = Date.now();
+        if (now - pageStateRef.current.lastActiveTime < 1000) {
+          // Quick resize might indicate address bar interaction
+          setTimeout(() => {
+            if (document.visibilityState === "hidden" && !pageStateRef.current.reloadAttempted) {
+              pageStateRef.current.reloadAttempted = true;
+            }
+          }, 200);
+        }
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [shouldPreventNavigation, isMobile]);
+
+  // Enhanced popstate handling for back/forward/refresh
+  useEffect(() => {
+    if (!shouldPreventNavigation()) return;
+
+    const handlePopState = (e: PopStateEvent) => {
+      // Always prevent back/forward navigation during test
+      window.history.pushState(null, "", pathname);
+
+      if (!pageStateRef.current.reloadAttempted) {
+        pageStateRef.current.reloadAttempted = true;
         interceptNavigation(document.referrer || "/");
       }
     };
 
-    // Set up an initial history entry to make the popstate work
+    // Set up history state
     window.history.pushState(null, "", pathname);
     window.addEventListener("popstate", handlePopState);
 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [pathname, shouldPreventNavigation, interceptNavigation]);
 
-  // Aggressively patch all Next.js navigation methods
+  // Router and navigation patching (keeping original implementation)
   useEffect(() => {
-    // Always store original methods even if we're not intercepting yet
     originalPushRef.current ??= router.push.bind(router);
     originalReplaceRef.current ??= router.replace.bind(router);
 
-    // If we shouldn't prevent navigation, don't apply patches
     if (!shouldPreventNavigation()) return;
 
-    // Override the router's push method to intercept navigation
     const patchedPush = (url: string, options?: NavigateOptions) => {
       if (shouldPreventNavigation() && url !== pathname) {
         interceptNavigation(url);
@@ -144,7 +475,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       return originalPushRef.current!(url, options);
     };
 
-    // Override the router's replace method
     const patchedReplace = (url: string, options?: NavigateOptions) => {
       if (shouldPreventNavigation() && url !== pathname) {
         interceptNavigation(url);
@@ -153,7 +483,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       return originalReplaceRef.current!(url, options);
     };
 
-    // Apply patches - use defineProperty to override methods
     Object.defineProperty(router, "push", {
       value: patchedPush,
       configurable: true,
@@ -166,7 +495,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       writable: true,
     });
 
-    // Hijack navigation globally
     if (typeof window !== "undefined") {
       const originalHistoryPushState = window.history.pushState.bind(window.history);
       window.history.pushState = function (data, unused, url) {
@@ -178,7 +506,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       };
 
       return () => {
-        // Restore original router methods
         if (originalPushRef.current) {
           Object.defineProperty(router, "push", {
             value: originalPushRef.current,
@@ -195,28 +522,23 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
           });
         }
 
-        // Restore original window.history.pushState
         window.history.pushState = originalHistoryPushState;
       };
     }
   }, [pathname, router, shouldPreventNavigation, interceptNavigation]);
 
-  // Patch all link clicks globally with capture phase
+  // Link click interception (keeping original implementation)
   useEffect(() => {
     if (!shouldPreventNavigation()) return;
 
     const handleGlobalClick = (e: MouseEvent) => {
-      // Check if the clicked element or any of its parents is a link
       let element = e.target as HTMLElement | null;
       while (element) {
-        // Next.js Link components have data-next-link attributes
         const isNextJsLink = element.hasAttribute("data-next-link");
 
-        // Check for both standard links and Next.js Link components
         if (element.tagName === "A" || isNextJsLink) {
           const href = element.getAttribute("href");
 
-          // If it's a link with an href that would navigate away
           if (href && href !== pathname && !href.startsWith("#")) {
             e.preventDefault();
             e.stopPropagation();
@@ -228,7 +550,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       }
     };
 
-    // Use capturing phase to get events before they reach their targets
     document.addEventListener("click", handleGlobalClick, { capture: true });
 
     return () => {
@@ -236,12 +557,11 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     };
   }, [shouldPreventNavigation, interceptNavigation, pathname]);
 
-  // Intercept data-next-link clicks through mutation observer
+  // Mutation observer for dynamic links (keeping original implementation)
   useEffect(() => {
     if (!shouldPreventNavigation()) return;
 
     const observer = new MutationObserver(mutations => {
-      // Look for attributes that might indicate a Next.js link
       mutations.forEach(mutation => {
         if (
           mutation.type === "attributes" &&
@@ -251,7 +571,6 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
           const href = element.getAttribute("href");
 
           if (href && href !== pathname && !href.startsWith("#")) {
-            // Add a click interceptor
             element.addEventListener(
               "click",
               e => {
