@@ -591,6 +591,35 @@ const FullSpeakingRecorderButton = forwardRef<
     };
   }, [callStatus, mode, endSession, triggerWindDown, windDownTriggered]);
 
+  const checkMicPermission = async () => {
+    try {
+      // First check if permission was already granted
+      const permission = await navigator.permissions.query({
+        name: "microphone" as PermissionName,
+      });
+
+      if (permission.state === "granted") {
+        setHasPermission(true);
+        setErrorMessage("");
+        return;
+      }
+
+      // If permission is denied, don't automatically request
+      if (permission.state === "denied") {
+        setHasPermission(false);
+        setErrorMessage("لا يوجد صلاحية وصول إلى الميكروفون، يرجى تفعيل الميكروفون");
+        return;
+      }
+
+      // If permission is prompt (not yet asked), we'll request it when user tries to start
+      setHasPermission(false);
+    } catch (error) {
+      console.error("Error checking microphone permission:", error);
+      // Fallback: assume permission not granted
+      setHasPermission(false);
+    }
+  };
+
   const requestMicPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -607,11 +636,11 @@ const FullSpeakingRecorderButton = forwardRef<
     }
   };
 
-  // Handle initial permission check
+  // Handle initial permission check - FIXED VERSION
   useEffect(() => {
     if (!permissionRequested) {
-      void requestMicPermission();
       setPermissionRequested(true);
+      void checkMicPermission();
     }
   }, [permissionRequested]);
 
