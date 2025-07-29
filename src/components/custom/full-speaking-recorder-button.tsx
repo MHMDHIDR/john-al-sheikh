@@ -96,8 +96,29 @@ function IeltsAssistantConfig({
           Section 1: Introduction and General Questions (2-3 minutes)
           - DO NOT proceed to Section 1 until the candidate has introduced himself/herself.
           - Ask the candidate about their nationality country.
-          - Ask the candidate about a random topic from one of the followings: 1. their home town, 2. their family, 3. their work, 4. their studies, 5. their hobbies.
-          - Ask ONE follow-up question based on their response.
+          - Ask the candidate about a random topic from one of the followings (choose one of them):
+              1. their home town.
+              2. their family.
+              3. their work.
+              4. their studies.
+              5. their hobbies.
+              6. their favorite food.
+              7. their favorite movie.
+              8. their favorite book.
+              9. their favorite music.
+              10. their favorite sport.
+              11. their favorite game.
+              12. their favorite animal.
+              13. their favorite plant.
+              14. their favorite color.
+              15. their favorite season.
+              16. their favorite holiday.
+              17. their favorite weather.
+              18. their favorite time of the day.
+              19. their favorite place to visit.
+              20. their favorite thing to do.
+
+        - Ask TWO follow-up questions based on their response.
 
           Section 2: Individual Long Turn (2-3 minutes)
           - Give the candidate a topic title.
