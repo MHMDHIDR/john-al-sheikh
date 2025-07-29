@@ -84,7 +84,6 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
     if (subject.trim()) {
       setSlug(createArabicSlug(subject.trim()));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject]);
 
   const optimizAndUploadImage = async (file: File) => {
@@ -351,7 +350,7 @@ export function EmailEditor({ emailList }: EmailEditorProps) {
         setIsRendering(false);
       });
     }
-  }, [isPreview, subject, previewContent, ctaUrl, ctaButtonLabel, files, image]);
+  }, [isPreview, subject, previewContent, ctaUrl, ctaButtonLabel, files, image, slug]);
 
   if (!editor) {
     return (

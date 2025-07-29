@@ -2,6 +2,7 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -25,6 +26,7 @@ import { checkRoleAccess } from "@/lib/check-role-access";
 import { UserRole } from "@/server/db/schema";
 import { CSVExportButton } from "./csv-export-button";
 import { LoadingCard } from "./loading";
+import { TablePagination } from "./table-pagination";
 import type { BaseEntity } from "./base-columns";
 import type { Users } from "@/server/db/schema";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
@@ -41,7 +43,7 @@ type DataTableProps<TData extends BaseEntity> = {
   searchPlaceholder?: string;
 };
 // Global filter function that searches across all columns
-function globalFilterFn(row: Row<unknown>, columnId: string, filterValue: string): boolean {
+function globalFilterFn(row: Row<unknown>, _columnId: string, filterValue: string): boolean {
   if (!filterValue) return true;
   const searchValue = filterValue.toLowerCase();
   // Get all cell values for this row
@@ -85,6 +87,7 @@ function globalFilterFn(row: Row<unknown>, columnId: string, filterValue: string
   // Check if any value contains the search term
   return searchableValues.some(val => val.toLowerCase().includes(searchValue));
 }
+
 export function DataTable<TData extends BaseEntity>({
   columns,
   data,
@@ -143,9 +146,10 @@ export function DataTable<TData extends BaseEntity>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: globalFilterFn,
+    globalFilterFn,
     state: {
       rowSelection,
       globalFilter,
@@ -227,6 +231,8 @@ export function DataTable<TData extends BaseEntity>({
         </div>
       )}
 
+      <TablePagination table={table} selectedRows={selectedRows} />
+
       <div className="border rounded-md overflow-auto">
         <Table>
           <TableHeader className="select-none">
@@ -300,6 +306,8 @@ export function DataTable<TData extends BaseEntity>({
           </TableBody>
         </Table>
       </div>
+
+      <TablePagination table={table} selectedRows={selectedRows} />
     </div>
   );
 }
