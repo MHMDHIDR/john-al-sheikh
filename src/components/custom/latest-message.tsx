@@ -37,7 +37,7 @@ export default function LatestMessage({ message }: { message: Message | undefine
     >
       <div
         className={cn(
-          "max-w-[80%] mx-auto rounded-lg p-4 mb-4",
+          "max-w-[95%] mx-auto rounded-lg p-3 mb-3",
           currentMessage.role === "examiner"
             ? "bg-blue-100 text-blue-900"
             : "bg-green-100 text-green-900",

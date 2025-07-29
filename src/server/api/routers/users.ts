@@ -127,6 +127,7 @@ export const usersRouter = createTRPCRouter({
         ...(input.image && { image: input.image }),
         ...(input.status && { status: input.status }),
         ...(input.deletedAt && { deletedAt: input.deletedAt }),
+        ...(input.goalBand && { goalBand: input.goalBand }),
         updatedAt: new Date(),
       })
       .where(whereClause)

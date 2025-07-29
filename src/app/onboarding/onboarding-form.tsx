@@ -453,12 +453,10 @@ export default function OnboardingForm({
                       onValueChange={value => {
                         field.onChange(value ? parseFloat(value) : 5.0);
                       }}
-                      value={field.value?.toString() || getDefaultValues().goalBand.toString()}
+                      value={field.value?.toString()}
                     >
                       <SelectTrigger className="rtl cursor-pointer">
-                        <SelectValue placeholder="اختر هدفك">
-                          {field.value?.toString() || getDefaultValues().goalBand}
-                        </SelectValue>
+                        <SelectValue placeholder="اختر هدفك" />
                       </SelectTrigger>
                       <SelectContent className="bg-white rtl">
                         <SelectGroup>

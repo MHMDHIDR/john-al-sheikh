@@ -13,6 +13,9 @@ type TimerProps = {
   isConnected: boolean;
   // Add this prop to prevent timer reset during preparation
   isPreparationMode?: boolean;
+  windDownTriggered?: boolean;
+  // Add new prop for starting conversation
+  onStartConversation?: () => void;
 };
 
 // Using memo to prevent unnecessary rerenders
@@ -26,6 +29,8 @@ export const Timer = memo(function Timer({
   onToggleMute,
   isConnected,
   isPreparationMode = false,
+  onStartConversation,
+  windDownTriggered,
 }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -332,6 +337,8 @@ export const Timer = memo(function Timer({
   const handleClick = () => {
     if (isConnected && !isPreparationMode) {
       onToggleMute?.();
+    } else if (!isConnected && onStartConversation) {
+      onStartConversation();
     }
   };
 
@@ -379,25 +386,28 @@ export const Timer = memo(function Timer({
           {isConnected ? (
             <button
               onClick={handleClick}
-              disabled={isPreparationMode}
+              disabled={isPreparationMode || windDownTriggered}
               className={cn(
                 "flex flex-col items-center justify-center w-20 h-20 rounded-full transition-all duration-200 relative z-10",
                 getBackgroundColor(),
-                isPreparationMode
+                isPreparationMode || windDownTriggered
                   ? "cursor-not-allowed opacity-50"
                   : "cursor-pointer hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
               )}
             >
               {isMuted || isPreparationMode ? (
-                <MicOff className="w-6 h-6 text-red-600" />
+                <MicOff className="size-6 text-red-600" />
               ) : (
-                <Mic className="w-6 h-6 text-green-600" />
+                <Mic className="size-6 text-green-600" />
               )}
             </button>
           ) : (
-            <div className="flex flex-col items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 relative z-10">
-              <Mic className="w-6 h-6 text-gray-400" />
-            </div>
+            <button
+              onClick={handleClick}
+              className="flex flex-col items-center justify-center size-20 rounded-full bg-blue-100 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-600 relative z-10 cursor-pointer hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <Mic className="size-6 text-blue-600" />
+            </button>
           )}
         </div>
       </div>

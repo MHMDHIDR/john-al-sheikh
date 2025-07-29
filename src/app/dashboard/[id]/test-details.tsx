@@ -313,6 +313,30 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
 
                     {isEnhancedFeedback(feedback) ? (
                       <div className="space-y-4">
+                        <Card>
+                          <CardHeader className="p-3 pb-0 text-center">
+                            <CardTitle>تحليل النص</CardTitle>
+                            {/* Legend */}
+                            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-1 bg-red-400 border-dotted border-b-2"></div>
+                                <span>أخطاء نحوية</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-1 bg-blue-400 border-dotted border-b-2"></div>
+                                <span>مفردات</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-1 bg-yellow-400 border-dotted border-b-2"></div>
+                                <span>طبيعية التعبير</span>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-3">
+                            <InteractiveTranscript feedback={feedback} />
+                          </CardContent>
+                        </Card>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <Card>
                             <CardHeader className="p-3 pb-0 text-center">
@@ -338,15 +362,6 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
                           </CardHeader>
                           <CardContent className="p-3">
                             <WordCloud wordUsage={feedback.vocabularyAnalysis.wordUsage} />
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="p-3 pb-0 text-center">
-                            <CardTitle>تحليل النص</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-3">
-                            <InteractiveTranscript feedback={feedback} />
                           </CardContent>
                         </Card>
 

@@ -221,6 +221,8 @@ export function useVapiConversation({
     try {
       setWindDownTriggered(true);
       onWindDownTriggered?.();
+      vapi.setMuted(true);
+      setIsMuted(true);
 
       // Send a message to the assistant to start winding down
       vapi.send({

@@ -94,24 +94,24 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
             align="center"
           >
             <div className="space-y-2">
-              <div className="font-semibold text-red-600">
+              <div className="font-semibold text-background">
                 قلت:{" "}
-                <mark className="bg-red-500 text-white" dir="auto">
+                <span className="text-red-500 " dir="auto">
                   &ldquo;{highlight.original}&rdquo;
-                </mark>
+                </span>
               </div>
-              <div className="font-semibold text-green-600">
+              <div className="font-semibold text-background">
                 بدلاً من ذلك:{" "}
-                <mark className="bg-green-500 text-white" dir="auto">
+                <span className="text-green-500 " dir="auto">
                   &ldquo;{highlight.correction}&rdquo;
-                </mark>
-              </div>
-              <div className="text-sm text-foreground border-t pt-2">
-                {highlight.arabicExplanation}
+                </span>
               </div>
               {highlight.explanation && (
                 <div className="text-xs text-foreground italic ltr">{highlight.explanation}</div>
               )}
+              <div className="text-sm text-foreground border-t pt-2">
+                {highlight.arabicExplanation}
+              </div>
             </div>
           </PopoverContent>
         </Popover>,
@@ -136,22 +136,6 @@ export function InteractiveTranscript({ feedback }: InteractiveTranscriptProps) 
         </div>
 
         <div className="ltr text-justify">{renderText()}</div>
-      </div>
-
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-red-400 border-dotted border-b-2"></div>
-          <span>أخطاء نحوية</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-blue-400 border-dotted border-b-2"></div>
-          <span>مفردات</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-1 bg-yellow-400 border-dotted border-b-2"></div>
-          <span>طبيعية التعبير</span>
-        </div>
       </div>
     </div>
   );

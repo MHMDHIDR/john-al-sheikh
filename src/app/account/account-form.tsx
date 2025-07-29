@@ -24,6 +24,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { fallbackUsername } from "@/lib/fallback-username";
@@ -53,6 +62,7 @@ export function AccountForm({ user }: { user: Session["user"] }) {
       id: user.id,
       name: user.name ?? "",
       email: user.email ?? "",
+      goalBand: user.goalBand ?? 5.0,
       phone: user.phone ?? "",
       theme: user.theme ?? "light",
       image: user.image ?? "",
@@ -66,6 +76,7 @@ export function AccountForm({ user }: { user: Session["user"] }) {
           id: user.id,
           name: data.name ?? user.name,
           email: user.email ?? "",
+          goalBand: data.goalBand ?? form.getValues("goalBand"),
           phone: data.phone ?? "",
           image: data.image ?? "",
           theme: data.theme ?? form.getValues("theme"),
@@ -144,6 +155,7 @@ export function AccountForm({ user }: { user: Session["user"] }) {
         id: user.id,
         name: data.name,
         phone: data.phone,
+        goalBand: data.goalBand,
         theme: data.theme,
         image: imageUrl,
       });
@@ -192,6 +204,40 @@ export function AccountForm({ user }: { user: Session["user"] }) {
                     disabled={!isEditingEnabled || isUploading}
                   />
                 </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="goalBand"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>المستوى الذي تطمح للوصول إليه</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={value => {
+                    field.onChange(value ? parseFloat(value) : 5.0);
+                  }}
+                  value={field.value?.toString()}
+                  disabled={!isEditingEnabled}
+                >
+                  <SelectTrigger className="rtl cursor-pointer">
+                    <SelectValue placeholder="اختر هدفك" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white rtl">
+                    <SelectGroup>
+                      <SelectLabel>اختر هدفك</SelectLabel>
+                      {Array.from({ length: 9 }, (_, i) => 5 + i * 0.5).map(band => (
+                        <SelectItem key={band} value={band.toFixed(1)} className="cursor-pointer">
+                          {band.toFixed(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

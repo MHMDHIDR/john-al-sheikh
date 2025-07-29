@@ -135,7 +135,7 @@ async function analyzeGrammar(
     messages: [
       {
         role: "system",
-        content: `You are an expert English grammar analyzer. Analyze the following text for grammatical errors and provide detailed feedback in Arabic.
+        content: `You are an expert English grammar analyzer for SPOKEN language. You are analyzing a transcribed speaking test, NOT written text. Focus ONLY on spoken grammar errors like verb tenses, sentence structure, and word order. DO NOT analyze punctuation, capitalization, or written text formatting as these are transcription artifacts. Analyze the following SPOKEN text for grammatical errors and provide detailed feedback in Arabic.
           Return a JSON object with the following structure:
           {
             "analysis": [{
@@ -190,7 +190,7 @@ async function analyzeVocabulary(
     messages: [
       {
         role: "system",
-        content: `You are an expert vocabulary analyzer. Analyze the following text for vocabulary usage and provide suggestions for improvement.
+        content: `You are an expert vocabulary analyzer for SPOKEN language. You are analyzing a transcribed speaking test, NOT written text. Focus on spoken vocabulary usage, word choice, repetition, and range of vocabulary. DO NOT consider punctuation or written formatting. Analyze the following SPOKEN text for vocabulary usage and provide suggestions for improvement.
           ${
             previousWordUsage
               ? "Consider the user's previous word usage history for personalized recommendations."
@@ -260,7 +260,7 @@ async function analyzeNativeness(
     messages: [
       {
         role: "system",
-        content: `You are an expert in British English. Analyze the following text for nativeness and provide suggestions for more natural British English expressions.
+        content: `You are an expert in British English for SPOKEN language. You are analyzing a transcribed speaking test, NOT written text. Focus on natural spoken expressions, colloquialisms, and pronunciation patterns typical of native British speakers. DO NOT analyze punctuation or written formatting. Analyze the following SPOKEN text for nativeness and provide suggestions for more natural British English expressions.
           Return a JSON object with the following structure:
           {
             "expressions": [{
@@ -512,13 +512,14 @@ export const openaiRouter = createTRPCRouter({
              }
 
              The response MUST be in Arabic language for all feedback points except for any English examples in originalText and correction fields.`
-          : `You are an expert IELTS examiner evaluating a student's speaking response to the topic: "${input.prompt}".
+          : `You are an expert IELTS examiner evaluating a student's SPOKEN response to the topic: "${input.prompt}". This is a transcribed speaking test, NOT written text.
 
-             Analyze the speaking response based on the official IELTS speaking assessment criteria:
+             Analyze the SPOKEN response based on the official IELTS speaking assessment criteria, focusing on SPOKEN language features:
              1. Fluency and Coherence
              2. Lexical Resource (vocabulary)
              3. Grammatical Range and Accuracy
              4. Pronunciation
+             DO NOT analyze punctuation, capitalization, or written text formatting as these are transcription artifacts. Focus only on spoken language features.
 
              Provide a detailed assessment and feedback in Arabic language.
              Return your feedback in the following JSON format with no additional text:

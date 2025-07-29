@@ -44,6 +44,15 @@ export default function ConversationUI({
   const sessionStartTimeRef = useRef<number | null>(null);
   const [showConnectingOverlay, setShowConnectingOverlay] = useState(false);
 
+  // Function to handle conversation start
+  const handleStartConversation = () => {
+    if (recorderRef.current) {
+      // Trigger the conversation start through the recorder ref
+      // We'll need to expose this method from the FullSpeakingRecorderButton
+      recorderRef.current.startConversation?.();
+    }
+  };
+
   // Update the ref when clearTest changes
   useEffect(() => {
     clearTestRef.current = clearTest;
@@ -133,12 +142,14 @@ export default function ConversationUI({
           isMuted={isMuted}
           onToggleMute={() => setVolume(isMuted ? 1 : 0)}
           isConnected={isConnected}
+          onStartConversation={handleStartConversation}
         />
       </div>
 
       <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 dark:bg-black/50 py-2 backdrop-blur-md flex flex-col">
         <LatestMessage message={latestMessage} />
-        <div className="flex flex-col items-center gap-4 select-none px-4">
+        {/* Hidden FullSpeakingRecorderButton to handle conversation logic */}
+        <div className="hidden">
           <FullSpeakingRecorderButton ref={recorderRef} user={user} mode={mode} />
         </div>
       </div>
@@ -146,7 +157,7 @@ export default function ConversationUI({
       {/* Connecting overlay - full screen */}
       {showConnectingOverlay && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80">
-          <div className="flex flex-col items-center gap-4 p-8 rounded-lg bg-white/10 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 p-6 rounded-full bg-white/10 backdrop-blur-sm">
             <Loader2 className="size-12 animate-spin text-white" />
             <div className="text-center">
               <h3 className="text-lg font-semibold text-white">جاري بدأ المحادثة</h3>

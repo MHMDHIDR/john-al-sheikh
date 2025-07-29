@@ -1,7 +1,6 @@
 "use client";
 
-import clsx from "clsx";
-import { ExternalLink, Loader2, Mic } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
@@ -17,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
 import { useMockTestStore } from "@/hooks/use-mock-test-store";
 import { CallStatus, useVapiConversation } from "@/hooks/use-vapi-conversation";
@@ -51,6 +50,7 @@ export type ConversationModeType = "mock-test" | "general-english";
 export interface FullSpeakingRecorderButtonRef {
   stopTest: () => void;
   getSessionStartTime: () => number | null;
+  startConversation: () => void;
 }
 
 /**
@@ -205,8 +205,8 @@ function IeltsAssistantConfig({
       temperature: 0.4,
       messages: [{ role: "system", content: systemPrompt }],
     },
-    voice: { provider: "11labs", voiceId: "steve" },
     transcriber: { provider: "google", model: "gemini-2.5-flash", language: "English" },
+    voice: { provider: "11labs", voiceId: "lUTamkMw7gOzZbFIwmq4" }, // James or steve for the voiceId
   };
 }
 
@@ -229,8 +229,6 @@ const TEST_ONE_MINUTE_TO_PREPARE = [
   "1 minute",
   "1 minute to prepare",
 ];
-
-// Wind down timing constants
 
 // Modify component to use forwardRef
 const FullSpeakingRecorderButton = forwardRef<
@@ -630,8 +628,17 @@ const FullSpeakingRecorderButton = forwardRef<
           silenceTimeoutMessage: "As there is no response, I am ending the call now.",
           idleMessageResetCountOnUserSpeechEnabled: true,
         },
-        startSpeakingPlan: { waitSeconds: 4 },
-        backgroundDenoisingEnabled: true,
+        startSpeakingPlan: {
+          waitSeconds: 3,
+          smartEndpointingPlan: {
+            provider: "livekit",
+          },
+        },
+        backgroundSpeechDenoisingPlan: {
+          smartDenoisingPlan: {
+            enabled: true,
+          },
+        },
       });
     } catch (error) {
       setErrorMessage(typeof error === "string" ? error : (error as Error).message);
@@ -651,6 +658,9 @@ const FullSpeakingRecorderButton = forwardRef<
       }
     },
     getSessionStartTime: () => sessionStartTimeRef.current,
+    startConversation: () => {
+      setShowQuickTipsDialog(true);
+    },
   }));
 
   return (
@@ -681,6 +691,7 @@ const FullSpeakingRecorderButton = forwardRef<
                     isMuted={true}
                     isConnected={true}
                     isPreparationMode={true} // Add this new prop
+                    windDownTriggered={windDownTriggered}
                   />
                 </div>
               </AlertDialogDescription>
@@ -697,105 +708,76 @@ const FullSpeakingRecorderButton = forwardRef<
         </AlertDialog>
       )}
 
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto shadow-none border-none">
         {/* Maybe remove this from the UI in the future and send errorMessage to Posthog */}
         {errorMessage && (
           <CardHeader className="py-0 text-center">
-            <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle>
+            {/* <CardTitle>{<p className="text-red-500 my-2 text-sm">{errorMessage}</p>}</CardTitle> */}
+            <CardTitle>
+              {<p className="text-red-500 my-2 text-sm">{"عفواً حدث خطأ تقني!"}</p>}
+            </CardTitle>
           </CardHeader>
         )}
 
-        <CardContent className="p-0">
-          <div className="flex justify-center items-center">
-            {!isConnected && (
-              <Button
-                id="start-conversation-button"
-                onClick={() => setShowQuickTipsDialog(true)}
-                disabled={callStatus === CallStatus.CONNECTING || isProcessingResults}
-                className={clsx("w-full relative cursor-pointer", {
-                  "animate-pulse": callStatus === CallStatus.INACTIVE,
-                })}
-              >
-                {isProcessingResults ? (
-                  <Loader2 className={clsx("mx-2 size-5 animate-spin")} />
-                ) : (
-                  <Mic
-                    className={clsx("mx-2 size-5", {
-                      "animate-pulse text-blue-600": callStatus === CallStatus.INACTIVE,
-                    })}
-                  />
-                )}
-                <strong>
-                  {callStatus === CallStatus.CONNECTING
-                    ? `جاري بدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}...`
-                    : isProcessingResults
-                      ? "جاري تحليل النتائج يرجى الإنتظار..."
-                      : `إبدأ ${mode === "mock-test" ? "الاختبار" : "المحادثة"}`}
+        <ConfirmationDialog
+          open={showQuickTipsDialog}
+          onOpenChange={setShowQuickTipsDialog}
+          title="نصيحة سريعة"
+          description={
+            <ul className="text-justify list-decimal leading-7">
+              <li className="text-gray-500">
+                ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة
+                <strong className="text-green-600 mx-1">
+                  {mode === "mock-test"
+                    ? MOCK_TEST_CONVERSATION_TIME / 1000 / 60
+                    : GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60}
                 </strong>
-              </Button>
-            )}
-          </div>
+                دقائق
+              </li>
+              <li className="text-purple-500 font-bold">
+                إجعل إجابتك واضحة ومنظمة في محور السؤال باللغة الإنجليزية
+              </li>
+              <li className="text-red-400 font-bold text-sm">
+                تحدث بصوت واضح وفي مكان قليل الضوضاء
+              </li>
+              <li className="text-green-600 dark:text-green-400">
+                في نهاية الوقت سيقوم <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> بإنهاء المحادثة
+                وإعطائك تقييم على مستوى المحادثة لديك
+              </li>
+            </ul>
+          }
+          buttonText="مـوافق"
+          buttonClass="bg-green-600 hover:bg-green-700"
+          onConfirm={() => {
+            setShowQuickTipsDialog(false);
+            void handleStartConversation();
+          }}
+        />
 
-          <ConfirmationDialog
-            open={showQuickTipsDialog}
-            onOpenChange={setShowQuickTipsDialog}
-            title="نصيحة سريعة"
-            description={
-              <ul className="text-justify list-decimal leading-7">
-                <li className="text-gray-500">
-                  ستتحدث مع صديقك <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> لمدة
-                  <strong className="text-green-600 mx-1">
-                    {mode === "mock-test"
-                      ? MOCK_TEST_CONVERSATION_TIME / 1000 / 60
-                      : GENERAL_ENGLISH_CONVERSATION_TIME / 1000 / 60}
-                  </strong>
-                  دقائق
-                </li>
-                <li className="text-purple-500 font-bold">
-                  إجعل إجابتك واضحة ومنظمة في محور السؤال باللغة الإنجليزية
-                </li>
-                <li className="text-red-400 font-bold text-sm">
-                  تحدث بصوت واضح وفي مكان قليل الضوضاء
-                </li>
-                <li className="text-green-600 dark:text-green-400">
-                  في نهاية الوقت سيقوم <strong>{env.NEXT_PUBLIC_APP_NAME}</strong> بإنهاء المحادثة
-                  وإعطائك تقييم على مستوى المحادثة لديك
-                </li>
-              </ul>
-            }
-            buttonText="مـوافق"
-            buttonClass="bg-green-600 hover:bg-green-700"
-            onConfirm={() => {
-              setShowQuickTipsDialog(false);
-              void handleStartConversation();
-            }}
-          />
-
-          <ConfirmationDialog
-            open={showPermissionDialog}
-            onOpenChange={setShowPermissionDialog}
-            title="الميكروفون مطلوب"
-            description={
-              <div className="flex flex-col text-right">
-                <p>
-                  <strong>يرجى السماح بوصول الميكروفون لاستخدام المحادثة بالصوت</strong>
-                </p>
-                <Link
-                  href="https://support.google.com/chrome/answer/2693767?hl=en-GB"
-                  target="_blank"
-                >
-                  <Button variant="link" className="px-0">
-                    <ExternalLink className="size-4" />
-                    كيف أسمح بوصول الميكروفون للمحادثة بالصوت؟
-                  </Button>
-                </Link>
-              </div>
-            }
-            buttonText="السماح بوصول الميكروفون"
-            buttonClass="bg-yellow-600 hover:bg-yellow-700"
-            onConfirm={requestMicPermission}
-          />
-        </CardContent>
+        <ConfirmationDialog
+          open={showPermissionDialog}
+          onOpenChange={setShowPermissionDialog}
+          title="الميكروفون مطلوب"
+          description={
+            <div className="flex flex-col text-right">
+              <p>
+                <strong>يرجى السماح بوصول الميكروفون لاستخدام المحادثة بالصوت</strong>
+              </p>
+              <Link
+                href="https://support.google.com/chrome/answer/2693767?hl=en-GB"
+                target="_blank"
+              >
+                <Button variant="link" className="px-0">
+                  <ExternalLink className="size-4" />
+                  كيف أسمح بوصول الميكروفون للمحادثة بالصوت؟
+                </Button>
+              </Link>
+            </div>
+          }
+          buttonText="السماح بوصول الميكروفون"
+          buttonClass="bg-yellow-600 hover:bg-yellow-700"
+          onConfirm={requestMicPermission}
+        />
       </Card>
     </>
   );

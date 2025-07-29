@@ -5,6 +5,13 @@ export const accountFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
   email: z.string().email("البريد الإلكتروني غير صالح").readonly().nullable().optional(),
+  goalBand: z
+    .number({
+      message: "يرجى اختيار الدرجة التي تهدف لها بشكل صحيح",
+    })
+    .min(1, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9")
+    .max(9, "يجب أن تكون الدرجة التي تهدف لها بين 1 و 9")
+    .optional(),
   phone: z
     .string()
     .optional()
