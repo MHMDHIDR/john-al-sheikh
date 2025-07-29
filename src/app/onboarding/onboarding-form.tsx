@@ -450,10 +450,8 @@ export default function OnboardingForm({
                   <FormLabel>المستوى الذي تطمح للوصول إليه</FormLabel>
                   <FormControl>
                     <Select
-                      onValueChange={value => {
-                        field.onChange(value ? parseFloat(value) : 5.0);
-                      }}
-                      value={field.value?.toString()}
+                      onValueChange={value => field.onChange(parseFloat(value))}
+                      value={typeof field.value === "number" ? field.value.toFixed(1) : "5.0"}
                     >
                       <SelectTrigger className="rtl cursor-pointer">
                         <SelectValue placeholder="اختر هدفك" />
@@ -461,7 +459,7 @@ export default function OnboardingForm({
                       <SelectContent className="bg-white rtl">
                         <SelectGroup>
                           <SelectLabel>اختر هدفك</SelectLabel>
-                          {Array.from({ length: 9 }, (_, i) => 5 + i * 0.5).map(band => (
+                          {Array.from({ length: 9 }, (_, i) => 5.0 + i * 0.5).map(band => (
                             <SelectItem
                               key={band}
                               value={band.toFixed(1)}
