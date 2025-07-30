@@ -10,6 +10,7 @@ import EmptyState from "@/components/custom/empty-state";
 import {
   GrammarImprovementChart,
   InteractiveTranscript,
+  InteractiveTranscriptView,
   VocabularyProgressChart,
   WordCloud,
 } from "@/components/custom/feedback";
@@ -56,59 +57,6 @@ const FeedbackSection: React.FC<{
     <div className="space-y-4">{children}</div>
   </div>
 );
-
-const TranscriptView = ({ transcription }: { transcription: SpeakingTest["transcription"] }) => {
-  if (!transcription?.messages || transcription.messages.length === 0) {
-    return (
-      <EmptyState>
-        <p className="mt-4 text-lg text-gray-500 select-none dark:text-gray-400">
-          لا يوجد تسجيل نصي لهذه المحادثة
-        </p>
-      </EmptyState>
-    );
-  }
-
-  const messageGroups = transcription.messages.reduce<
-    Array<{
-      role: "user" | "examiner";
-      messages: Array<(typeof transcription.messages)[number]>;
-    }>
-  >((acc, message) => {
-    const lastGroup = acc[acc.length - 1];
-    if (lastGroup && lastGroup.role === message.role) {
-      lastGroup.messages.push(message);
-    } else {
-      acc.push({ role: message.role, messages: [message] });
-    }
-    return acc;
-  }, []);
-
-  return (
-    <div className="space-y-4 mt-6">
-      {messageGroups.map((group, groupIndex) => (
-        <div
-          key={groupIndex}
-          className={`p-4 rounded-lg flex gap-2.5 ${
-            group.role === "examiner" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"
-          }`}
-        >
-          <div className="flex-shrink-0">
-            <Badge variant={group.role === "user" ? "default" : "secondary"}>
-              {group.role === "user" ? "المستخدم" : "الممتحن"}
-            </Badge>
-          </div>
-          <div className="flex-1 space-y-2">
-            {group.messages.map((message, messageIndex) => (
-              <p key={messageIndex} className="text-sm ltr">
-                {message.content}
-              </p>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 function isEnhancedFeedback(feedback: FeedbackType): feedback is EnhancedFeedback {
   return (
@@ -489,7 +437,10 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
               </CardHeader>
               <CardContent className="max-sm:p-2">
                 {recordingUrl && <AudioPlayer audioUrl={recordingUrl} title="تسجيل المحادثة" />}
-                <TranscriptView transcription={details.transcription} />
+                <InteractiveTranscriptView
+                  transcription={details.transcription}
+                  feedback={feedback && isEnhancedFeedback(feedback) ? feedback : undefined}
+                />
               </CardContent>
             </Card>
           </TabsContent>
