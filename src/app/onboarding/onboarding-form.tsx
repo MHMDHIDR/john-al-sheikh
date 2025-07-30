@@ -5,6 +5,7 @@ import { Images, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { onboardingSchema } from "@/app/schemas/onboarding";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,8 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { hobbiesList, MINUTES_IN_MS } from "@/lib/constants";
 import { api } from "@/trpc/react";
-import { onboardingSchema } from "../schemas/onboarding";
-import type { OnboardingForm } from "../schemas/onboarding";
+import type { OnboardingForm } from "@/app/schemas/onboarding";
 import type { RouterOutputs } from "@/trpc/react";
 import type { Session } from "next-auth";
 
@@ -78,7 +78,7 @@ export default function OnboardingForm({
       username: generatedUsername ?? "user", // Ensure we have at least 3 chars
       email: session?.user?.email ?? "",
       gender: undefined as "male" | "female" | undefined,
-      goalBand: 5.0,
+      goalBand: profileData?.user?.goalBand ?? 5.0,
       phone: "",
       hobbies: [] as string[],
       profileImage: undefined as File | undefined,
@@ -450,8 +450,8 @@ export default function OnboardingForm({
                   <FormLabel>المستوى الذي تطمح للوصول إليه</FormLabel>
                   <FormControl>
                     <Select
-                      onValueChange={value => field.onChange(parseFloat(value))}
-                      value={typeof field.value === "number" ? field.value.toFixed(1) : "5.0"}
+                      value={field.value.toString()}
+                      onValueChange={value => field.onChange(value)}
                     >
                       <SelectTrigger className="rtl cursor-pointer">
                         <SelectValue placeholder="اختر هدفك" />
