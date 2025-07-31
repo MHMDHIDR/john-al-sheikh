@@ -83,7 +83,7 @@ export default function OnboardingForm({
       hobbies: [] as string[],
       profileImage: undefined as File | undefined,
     };
-  }, [session?.user?.name, session?.user?.email]);
+  }, [session?.user?.name, session?.user?.email, profileData?.user?.goalBand]);
 
   // Initialize the form with proper default values
   const form = useForm<OnboardingForm>({

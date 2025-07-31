@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/custom/audio-player";
-import EmptyState from "@/components/custom/empty-state";
 import {
   GrammarImprovementChart,
   InteractiveTranscript,
@@ -34,7 +33,6 @@ import type {
   FeedbackType,
   LegacyFeedback,
   LegacyFeedbackWithProgress,
-  SpeakingTest,
 } from "@/server/db/schema";
 import type { inferRouterOutputs } from "@trpc/server";
 

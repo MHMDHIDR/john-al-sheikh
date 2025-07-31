@@ -163,6 +163,9 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     pageStateRef.current.isActive = true;
     pageStateRef.current.lastActiveTime = startTime;
 
+    // Capture the current state reference at effect creation time
+    const currentState = pageStateRef.current;
+
     // Store initial state in session storage
     const stateKey = "test_page_state";
     const initialState = {
@@ -213,13 +216,10 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
         };
         const now = Date.now();
 
-        // If there's a significant gap in heartbeats or if we detect a fresh page load
-        // after a very short time, it might be a reload
         if (
           now - state.lastHeartbeat > 3000 ||
           (now - state.startTime < 1000 && state.startTime !== startTime)
         ) {
-          // Potential reload detected
           if (!pageStateRef.current.reloadAttempted) {
             pageStateRef.current.reloadAttempted = true;
             setShowExitConfirmation(true);
@@ -229,11 +229,11 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
     };
 
     // Start heartbeat and checking intervals
-    pageStateRef.current.heartbeatInterval = setInterval(heartbeat, 1000);
-    pageStateRef.current.stateCheckInterval = setInterval(checkForReload, 500);
+    currentState.heartbeatInterval = setInterval(heartbeat, 1000);
+    currentState.stateCheckInterval = setInterval(checkForReload, 500);
 
     return () => {
-      const currentState = pageStateRef.current;
+      // Use the captured reference instead of pageStateRef.current
       if (currentState.heartbeatInterval) {
         clearInterval(currentState.heartbeatInterval);
         currentState.heartbeatInterval = null;
@@ -350,7 +350,7 @@ export default function TestsLayout({ children }: { children: React.ReactNode })
       }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
+    const handleTouchEnd = () => {
       const touchEndTime = Date.now();
       const touchDuration = touchEndTime - touchStartTime;
 
