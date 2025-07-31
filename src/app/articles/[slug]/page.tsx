@@ -6,9 +6,7 @@ import { ShareButtons } from "@/app/articles/share-button";
 import { SubscriptionForm } from "@/app/subscribe/subscription-form";
 import { Logo } from "@/components/custom/icons";
 import { env } from "@/env";
-import { createArabicSlug } from "@/lib/create-slug";
 import { formatDate } from "@/lib/format-date";
-import { getAllNewsletters } from "@/lib/get-newsletters";
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import type { Metadata } from "next";
@@ -28,6 +26,7 @@ export async function generateMetadata({ params }: ArticleProps): Promise<Metada
       return {
         title: "نشرة المقالات",
         description: "نشرة المقالات",
+        metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "https://www.john-al-shiekh.live"),
       };
     }
     const title = `نشرة المقالات | ${newsletter.subject}`;
@@ -46,22 +45,24 @@ export async function generateMetadata({ params }: ArticleProps): Promise<Metada
       },
     };
   } catch (error) {
-    console.error("Error generating metadata for test result page =>  ", error);
+    console.error("Error generating metadata for newsletter page =>  ", error);
     return {
       title: "نشرة المقالات",
       description: "نشرة المقالات",
+      metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || "https://www.john-al-shiekh.live"),
     };
   }
 }
 
-export async function generateStaticParams() {
-  const newsletters = await getAllNewsletters();
-  return newsletters.map(newsletter => ({
-    slug: newsletter.slug ?? createArabicSlug(newsletter.subject),
-  }));
-}
+// Remove generateStaticParams to avoid build-time database calls
+// export async function generateStaticParams() {
+//   const newsletters = await getAllNewsletters();
+//   return newsletters.map(newsletter => ({
+//     slug: newsletter.slug ?? createArabicSlug(newsletter.subject),
+//   }));
+// }
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
 export default async function Article({ params }: ArticleProps) {
