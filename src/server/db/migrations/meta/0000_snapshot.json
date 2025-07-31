@@ -1,5 +1,5 @@
 {
-  "id": "26821c00-813e-484e-9741-8feef895fe5d",
+  "id": "1107a8c0-0f56-4f16-aec3-81d8cd6d8163",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -117,95 +117,6 @@
         }
       },
       "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.jas_authenticator": {
-      "name": "jas_authenticator",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(255)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "credential_id": {
-          "name": "credential_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_account_id": {
-          "name": "provider_account_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "credential_public_key": {
-          "name": "credential_public_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "counter": {
-          "name": "counter",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "credential_device_type": {
-          "name": "credential_device_type",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "credential_backed_up": {
-          "name": "credential_backed_up",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "transports": {
-          "name": "transports",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "jas_authenticator_user_id_jas_user_id_fk": {
-          "name": "jas_authenticator_user_id_jas_user_id_fk",
-          "tableFrom": "jas_authenticator",
-          "tableTo": "jas_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "jas_authenticator_credential_id_unique": {
-          "name": "jas_authenticator_credential_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "credential_id"
-          ]
-        }
-      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -789,7 +700,7 @@
         },
         "vocabulary_score": {
           "name": "vocabulary_score",
-          "type": "numeric(3, 1)",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },

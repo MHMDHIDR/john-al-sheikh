@@ -22,19 +22,6 @@ CREATE TABLE "jas_account" (
 	CONSTRAINT "jas_account_provider_provider_account_id_pk" PRIMARY KEY("provider","provider_account_id")
 );
 --> statement-breakpoint
-CREATE TABLE "jas_authenticator" (
-	"id" varchar(255) PRIMARY KEY NOT NULL,
-	"credential_id" varchar(255) NOT NULL,
-	"user_id" varchar(255) NOT NULL,
-	"provider_account_id" varchar(255) NOT NULL,
-	"credential_public_key" text NOT NULL,
-	"counter" integer NOT NULL,
-	"credential_device_type" varchar(255) NOT NULL,
-	"credential_backed_up" boolean NOT NULL,
-	"transports" varchar(255),
-	CONSTRAINT "jas_authenticator_credential_id_unique" UNIQUE("credential_id")
-);
---> statement-breakpoint
 CREATE TABLE "jas_credit_transaction" (
 	"id" varchar(255) PRIMARY KEY NOT NULL,
 	"user_id" varchar(255) NOT NULL,
@@ -111,7 +98,7 @@ CREATE TABLE "jas_speaking_tests" (
 	"topic" varchar(255) NOT NULL,
 	"band" numeric(3, 1),
 	"feedback" jsonb,
-	"vocabulary_score" numeric(3, 1),
+	"vocabulary_score" jsonb,
 	"grammar_score" numeric(3, 1),
 	"nativeness_score" numeric(3, 1),
 	"expression_complexity" numeric(3, 1),
@@ -168,7 +155,6 @@ CREATE TABLE "jas_verification_token" (
 );
 --> statement-breakpoint
 ALTER TABLE "jas_account" ADD CONSTRAINT "jas_account_user_id_jas_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."jas_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "jas_authenticator" ADD CONSTRAINT "jas_authenticator_user_id_jas_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."jas_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "jas_credit_transaction" ADD CONSTRAINT "jas_credit_transaction_user_id_jas_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."jas_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "jas_credit_transaction" ADD CONSTRAINT "jas_credit_transaction_speaking_test_id_jas_speaking_tests_id_fk" FOREIGN KEY ("speaking_test_id") REFERENCES "public"."jas_speaking_tests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "jas_newsletter_send_queue" ADD CONSTRAINT "jas_newsletter_send_queue_newsletter_id_jas_newsletter_id_fk" FOREIGN KEY ("newsletter_id") REFERENCES "public"."jas_newsletter"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
