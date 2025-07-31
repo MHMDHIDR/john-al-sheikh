@@ -4,7 +4,8 @@ import StickyCtaBar from "@/components/(landing)/sticky-cta-bar";
 import Testimonials from "@/components/(landing)/testimonials";
 import Why from "@/components/(landing)/why";
 import Footer from "@/components/custom/footer";
-import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
+
+// import { QuickSpeakingTest } from "@/components/custom/quick-speaking-test";
 
 export default function LandingPage() {
   return (
@@ -13,7 +14,7 @@ export default function LandingPage() {
       <Why />
       <How />
       <Testimonials />
-      <QuickSpeakingTest />
+      {/* <QuickSpeakingTest /> */}
       <StickyCtaBar />
       <Footer />
     </>
