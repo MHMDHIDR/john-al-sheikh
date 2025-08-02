@@ -36,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useCountUp } from "@/hooks/use-count-up";
 import { CallStatus } from "@/hooks/use-vapi-conversation";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { MINUTES_IN_MS } from "@/lib/constants";
@@ -53,10 +54,18 @@ import type { Session } from "next-auth";
 export default function AccountNav({ user }: { user: Session["user"] }) {
   const { callStatus } = useGlobalVapiConversation();
   const isCallActive = callStatus === CallStatus.ACTIVE;
-  const { data: minutes } = api.payments.getUserMinutes.useQuery(undefined, {
+  const { data: minutes, isLoading } = api.payments.getUserMinutes.useQuery(undefined, {
     refetchInterval: isCallActive ? 5000 : MINUTES_IN_MS * 2,
     refetchOnWindowFocus: isCallActive,
   });
+
+  // Use count-up animation when we have actual minutes data and it's > 0
+  const shouldAnimate = !isLoading && minutes !== undefined && minutes > 0;
+  const displayMinutes = useCountUp(shouldAnimate ? minutes : 0, 2000);
+  const actualDisplayMinutes = shouldAnimate ? displayMinutes : (minutes ?? 0);
+
+  // Color logic: red if loading, or if minutes is 0, otherwise green
+  const isRedBadge = isLoading || (minutes !== undefined && minutes === 0);
 
   const NAV_ITEMS = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
@@ -81,33 +90,34 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
 
   return (
     <div className="flex gap-2">
-      {minutes && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Badge
-              className="text-xs flex items-center gap-x-1 font-semibold py-0 rounded-full select-none cursor-pointer hover:bg-green-600 transition-colors"
-              variant={"success"}
-            >
-              <strong className="hidden md:inline-flex">رصيد الدقائق: </strong>
-              <IconClock size={14} />
-              {minutes} {minutesLabel({ credits: minutes })}
-            </Badge>
-          </PopoverTrigger>
-          <PopoverContent className="w-fit py-2 px-1 mx-auto text-sm" side="bottom" align="center">
-            <div className="flex items-center gap-x-1">
-              <IconClock size={16} className="text-green-600" />
-              <span>
-                لديك {minutes} {minutesLabel({ credits: minutes })} متوفرة حالياً
-              </span>
-            </div>
-            <Link href="/buy-minutes" className="w-full inline-flex justify-center">
-              <span className="text-2xs text-blue-600 hover:underline hover:text-blue-600/80 underline-offset-6 hover:decoration-wavy">
-                انقر للحصول على المزيد من الدقائق
-              </span>
-            </Link>
-          </PopoverContent>
-        </Popover>
-      )}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Badge
+            className={`text-xs flex items-center gap-x-1 font-semibold py-0 rounded-full text-background select-none cursor-pointer transition-all duration-300 ${
+              isRedBadge ? "hover:bg-red-600" : "hover:bg-green-600"
+            }`}
+            variant={isRedBadge ? "destructive" : "success"}
+          >
+            <strong className="hidden md:inline-flex">رصيد الدقائق: </strong>
+            <IconClock size={14} />
+            {actualDisplayMinutes} {minutesLabel({ credits: actualDisplayMinutes })}
+          </Badge>
+        </PopoverTrigger>
+        <PopoverContent className="w-fit py-2 px-1 mx-auto text-sm" side="bottom" align="center">
+          <div className="flex items-center gap-x-1">
+            <IconClock size={16} className="text-green-600" />
+            <span>
+              لديك {actualDisplayMinutes} {minutesLabel({ credits: actualDisplayMinutes })} متوفرة
+              حالياً
+            </span>
+          </div>
+          <Link href="/buy-minutes" className="w-full inline-flex justify-center">
+            <span className="text-2xs text-blue-600 hover:underline hover:text-blue-600/80 underline-offset-6 hover:decoration-wavy">
+              انقر للحصول على المزيد من الدقائق
+            </span>
+          </Link>
+        </PopoverContent>
+      </Popover>
       <Sheet>
         <SheetTrigger asChild>
           <Button
