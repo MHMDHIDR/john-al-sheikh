@@ -19,6 +19,7 @@ import {
   MINUTES_IN_MS,
   MOCK_TEST_CONVERSATION_TIME,
 } from "@/lib/constants";
+import { translateSring } from "@/lib/translate-string";
 import { api } from "@/trpc/react";
 
 // Convert ms to minutes for comparison
@@ -65,8 +66,8 @@ export default function TestActionWrapper({ children, testType }: TestActionWrap
 
       <DrawerContent className="min-w-full">
         <DrawerHeader className="text-center">
-          <DrawerTitle className="text-2xl font-bold tracking-tighter sm:text-4xl">
-            قوي مستواك في محادثات اللغة الإنجليزية
+          <DrawerTitle className="text-xl font-bold tracking-tighter sm:text-2xl">
+            تحتاج إلى رصيد {requiredMinutes} دقائق على الأقل للوصول إلى {translateSring(testType)}
           </DrawerTitle>
           <DrawerDescription className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl text-balance">
             شراء رصيد دقائق للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
