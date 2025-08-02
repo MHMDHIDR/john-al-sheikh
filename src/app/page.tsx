@@ -24,7 +24,7 @@ export default async function Home() {
   return (
     <main className="relative select-none">
       {session && (
-        <div className="flex flex-col justify-center items-center mt-10">
+        <div className="flex flex-col justify-center items-center my-10">
           <h1 className="text-lg md:text-2xl text-center text-gray-500">
             جرّب واحد من التحديات المصممة خصيصاً لك
           </h1>

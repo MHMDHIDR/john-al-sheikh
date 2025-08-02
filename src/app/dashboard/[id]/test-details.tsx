@@ -13,6 +13,7 @@ import {
   VocabularyProgressChart,
   WordCloud,
 } from "@/components/custom/feedback";
+import TestActionWrapper from "@/components/custom/test-action-wrapper";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
@@ -38,7 +39,6 @@ import type { inferRouterOutputs } from "@trpc/server";
 
 type TestDetailsProps = {
   details: inferRouterOutputs<AppRouter>["users"]["getTestById"];
-  minutes: inferRouterOutputs<AppRouter>["payments"]["getUserMinutes"];
   recordingUrl?: string | null;
 };
 
@@ -132,12 +132,11 @@ function renderProgressMetrics(feedback: FeedbackType) {
   return null;
 }
 
-export default function TestDetails({ details, minutes, recordingUrl }: TestDetailsProps) {
+export default function TestDetails({ details, recordingUrl }: TestDetailsProps) {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
 
   const activeTab = searchParams.get("view") ?? "results";
-  const isEnoughMinutes = minutes > 5;
 
   const handleTabChange = useCallback(
     (value: string) => {
@@ -444,18 +443,18 @@ export default function TestDetails({ details, minutes, recordingUrl }: TestDeta
           </TabsContent>
         </Tabs>
 
-        <div className="mt-8 text-center">
-          <Link href={isEnoughMinutes ? "/mock-test" : "/buy-minutes"}>
+        <div className="mt-8 flex justify-center items-center">
+          <TestActionWrapper testType="mock-test">
             <Button variant="outline" className="w-full max-w-xs">
               ابدأ اختبار محادثة جديد
             </Button>
-          </Link>
+          </TestActionWrapper>
           <Divider className="my-5">أو</Divider>
-          <Link href={isEnoughMinutes ? "/general-english" : "/buy-minutes"}>
+          <TestActionWrapper testType="general-english">
             <Button variant="outline" className="w-full max-w-xs">
               محادثة عامة بالإنجليزي
             </Button>
-          </Link>
+          </TestActionWrapper>
         </div>
       </div>
     </main>

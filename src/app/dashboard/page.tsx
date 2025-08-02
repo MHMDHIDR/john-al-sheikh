@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import { CalendarClock, LineChart, ListChecks, Trophy } from "lucide-react";
 import Link from "next/link";
+import TestActionWrapper from "@/components/custom/test-action-wrapper";
 import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
@@ -44,7 +45,6 @@ export default async function DashboardPage({
   const stats = await api.users.getUserTestStats();
   const testHistory = await api.users.getUserTestHistory();
   const minutes = await api.payments.getUserMinutes();
-  const isEnoughMinutes = minutes > 5;
 
   // Get trend indicator (up, down, or neutral)
   const getTrendIndicator = () => {
@@ -79,7 +79,7 @@ export default async function DashboardPage({
 
         {payment_success === "true" && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center text-green-800">
-            تم إضافة الدقائق بنجاح إلى حسابك
+            تم إضافة رصيد الدقائق بنجاح إلى حسابك
           </div>
         )}
 
@@ -90,19 +90,19 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent />
             <CardFooter className="flex gap-2 flex-col">
-              <Link href={isEnoughMinutes ? "/mock-test" : "/buy-minutes"} className="w-full">
+              <TestActionWrapper testType="mock-test">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
                 </Button>
-              </Link>
+              </TestActionWrapper>
               <Divider className="my-1" textClassName="bg-card!">
                 أو
               </Divider>
-              <Link href={isEnoughMinutes ? "/general-english" : "/buy-minutes"} className="w-full">
+              <TestActionWrapper testType="general-english">
                 <Button variant="outline" className="w-full">
                   محادثة عامة بالإنجليزي
                 </Button>
-              </Link>
+              </TestActionWrapper>
             </CardFooter>
           </Card>
 
@@ -264,40 +264,37 @@ export default async function DashboardPage({
             ) : (
               <div className="text-center py-10">
                 <p className="text-gray-500 mb-4">لم تقم بإجراء أي اختبارات محادثة بعد</p>
-                <Link href={isEnoughMinutes ? "/mock-test" : "/buy-minutes"} className="w-full">
+                <TestActionWrapper testType="mock-test">
                   <Button variant="outline" className="w-full">
                     ابدأ اختبار محادثة جديد
                   </Button>
-                </Link>
+                </TestActionWrapper>
                 <Divider className="my-5" textClassName="bg-card!">
                   أو
                 </Divider>
-                <Link
-                  href={isEnoughMinutes ? "/general-english" : "/buy-minutes"}
-                  className="w-full"
-                >
+                <TestActionWrapper testType="general-english">
                   <Button variant="outline" className="w-full">
                     محادثة عامة بالإنجليزي
                   </Button>
-                </Link>
+                </TestActionWrapper>
               </div>
             )}
           </CardContent>
           {testHistory && testHistory.length > 0 && (
             <CardFooter className="flex max-sm:px-2 gap-2 flex-col md:flex-row">
-              <Link href={isEnoughMinutes ? "/mock-test" : "/buy-minutes"} className="w-full">
+              <TestActionWrapper testType="mock-test">
                 <Button variant="outline" className="w-full">
                   ابدأ اختبار محادثة جديد
                 </Button>
-              </Link>
+              </TestActionWrapper>
               <Divider className="my-5" textClassName="bg-card!">
                 أو
               </Divider>
-              <Link href={isEnoughMinutes ? "/general-english" : "/buy-minutes"} className="w-full">
+              <TestActionWrapper testType="general-english">
                 <Button variant="outline" className="w-full">
                   محادثة عامة بالإنجليزي
                 </Button>
-              </Link>
+              </TestActionWrapper>
             </CardFooter>
           )}
         </Card>

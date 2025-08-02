@@ -18,6 +18,54 @@ import type Stripe from "stripe";
 type UserCountry = { ip: string; country: string };
 
 export const paymentsRouter = createTRPCRouter({
+  /** Create checkout sessions for all minute packages */
+  getCheckoutSessions: protectedProcedure.query(async ({ ctx }) => {
+    const { session } = ctx;
+    const userId = session.user.id;
+    const userEmail = session.user.email ?? "";
+
+    const cookieStore = await cookies();
+    const datafastVisitorId = cookieStore.get("datafast_visitor_id")?.value;
+    const datafastSessionId = cookieStore.get("datafast_session_id")?.value;
+
+    const checkoutSessions: Record<string, string> = {};
+
+    for (const [packageId, packageInfo] of Object.entries(minutePackages)) {
+      try {
+        // Create Stripe Checkout session
+        const checkoutSession = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          customer_email: userEmail,
+          line_items: [
+            {
+              price: packageInfo.priceId,
+              quantity: 1,
+            },
+          ],
+          mode: "payment",
+          success_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${env.NEXT_PUBLIC_APP_URL}/buy-minutes?cancelled=true`,
+          metadata: {
+            userId,
+            packageId,
+            minutes: packageInfo.minutes.toString(),
+            packageName: packageInfo.name,
+            datafast_visitor_id: datafastVisitorId,
+            datafast_session_id: datafastSessionId,
+          },
+        } as Stripe.Checkout.SessionCreateParams);
+
+        if (checkoutSession.url) {
+          checkoutSessions[packageId] = checkoutSession.url;
+        }
+      } catch (error) {
+        console.error(`Error creating checkout session for package ${packageId}:`, error);
+      }
+    }
+
+    return checkoutSessions;
+  }),
+
   /** Create a Stripe checkout session for the user to purchase credits */
   createCheckoutSession: protectedProcedure
     .input(z.object({ packageId: z.enum(["fiveMinutes", "tenMinutes", "fifteenMinutes"]) }))

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import { SignoutButton } from "@/components/custom/signout-button";
+import TestActionWrapper from "@/components/custom/test-action-wrapper";
 import { AvatarFallback, AvatarImage, Avatar as AvatarWrapper } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,15 +42,19 @@ import { CallStatus } from "@/hooks/use-vapi-conversation";
 import { checkRoleAccess } from "@/lib/check-role-access";
 import { MINUTES_IN_MS } from "@/lib/constants";
 import { fallbackUsername, truncateUsername } from "@/lib/fallback-username";
-import {
-  isEnoughMinutesForGeneralEnglish,
-  isEnoughMinutesForMockTest,
-} from "@/lib/is-enough-minutes";
 import { minutesLabel } from "@/lib/minutes-label";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/server/db/schema";
 import { api } from "@/trpc/react";
+import type { LucideIcon } from "lucide-react";
 import type { Session } from "next-auth";
+
+type NavItem = {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  testType?: "general-english" | "mock-test";
+};
 
 export default function AccountNav({ user }: { user: Session["user"] }) {
   const { callStatus } = useGlobalVapiConversation();
@@ -67,26 +72,28 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
   // Color logic: red if loading, or if minutes is 0, otherwise green
   const isRedBadge = isLoading || (minutes !== undefined && minutes === 0);
 
-  const NAV_ITEMS = [
+  const NAV_ITEMS: NavItem[] = [
     { href: "/", icon: IconHome, label: "الرئيسية" },
     { href: "/account", icon: IconUser, label: "الحساب" },
     { href: "/dashboard", icon: IconPackage, label: "لوحة التحكم" },
     {
-      href: isEnoughMinutesForMockTest(minutes ?? 0) ? "/mock-test" : "/buy-minutes",
+      href: "/mock-test",
       icon: IconSpeakerphone,
       label: "اختبار المحادثة",
+      testType: "mock-test",
     },
     {
-      href: isEnoughMinutesForGeneralEnglish(minutes ?? 0) ? "/general-english" : "/buy-minutes",
+      href: "/general-english",
       icon: IconPhoneCalling,
       label: "محادثة عامة بالإنجليزي",
+      testType: "general-english",
     },
     { href: "/buy-minutes", icon: IconCreditCard, label: "شراء رصيد دقائق" },
     // Show admin management link if user is SUPER_ADMIN or ADMIN
     checkRoleAccess(user.role, [UserRole.SUPER_ADMIN, UserRole.ADMIN])
       ? { href: "/admin", icon: IconSettings, label: "الإدارة" }
       : null,
-  ].filter(Boolean);
+  ].filter(Boolean) as NavItem[];
 
   return (
     <div className="flex gap-2">
@@ -144,7 +151,7 @@ export default function AccountNav({ user }: { user: Session["user"] }) {
                 if (!item) return null;
                 const Icon = item.icon;
                 return (
-                  <NavLink key={item.href + index} href={item.href}>
+                  <NavLink key={item.href + index} href={item.href} testType={item.testType}>
                     <Icon size={20} />
                     <span>{item.label}</span>
                   </NavLink>
@@ -213,25 +220,46 @@ function Avatar({ user, className }: { user: Session["user"]; className?: string
   );
 }
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({
+  href,
+  children,
+  testType,
+}: {
+  href: string;
+  children: React.ReactNode;
+  testType?: "general-english" | "mock-test";
+}) {
   const pathname = usePathname();
 
+  const linkContent = (
+    <div
+      className={clsx(
+        "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/70 outline-blue-300",
+        {
+          "text-blue-500 border-blue-600 bg-blue-50 dark:bg-blue-900/50": pathname === href,
+          "text-red-500 border-red-600 bg-red-50 ": pathname === href && href === "/admin",
+          "text-red-400 hover:bg-red-200/50 dark:hover:bg-red-900/50 outline-red-300":
+            href === "/admin",
+        },
+      )}
+    >
+      {children}
+    </div>
+  );
+
+  // If it's a test type, use TestActionWrapper
+  if (testType) {
+    return (
+      <SheetClose asChild>
+        <TestActionWrapper testType={testType}>{linkContent}</TestActionWrapper>
+      </SheetClose>
+    );
+  }
+
+  // Otherwise, use regular Link
   return (
     <SheetClose asChild>
-      <Link
-        href={href}
-        className={clsx(
-          "inline-flex items-center gap-x-2 w-full select-none rounded-sm border text-blue-400 p-2 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-900/70 outline-blue-300",
-          {
-            "text-blue-500 border-blue-600 bg-blue-50 dark:bg-blue-900/50": pathname === href,
-            "text-red-500 border-red-600 bg-red-50 ": pathname === href && href === "/admin",
-            "text-red-400 hover:bg-red-200/50 dark:hover:bg-red-900/50 outline-red-300":
-              href === "/admin",
-          },
-        )}
-      >
-        {children}
-      </Link>
+      <Link href={href}>{linkContent}</Link>
     </SheetClose>
   );
 }

@@ -8,7 +8,6 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   const test = await api.users.getTestById({ testId: id });
-  const minutes = await api.payments.getUserMinutes();
 
   let recordingUrl: string | null = null;
   if (test?.callId) {
@@ -38,6 +37,6 @@ export default async function TestDetailsPage({ params }: { params: Promise<{ id
       </Card>
     </div>
   ) : (
-    <TestDetails details={test} minutes={minutes} recordingUrl={recordingUrl} />
+    <TestDetails details={test} recordingUrl={recordingUrl} />
   );
 }
