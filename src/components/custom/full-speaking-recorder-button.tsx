@@ -226,7 +226,7 @@ function IeltsAssistantConfig({
       temperature: 0.4,
       messages: [{ role: "system", content: systemPrompt }],
     },
-    transcriber: { provider: "google", model: "gemini-2.5-flash", language: "English" },
+    transcriber: { provider: "deepgram", model: "nova-3-general", language: "en" },
     voice: { provider: "11labs", voiceId: "lUTamkMw7gOzZbFIwmq4" }, // James or steve for the voiceId
   };
 }
