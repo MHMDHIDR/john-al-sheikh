@@ -10,8 +10,6 @@ export default async function Home() {
   const hasEmail = session?.user?.email;
   const isProfileCompleted = session?.user?.profileCompleted;
 
-  // For Twitter users, we need both email and phone to be complete
-  // For other providers, we only need phone to be complete
   const isTwitterUser = !hasEmail;
   const isComplete = isProfileCompleted && hasPhone && (!isTwitterUser || hasEmail);
 
