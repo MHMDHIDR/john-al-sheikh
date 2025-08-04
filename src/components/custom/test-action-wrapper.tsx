@@ -72,8 +72,8 @@ export default function TestActionWrapper({ children, testType }: TestActionWrap
           </DrawerTitle>
           <DrawerDescription className="mx-auto max-w-2xl text-gray-500 dark:text-white md:text-xl text-balance">
             لبدء المحادثة، يجب توفر {requiredMinutes} دقائق كاملة على الأقل. هذا لأن{" "}
-            {env.NEXT_PUBLIC_APP_NAME} يحتاج وقتاً كافياً لسماعك وتقييم مستوى محادثتك بدقة! يرجى
-            شراء دقائق إضافية
+            {env.NEXT_PUBLIC_APP_NAME} يحتاج وقتاً كافياً لسماعك وتقييم مستواك بدقة! يرجى شراء دقائق
+            إضافية
             <small className="block mt-3 text-gray-900 dark:text-white">
               إختر واحدة من الباقات المتوفرة (تستطيع إستخدام الدقائق إلى الأبد 😍)
             </small>
