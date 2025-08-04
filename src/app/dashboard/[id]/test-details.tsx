@@ -178,12 +178,12 @@ export default function TestDetails({ details, recordingUrl }: TestDetailsProps)
               </Button>
             </Link>
             <TestActionWrapper testType="mock-test">
-              <Button variant="outline" className="w-full max-w-xs">
+              <Button variant="outline" className="min-w-full max-w-xs">
                 ابدأ اختبار محادثة جديد
               </Button>
             </TestActionWrapper>
             <TestActionWrapper testType="general-english">
-              <Button variant="outline" className="w-full max-w-xs">
+              <Button variant="outline" className="min-w-full max-w-xs">
                 محادثة عامة بالإنجليزي
               </Button>
             </TestActionWrapper>

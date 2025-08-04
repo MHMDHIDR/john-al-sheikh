@@ -182,7 +182,11 @@ export function ShareTestDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant={size === "icon" ? "ghost" : "pressable"} className="font-bold" size={size}>
+        <Button
+          variant={size === "icon" ? "ghost" : "pressable"}
+          className="font-bold px-12"
+          size={size}
+        >
           {size === "icon" ? (
             <Share2 className="size-4" />
           ) : (
