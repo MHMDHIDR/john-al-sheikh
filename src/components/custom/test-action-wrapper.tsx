@@ -66,12 +66,15 @@ export default function TestActionWrapper({ children, testType }: TestActionWrap
 
       <DrawerContent className="min-w-full">
         <DrawerHeader className="text-center">
-          <DrawerTitle className="text-xl font-bold tracking-tighter sm:text-2xl">
+          <DrawerTitle className="text-lg font-bold tracking-tighter sm:text-xl">
             تحتاج إلى رصيد {requiredMinutes} دقائق على الأقل للوصول إلى {translateSring(testType)}
           </DrawerTitle>
-          <DrawerDescription className="mx-auto max-w-2xl text-gray-500 dark:text-gray-400 md:text-xl text-balance">
-            شراء رصيد دقائق للوصول إلى اختبارات المحادثة التدريبية بالتفصيل مع تحديثات وملاحظات عن
-            مستواك
+          <DrawerDescription className="mx-auto max-w-2xl text-gray-500 dark:text-white md:text-xl text-balance">
+            لنستطيع مساعدتك في تحليل و تحسين مستواك في {translateSring(testType)}، يجب توفر{" "}
+            {requiredMinutes} دقائق على الأقل في رصيدك
+            <small className="block mt-3 text-gray-900 dark:text-white">
+              إختر واحدة من الباقات المتوفرة (تستطيع إستخدام الدقائق إلى الأبد 😍)
+            </small>
           </DrawerDescription>
         </DrawerHeader>
 
