@@ -14,6 +14,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { env } from "@/env";
 import {
   GENERAL_ENGLISH_CONVERSATION_TIME,
   MINUTES_IN_MS,
@@ -70,8 +71,9 @@ export default function TestActionWrapper({ children, testType }: TestActionWrap
             تحتاج إلى رصيد {requiredMinutes} دقائق على الأقل للوصول إلى {translateSring(testType)}
           </DrawerTitle>
           <DrawerDescription className="mx-auto max-w-2xl text-gray-500 dark:text-white md:text-xl text-balance">
-            لنستطيع مساعدتك في تحليل و تحسين مستواك في {translateSring(testType)}، يجب توفر{" "}
-            {requiredMinutes} دقائق على الأقل في رصيدك
+            لبدء المحادثة، يجب توفر {requiredMinutes} دقائق كاملة على الأقل. هذا لأن{" "}
+            {env.NEXT_PUBLIC_APP_NAME} يحتاج لأن وقتاً كافياً لسماعك وتقييم مستوى محادثتك بدقة! يرجى
+            شراء دقائق إضافية
             <small className="block mt-3 text-gray-900 dark:text-white">
               إختر واحدة من الباقات المتوفرة (تستطيع إستخدام الدقائق إلى الأبد 😍)
             </small>
