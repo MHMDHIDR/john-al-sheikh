@@ -16,33 +16,35 @@ export default function Footer() {
           <span className="text-sm sm:inline-flex">{env.NEXT_PUBLIC_APP_NAME}</span>
         </Link>
 
-        <div className="flex max-sm:grid max-sm:grid-cols-2 max-sm:pb-5 max-sm:flex-1 justify-center items-center gap-2 text-sm text-gray-600 max-sm:order-1">
-          <Link href="/privacy" className="hover:text-gray-900 transition-colors">
-            الخصوصية
-          </Link>
-          <Dot className="text-gray-400 max-sm:hidden" />
-          <Link href="/terms" className="hover:text-gray-900 transition-colors">
-            الشروط والأحكام
-          </Link>
-          <Dot className="text-gray-400 max-sm:hidden" />
-          <Link href="/contact" className="hover:text-gray-900 transition-colors">
-            تواصل معنا
-          </Link>
-          <Dot className="text-gray-400 max-sm:hidden" />
-          <Link href="/articles" className="hover:text-gray-900 transition-colors">
-            النشرة البريدية
+        <div className="flex md:gap-4 justify-between max-sm:w-full">
+          <div className="flex max-sm:grid max-sm:grid-cols-2 max-sm:flex-1 justify-center items-center gap-2 text-sm text-gray-600">
+            <Link href="/privacy" className="hover:text-gray-900 transition-colors">
+              الخصوصية
+            </Link>
+            <Dot className="text-gray-400 max-sm:hidden" />
+            <Link href="/terms" className="hover:text-gray-900 transition-colors">
+              الشروط والأحكام
+            </Link>
+            <Dot className="text-gray-400 max-sm:hidden" />
+            <Link href="/contact" className="hover:text-gray-900 transition-colors">
+              تواصل معنا
+            </Link>
+            <Dot className="text-gray-400 max-sm:hidden" />
+            <Link href="/articles" className="hover:text-gray-900 transition-colors">
+              النشرة البريدية
+            </Link>
+          </div>
+
+          <Link
+            href="https://www.linkedin.com/company/john-al-shiekh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-600 py-2 hover:text-gray-900 transition-colors max-sm:flex-1 max-sm:justify-end flex items-center"
+            aria-label="Visit our LinkedIn page"
+          >
+            <IconBrandLinkedin size={26} stroke={1} />
           </Link>
         </div>
-
-        <Link
-          href="https://www.linkedin.com/company/john-al-shiekh"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-600 py-2 hover:text-gray-900 transition-colors"
-          aria-label="Visit our LinkedIn page"
-        >
-          <IconBrandLinkedin size={26} stroke={1} />
-        </Link>
       </div>
     </footer>
   );

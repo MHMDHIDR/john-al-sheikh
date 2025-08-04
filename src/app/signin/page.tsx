@@ -30,14 +30,14 @@ export default async function SignInPage({
   return (
     <main className="flex flex-col items-center justify-center h-screen -mt-14 md:-mt-20">
       {callbackUrl && (
-        <Card className="mb-4 mx-2 select-none flex items-center gap-x-3 rounded-lg border-l-4 border-l-red-500 bg-red-50 p-2.5 dark:bg-red-950/50">
-          <AlertCircle className="size-5 text-red-500" />
+        <Card className="mb-4 mx-2 select-none flex items-center gap-x-3 rounded-lg border-l-4 border-l-blue-500 bg-blue-50 p-2.5 dark:bg-blue-950/50">
+          <AlertCircle className="size-5 text-blue-500" />
           <CardHeader className="flex flex-col p-0">
-            <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
+            <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-200">
               تنبيه الوصول
             </CardTitle>
             <CardContent className="p-0">
-              <p className="text-sm text-red-600 dark:text-red-300 text-pretty">
+              <p className="text-xs text-blue-600 dark:text-blue-300 text-pretty">
                 الرجاء تسجيل الدخول للوصول إلى{" "}
                 <strong>{translateSring(callbackUrlPageName)}</strong>
               </p>

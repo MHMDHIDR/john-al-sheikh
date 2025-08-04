@@ -35,7 +35,8 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-            <Link href="#quick-speaking">
+            {/* #quick-speaking */}
+            <Link href="/general-english">
               <Button
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 px-8 py-6 text-sm lg:text-base xl:text-lg rounded-full"
