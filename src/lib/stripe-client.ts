@@ -26,7 +26,7 @@ export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
   fiveMinutes: {
     id: "fiveMinutes",
     priceId: PriceIDs.fiveMinutes,
-    name: "Starter",
+    name: "الأساسية",
     description: "مناسب للمبتدئين لتجربة المنصة",
     minutes: Minutes.STARTER,
     features: [
@@ -40,7 +40,7 @@ export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
   fifteenMinutes: {
     id: "fifteenMinutes",
     priceId: PriceIDs.fifteenMinutes,
-    name: "Pro",
+    name: "الإحترافية",
     description: "نحن على ثقة تامة من أنك ستحصل على أفضل النتائج",
     minutes: Minutes.PRO,
     features: [
@@ -56,7 +56,7 @@ export const minutePackages: Record<keyof typeof PriceIDs, PackageInfo> = {
   tenMinutes: {
     id: "tenMinutes",
     priceId: PriceIDs.tenMinutes,
-    name: "Plus",
+    name: "المتقدمة",
     description: "تحضير متكامل للنجاح المضمون",
     minutes: Minutes.PLUS,
     features: [

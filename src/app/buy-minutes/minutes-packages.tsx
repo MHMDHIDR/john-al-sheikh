@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format-price";
 import { minutesLabel } from "@/lib/minutes-label";
-import { minutePackages } from "@/lib/stripe-client";
+import { minutePackages, Minutes } from "@/lib/stripe-client";
 import type { PackageInfo } from "@/lib/stripe-client";
 
 export default function MinutePackages({
@@ -52,8 +52,10 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
       className={clsx(
         "relative flex h-full select-none min-w-xs md:min-w-2xs md:max-w-sm flex-col",
         {
-          "border border-green-500/50 shadow-md md:-mx-3 z-10 md:order-none order-first": popular,
-          "border border-gray-200 lg:mt-5": !popular,
+          "border border-green-500/50 shadow-md md:-mx-3 z-10 md:order-none order-first":
+            minutes === Minutes.PRO,
+          "max-sm:order-2": minutes === Minutes.PLUS,
+          "max-sm:order-last": minutes === Minutes.STARTER,
         },
       )}
     >
@@ -67,7 +69,18 @@ function PackageCard({ packageInfo, onPurchase }: PackageCardProps) {
       )}
       <CardHeader className="flex-none pb-1 pt-8 text-center">
         <CardTitle className="text-xl font-medium">
-          <h2 className="font-bold">{name}</h2>
+          <h2
+            className={clsx("font-bold", {
+              "text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500":
+                minutes === Minutes.PRO,
+              "text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-blue-600":
+                minutes === Minutes.PLUS,
+              "text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-gold-800":
+                minutes === Minutes.STARTER,
+            })}
+          >
+            {name}
+          </h2>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow px-6 pb-0 pt-2">
