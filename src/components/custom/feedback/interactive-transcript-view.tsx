@@ -132,13 +132,13 @@ export function InteractiveTranscriptView({
             align="center"
           >
             <div className="space-y-2">
-              <div className="font-semibold text-background">
+              <div className="font-semibold text-foreground">
                 قلت:{" "}
                 <span className="text-red-500" dir="auto">
                   &ldquo;{highlight.original}&rdquo;
                 </span>
               </div>
-              <div className="font-semibold text-background">
+              <div className="font-semibold text-foreground">
                 بدلاً من ذلك:{" "}
                 <span className="text-green-500" dir="auto">
                   &ldquo;{highlight.correction}&rdquo;
