@@ -25,7 +25,7 @@ export function FeedbackButton() {
     setIsMounted(true);
   }, []);
 
-  const DO_NOT_SHOW_FEEDBACK_BUTTON = ["/admin", "/dashboard"];
+  const DO_NOT_SHOW_FEEDBACK_BUTTON = ["/admin", "/dashboard", "contact"];
 
   return !isMounted || DO_NOT_SHOW_FEEDBACK_BUTTON.some(path => pathname?.includes(path)) ? null : (
     <>
