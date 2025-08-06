@@ -78,15 +78,6 @@ export const subscribersColumns: ColumnDef<CombinedSubscriber>[] = [
     ),
   },
   {
-    accessorKey: "ieltsGoal",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        المستوى المستهدف
-        <ArrowUpDown className="size-4 ml-2" />
-      </Button>
-    ),
-  },
-  {
     accessorKey: "createdAt",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>

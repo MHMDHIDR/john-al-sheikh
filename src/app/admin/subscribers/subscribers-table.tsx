@@ -13,7 +13,6 @@ export type CombinedSubscriber = {
   name: SubscribedEmail["fullname"];
   email: SubscribedEmail["email"];
   gender: Users["gender"];
-  ieltsGoal: SubscribedEmail["ieltsGoal"];
   createdAt: SubscribedEmail["createdAt"];
   source: "subscribed_emails" | "users";
 };

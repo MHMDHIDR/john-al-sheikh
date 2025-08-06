@@ -39,7 +39,6 @@ export function SubscriptionForm({ className }: { className?: string }) {
     defaultValues: {
       fullname: "",
       email: "",
-      ieltsGoal: 5,
     },
   });
 
@@ -109,45 +108,6 @@ export function SubscriptionForm({ className }: { className?: string }) {
                       required
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="ieltsGoal"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-700">الدرجة المستهدفة</FormLabel>
-                  <Select
-                    onValueChange={value => {
-                      if (value) {
-                        field.onChange(parseFloat(value));
-                      }
-                    }}
-                    value={field.value ? field.value.toString() : "5.0"}
-                    required
-                  >
-                    <FormControl>
-                      <SelectTrigger className="cursor-pointer rtl border-gray-200">
-                        <SelectValue placeholder="اختر الدرجة المستهدفة">
-                          {field.value ? field.value.toString() : "5.0"}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent side="top" avoidCollisions={false}>
-                      {Array.from({ length: 9 }, (_, i) => 5 + i * 0.5).map(band => (
-                        <SelectItem
-                          key={band}
-                          value={band.toFixed(1)}
-                          className="cursor-pointer rtl"
-                        >
-                          {band.toFixed(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

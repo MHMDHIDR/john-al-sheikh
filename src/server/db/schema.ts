@@ -406,7 +406,6 @@ export const subscribedEmails = createTable("subscribed_emails", {
     .$defaultFn(() => crypto.randomUUID()),
   fullname: varchar("fullname", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  ieltsGoal: decimal("ielts_goal", { precision: 3, scale: 1 }).$type<number>().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
