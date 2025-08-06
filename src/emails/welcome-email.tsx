@@ -33,9 +33,11 @@ export default function WelcomeEmailTemplate({
   return (
     <Html dir="rtl" lang="ar">
       <Head>
-        <title>مرحباً بك في منصة {process.env.NEXT_PUBLIC_APP_NAME} للايلتس</title>
+        <title>
+          مرحباً بك في منصة {process.env.NEXT_PUBLIC_APP_NAME} للمحادثة باللغة الإنجليزية
+        </title>
       </Head>
-      <Preview>نرحب بك في رحلتك نحو النجاح في اختبار الايلتس!</Preview>
+      <Preview>نرحب بك في رحلتك نحو النجاح في المحادثة باللغة الإنجليزية!</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
@@ -81,14 +83,14 @@ export default function WelcomeEmailTemplate({
                 <Text style={paragraph}>
                   {ctaButtonLabel // if ctaButtonLabel is provided, it means the user has created an account so we welcome them, otherwise they're just a subscriber
                     ? `مرحباً بك في منصة ${process.env.NEXT_PUBLIC_APP_NAME} للمحادثة باللغة الإنجليزية! حيث نساعدك على تحقيق أهدافك
-                  في اختبار الايلتس والمحادثة الإنجليزية. نحن متحمسون لانضمامك إلينا!`
+                  في اختبار المحادثة باللغة الإنجليزية. نحن متحمسون لانضمامك إلينا!`
                     : `شكراً على اشتراكك في النشرة البريدية الخاصة بتعليم المحادثة باللغة الإنجليزية. يسعدنا
                   انضمامك إلى مجتمعنا!`}
                 </Text>
                 {ieltsGoal && (
                   <Text style={paragraph}>
-                    هدفك هو الوصول إلى درجة {ieltsGoal} في الايلتس، ونحن هنا لمساعدتك على تحقيق ذلك
-                    خطوة بخطوة.
+                    هدفك هو الوصول إلى درجة {ieltsGoal} في اختبار المحادثة باللغة الإنجليزية، ونحن
+                    هنا لمساعدتك على تحقيق ذلك خطوة بخطوة.
                   </Text>
                 )}
                 <Text style={paragraph}>
@@ -101,8 +103,8 @@ export default function WelcomeEmailTemplate({
                 </Section>
                 {!ctaButtonLabel && ( // this is for the subscribers who did not create an account, so we encourage them to do so
                   <Text style={paragraph}>
-                    قم بإنشاء حساب للوصول إلى مزيد من الميزات والموارد المخصصة لتعلم الايلتس وتحقيق
-                    درجة أعلى.
+                    قم بإنشاء حساب للوصول إلى مزيد من الميزات والموارد المخصصة لتعلم المحادثة باللغة
+                    الإنجليزية وتحقيق درجة أعلى.
                   </Text>
                 )}
                 <Text style={paragraph}>نتطلع إلى مساعدتك في تحقيق أهدافك التعليمية!</Text>

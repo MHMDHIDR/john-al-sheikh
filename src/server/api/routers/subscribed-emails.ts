@@ -56,7 +56,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
           subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
           react: WelcomeEmailTemplate({
             name: input.fullname,
-            customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في اختبار الايلتس.</p>`,
+            customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في المحادثة باللغة الإنجليزية.</p>`,
             ctaUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
           }),
         });
@@ -91,7 +91,7 @@ export const subscribedEmailsRouter = createTRPCRouter({
         subject: `مرحباً بك في منصة ${env.NEXT_PUBLIC_APP_NAME}`,
         react: WelcomeEmailTemplate({
           name: input.fullname,
-          customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في اختبار الايلتس.</p>`,
+          customContent: `<p>أهلاً ${input.fullname}،<br/>شكرًا لاشتراكك في نشرتنا البريدية! سنرسل لك كل جديد حول تعلم الإنجليزية ونجاحك في المحادثة باللغة الإنجليزية.</p>`,
           ctaUrl: `${env.NEXT_PUBLIC_APP_URL}/signin`,
         }),
       });

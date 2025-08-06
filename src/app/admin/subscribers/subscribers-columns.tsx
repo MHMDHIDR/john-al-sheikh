@@ -81,7 +81,7 @@ export const subscribersColumns: ColumnDef<CombinedSubscriber>[] = [
     accessorKey: "ieltsGoal",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        هدف الايلتس
+        المستوى المستهدف
         <ArrowUpDown className="size-4 ml-2" />
       </Button>
     ),
