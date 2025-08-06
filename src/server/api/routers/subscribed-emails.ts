@@ -80,7 +80,6 @@ export const subscribedEmailsRouter = createTRPCRouter({
       await ctx.db.insert(subscribedEmails).values({
         fullname: input.fullname,
         email: input.email,
-        ieltsGoal: input.ieltsGoal ?? 5,
       });
 
       // Send welcome email
@@ -125,7 +124,6 @@ export const subscribedEmailsRouter = createTRPCRouter({
         name: SubscribedEmail["fullname"];
         email: SubscribedEmail["email"];
         gender: Users["gender"];
-        ieltsGoal: SubscribedEmail["ieltsGoal"];
         createdAt: SubscribedEmail["createdAt"];
         source: "subscribed_emails" | "users";
       }
@@ -138,7 +136,6 @@ export const subscribedEmailsRouter = createTRPCRouter({
         name: sub.fullname,
         email: sub.email,
         gender: null,
-        ieltsGoal: sub.ieltsGoal,
         createdAt: sub.createdAt,
         source: "subscribed_emails" as const,
       });
@@ -154,7 +151,6 @@ export const subscribedEmailsRouter = createTRPCRouter({
             name: user.name,
             email: user.email,
             gender: user.gender,
-            ieltsGoal: user.goalBand ?? 5,
             createdAt: user.createdAt,
             source: "users" as const,
           });

@@ -17,13 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
@@ -64,12 +57,12 @@ export function SubscriptionForm({ className }: { className?: string }) {
   return (
     <div className={cn("w-full max-w-md", className)}>
       {isSuccess ? (
-        <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center animate-in fade-in duration-300">
-          <h3 className="text-green-800 text-lg font-medium mb-2">شكرا لك على الاشتراك!</h3>
+        <div className="p-6 text-center bg-green-50 rounded-lg border border-green-200 duration-300 animate-in fade-in">
+          <h3 className="mb-2 text-lg font-medium text-green-800">شكرا لك على الاشتراك!</h3>
           <p className="text-green-700">
             سوف نساعدك على تحقيق أهدافك في المحادثة باللغة الإنجليزية
           </p>
-          <p className="text-green-700 mt-2">جاري تحويلك للصفحة الرئيسية...</p>
+          <p className="mt-2 text-green-700">جاري تحويلك للصفحة الرئيسية...</p>
         </div>
       ) : (
         <Form {...form}>
@@ -115,12 +108,12 @@ export function SubscriptionForm({ className }: { className?: string }) {
 
             <Button
               type="submit"
-              className="w-full bg-black hover:bg-gray-800 text-white py-6 font-medium mt-2 transition-all"
+              className="py-6 mt-2 w-full font-medium text-white bg-black transition-all hover:bg-gray-800"
               disabled={subscribeMutation.isPending}
             >
               {subscribeMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                   جاري الاشتراك...
                 </>
               ) : (
@@ -129,12 +122,12 @@ export function SubscriptionForm({ className }: { className?: string }) {
             </Button>
           </form>
 
-          <p className="text-sm text-gray-500 select-none pt-2">
+          <p className="pt-2 text-sm text-gray-500 select-none">
             بالمتابعة، أنت توافق على
             <Link
               href="/terms"
               target="_blank"
-              className="text-blue-500 inline-flex px-1 hover:underline"
+              className="inline-flex px-1 text-blue-500 hover:underline"
             >
               شروط الخدمة
             </Link>
@@ -142,7 +135,7 @@ export function SubscriptionForm({ className }: { className?: string }) {
             <Link
               href="/privacy"
               target="_blank"
-              className="text-blue-500 inline-flex px-1 hover:underline"
+              className="inline-flex px-1 text-blue-500 hover:underline"
             >
               سياسة الخصوصية
             </Link>
