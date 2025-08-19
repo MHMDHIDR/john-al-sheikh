@@ -25,9 +25,9 @@ type ConversationUIProps = {
   title?: string;
 };
 
-const LatestMessage = dynamic(() => import("@/components/custom/latest-message"), {
-  ssr: false,
-});
+// const LatestMessage = dynamic(() => import("@/components/custom/latest-message"), {
+//   ssr: false,
+// });
 
 export default function ConversationUI({
   user,
@@ -147,7 +147,7 @@ export default function ConversationUI({
       </div>
 
       <div className="sticky bottom-0 shadow-inner z-20 w-full bg-white/50 dark:bg-black/50 py-2 backdrop-blur-md flex flex-col">
-        <LatestMessage message={latestMessage} />
+        {/* <LatestMessage message={latestMessage} /> */}
         {/* Hidden FullSpeakingRecorderButton to handle conversation logic */}
         <div className="hidden">
           <FullSpeakingRecorderButton ref={recorderRef} user={user} mode={mode} />

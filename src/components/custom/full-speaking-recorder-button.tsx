@@ -84,11 +84,11 @@ function IeltsAssistantConfig({
       : `Hey There, ${getTimeOfDay()}!, I'm John Al-Shiekh ${mode === "mock-test" ? "the IELTS examiner" : "your English conversation friend"}, can you please introduce yourself?`,
     model: {
       provider: "openai",
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini", // gpt-4o-realtime-preview-2024-12-17
       temperature: 0.4,
       messages: [{ role: "system", content: systemPrompt }],
     },
-    transcriber: { provider: "deepgram", model: "whisper", language: "en" },
+    // transcriber: { provider: "deepgram", model: "nova-3-medical", language: "en" },
     voice: { provider: "11labs", voiceId: "lUTamkMw7gOzZbFIwmq4" }, // James or steve for the voiceId
   };
 }
