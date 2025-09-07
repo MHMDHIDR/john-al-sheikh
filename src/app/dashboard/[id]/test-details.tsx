@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/custom/audio-player";
+import { ShareTestDialog } from "@/components/custom/dialog-share-test";
 import {
   GrammarImprovementChart,
   InteractiveTranscript,
@@ -14,7 +15,6 @@ import {
   WordCloud,
 } from "@/components/custom/feedback";
 import TestActionWrapper from "@/components/custom/test-action-wrapper";
-import { ShareTestDialog } from "@/components/dialog-share-test";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import { Badge } from "@/components/ui/badge";
