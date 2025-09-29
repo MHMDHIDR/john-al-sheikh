@@ -12,6 +12,9 @@ import { Check, Copy, Download, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { Logo } from "@/components/custom/icons";
+import { AuroraText } from "@/components/magicui/aurora-text";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,14 +24,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Divider from "@/components/ui/divider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
 import { useToast } from "@/hooks/use-toast";
 import { formatTestType } from "@/lib/format-test-type";
-import { Logo } from "./custom/icons";
-import { AuroraText } from "./magicui/aurora-text";
-import { Badge } from "./ui/badge";
-import Divider from "./ui/divider";
 import type { SpeakingTestType } from "@/lib/format-test-type";
 
 interface ShareTestDialogProps {
