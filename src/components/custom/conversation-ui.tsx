@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useGlobalVapiConversation } from "@/app/providers/vapi-conversation-provider";
 import FullSpeakingRecorderButton from "@/components/custom/full-speaking-recorder-button";
@@ -102,7 +101,7 @@ export default function ConversationUI({
   }, [isConnected]);
 
   // Get the latest message
-  const latestMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
+  // const latestMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
 
   return (
     <main className="min-h-screen grid grid-rows-[auto_1fr_auto] grid-cols-[minmax(0,1fr)] overflow-x-clip -my-16">

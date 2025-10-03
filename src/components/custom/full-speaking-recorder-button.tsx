@@ -34,6 +34,12 @@ import { Timer } from "./timer";
 import type { CreateAssistantDTO } from "@/hooks/use-vapi-conversation";
 import type { ConversationModeType } from "@/lib/conversation-prompts";
 import type { Users } from "@/server/db/schema";
+import type {
+  CallHookAssistantSpeechInterrupted,
+  CallHookCallEnding,
+  CallHookCustomerSpeechInterrupted,
+  CallHookCustomerSpeechTimeout,
+} from "@vapi-ai/web/dist/api";
 
 export type UserProfile = {
   id: Users["id"];
@@ -65,7 +71,14 @@ function IeltsAssistantConfig({
 }: {
   userProfile: Omit<UserProfile, "id">;
   mode?: ConversationModeType;
-}): CreateAssistantDTO {
+}): CreateAssistantDTO & {
+  hooks: (
+    | CallHookCallEnding
+    | CallHookAssistantSpeechInterrupted
+    | CallHookCustomerSpeechInterrupted
+    | CallHookCustomerSpeechTimeout
+  )[];
+} {
   const getTimeOfDay = () => {
     const now = new Date();
     const hours = now.getHours();
@@ -90,6 +103,40 @@ function IeltsAssistantConfig({
     },
     // transcriber: { provider: "deepgram", model: "nova-3-medical", language: "en" },
     voice: { provider: "11labs", voiceId: "lUTamkMw7gOzZbFIwmq4" }, // James or steve for the voiceId
+    // New hooks-based approach replacing deprecated silenceTimeoutSeconds and messagePlan
+    hooks: [
+      {
+        on: "customer.speech.timeout" as const,
+        options: {
+          timeoutSeconds: 60, // Wait 60 seconds of silence before first idle message
+          triggerMaxCount: 3,
+          triggerResetMode: { mode: "onUserSpeech" } as const,
+        },
+        do: [
+          {
+            type: "say" as const,
+            exact: { message: "I'm here whenever you're ready to continue. Are you still there?" },
+          },
+        ],
+      },
+      {
+        on: "customer.speech.timeout" as const,
+        options: {
+          timeoutSeconds: 100, // After ~1.6 minutes, send final warning before ending call
+          triggerMaxCount: 1,
+          triggerResetMode: { mode: "onUserSpeech" } as const,
+        },
+        do: [
+          {
+            type: "say" as const,
+            exact: {
+              message:
+                "I haven't heard from you in a while. As there is no response, I will need to end the call soon. Please speak if you're still there.",
+            },
+          },
+        ],
+      },
+    ],
   };
 }
 
@@ -163,7 +210,7 @@ const FullSpeakingRecorderButton = forwardRef<
         if (role === "examiner" && isTestConclusionMessage(message.content)) {
           setIsTestCompleted(true);
           setTimeout(() => {
-            vapi.stop();
+            void vapi.stop();
           }, 5000);
         }
 
@@ -599,7 +646,6 @@ const FullSpeakingRecorderButton = forwardRef<
 
       await startSession(IeltsAssistantConfig({ userProfile, mode }), {
         name: "John Al-Shiekh",
-        silenceTimeoutSeconds: 100, // Allow 1.66 minutes of silence,
         maxDurationSeconds:
           mode === "mock-test"
             ? MOCK_TEST_CONVERSATION_TIME / 1000 // 10 minutes for mock-test mode
@@ -608,18 +654,6 @@ const FullSpeakingRecorderButton = forwardRef<
           mode === "general-english"
             ? "Thank you for our conversation! I hope you enjoyed practicing your English with me. Have a great day!"
             : `Thanks for the conversation ${userProfile.name}! I hope you enjoyed practicing your English with me today.`,
-        messagePlan: {
-          idleMessages: [
-            "I'm here whenever you're ready to continue.",
-            "Are you still there?",
-            "May I remind we have limited time! Please speak up!",
-            "Can you please continue speaking?",
-            "I'm still waiting for you to speak!",
-          ],
-          idleTimeoutSeconds: 60,
-          silenceTimeoutMessage: "As there is no response, I am ending the call now.",
-          idleMessageResetCountOnUserSpeechEnabled: true,
-        },
         startSpeakingPlan: {
           waitSeconds: 3,
           smartEndpointingPlan: {

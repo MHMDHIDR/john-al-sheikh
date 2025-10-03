@@ -203,7 +203,7 @@ export function useVapiConversation({
   );
 
   const endSession = useCallback(() => {
-    vapi.stop();
+    void vapi.stop();
     setCallStatus(CallStatus.FINISHED);
     setWindDownTriggered(false);
   }, []);
